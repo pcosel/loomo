@@ -58,13 +58,22 @@ public class MainActivity extends AppCompatActivity {
 //                        while ((getDistance(startX, startY, mBase.getOdometryPose(-1).getX(), mBase.getOdometryPose(-1).getY()) < 1) && !isStop) {
                                 Log.d(TAG, "run: " + getDistance(startX, startY, mBase.getOdometryPose(-1).getX(), mBase.getOdometryPose(-1).getY()));
                                 double Distance = Double.parseDouble(mBase.getUltrasonicDistance());
-                                if (Distance > 0.3) {
-                                    // set robot base linearVelocity, unit is rad/s, rand is -PI ~ PI.
-                                    mBase.setLinearVelocity(1);
-                                }
-                                else
+
+                                while(mBase.getUltrasonicDistance().getDistance() > 1500)
                                 {
-                                    //turn left or right
+                                    mBase.setControlMode(Base.CONTROL_MODE_RAW);
+                                    // the unit is mm.
+                                    if (mBase.getUltrasonicDistance().getDistance() > 1500) {
+                                        // set robot base linearVelocity, unit is rad/s, rand is -PI ~ PI.
+
+                                        ArrayList<Pose2D> position;
+                                        position.add(mBase.getOdometryPose(System.currentTimeMillseconds() * 1000));
+                                        mBase.setLinearVelocity(1);
+                                    } else {
+                                        //turn left
+                                        mBase.setControlMode(Base.CONTROL_MODE_NAVIGATION);
+                                        public CheckPoint addCheckPoint(0.0, 1.0, Math.PI/2);
+                                    }
                                 }
                                 try {
                                     Thread.sleep(1000);

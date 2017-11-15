@@ -1,0 +1,7 @@
+erkundung/.gradle/
+erkundung/.idea/
+erkundung/app/.externalNativeBuild/
+erkundung/app/app.iml
+erkundung/build/
+erkundung/erkundung.iml
+erkundung/local.properties

@@ -44,37 +44,32 @@ public class MainActivity extends AppCompatActivity {
         button.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
                 mBase.setControlMode(Base.CONTROL_MODE_RAW);
-                        new Thread() {
-                            @Override
-                            public void run() {
-                                float startX = mBase.getOdometryPose(-1).getX();
-                                float startY = mBase.getOdometryPose(-1).getY();
+                    new Thread() {
+                        @Override
+                        public void run() {
 
-                                while(mBase.getUltrasonicDistance().getDistance() > 1500)
-                                {
-                                    mBase.setControlMode(Base.CONTROL_MODE_RAW);
-                                    // the unit is mm.
-                                    if (mBase.getUltrasonicDistance().getDistance() > 1500) {
-                                        // set robot base linearVelocity, unit is rad/s, rand is -PI ~ PI.
+                            while(mBase.getUltrasonicDistance().getDistance() > 1500)
+                            {
+                                // the unit is mm.
+                                if (mBase.getUltrasonicDistance().getDistance() > 1500) {
+                                    // set robot base linearVelocity, unit is rad/s, rand is -PI ~ PI.
 
-                                        ArrayList<Pose2D> position = new ArrayList<>();
-                                        position.add(mBase.getOdometryPose(System.currentTimeMillis() * 1000));
-                                        mBase.setLinearVelocity(1);
-                                    } else {
-                                        //turn left
-                                        mBase.setControlMode(Base.CONTROL_MODE_NAVIGATION);
-                                        mBase.addCheckPoint(0.0f, 1.0f, (float)(Math.PI/2));
-                                    }
+                                    ArrayList<Pose2D> position = new ArrayList<>();
+                                    position.add(mBase.getOdometryPose(System.currentTimeMillis() * 1000));
+                                    mBase.setLinearVelocity(0.2f);
+                                } else {
+                                    //turn left
+                                    mBase.setAngularVelocity(0.3f);
                                 }
-                                try {
-                                    Thread.sleep(1000);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-//                        }
-                                mBase.setLinearVelocity(0);
                             }
-                        }.start();
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            mBase.setLinearVelocity(0);
+                        }
+                    }.start();
 
                 }
         });

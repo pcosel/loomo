@@ -1,0 +1,4 @@
+#Fri Nov 17 13:57:39 CET 2017
+base.0=/home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/build/intermediates/transforms/dexMerger/debug/1
+renamed.0=classes.dex
+file.0=/home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/build/intermediates/transforms/dexMerger/debug/1/classes.dex

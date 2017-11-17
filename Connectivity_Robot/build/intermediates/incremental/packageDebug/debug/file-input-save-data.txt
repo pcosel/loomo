@@ -1,0 +1,33 @@
+#Internal package file, do not edit.
+#Fri Nov 17 13:57:40 CET 2017
+2.base=/home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/build/intermediates/res/debug/resources-debug.ap_
+5.file=/home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/build/intermediates/res/debug/resources-debug.ap_/res/mipmap-xxxhdpi-v4/ic_launcher.png
+5.set=ANDROID_RESOURCE
+3.base=/home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/build/intermediates/transforms/dexMerger/debug/14
+6.file=/home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/build/intermediates/transforms/dexMerger/debug/13/classes.dex
+2.set=ANDROID_RESOURCE
+4.base=/home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/build/intermediates/transforms/dexMerger/debug/17
+7.file=/home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/build/intermediates/res/debug/resources-debug.ap_/res/layout/activity_main.xml
+7.set=ANDROID_RESOURCE
+count=10
+0.file=/home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/build/intermediates/transforms/dexMerger/debug/16/classes.dex
+5.base=/home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/build/intermediates/res/debug/resources-debug.ap_
+8.file=/home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/build/intermediates/transforms/dexMerger/debug/15/classes.dex
+4.set=DEX
+6.base=/home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/build/intermediates/transforms/dexMerger/debug/13
+1.file=/home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/build/intermediates/transforms/dexMerger/debug/12/classes.dex
+9.set=ANDROID_RESOURCE
+9.file=/home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/build/intermediates/res/debug/resources-debug.ap_/resources.arsc
+1.set=DEX
+7.base=/home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/build/intermediates/res/debug/resources-debug.ap_
+2.file=/home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/build/intermediates/res/debug/resources-debug.ap_/AndroidManifest.xml
+6.set=DEX
+0.base=/home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/build/intermediates/transforms/dexMerger/debug/16
+8.base=/home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/build/intermediates/transforms/dexMerger/debug/15
+3.file=/home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/build/intermediates/transforms/dexMerger/debug/14/classes.dex
+3.set=DEX
+1.base=/home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/build/intermediates/transforms/dexMerger/debug/12
+9.base=/home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/build/intermediates/res/debug/resources-debug.ap_
+4.file=/home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/build/intermediates/transforms/dexMerger/debug/17/classes.dex
+8.set=DEX
+0.set=DEX

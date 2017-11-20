@@ -14,10 +14,9 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 25
     buildToolsVersion "24.0.2"
-
     defaultConfig {
-        applicationId "com.segway.robot.mobilesample"
-        minSdkVersion 17
+        applicationId "com.segway.robot.robotsample"
+        minSdkVersion 19
         targetSdkVersion 22
         versionCode 1
         versionName "1.1"
@@ -28,21 +27,27 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-      lintOptions {
-          abortOnError false
-      }
+    lintOptions {
+        abortOnError false
+    }
+    productFlavors {
+    }
 }
 
 repositories {
     flatDir {
         dirs 'libs'
     }
-
     jcenter()
 }
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'com.segway.robot:mobile-connectivity-sdk:0.5.88'
     testCompile 'junit:junit:4.12'
+    compile 'com.segway.robot:robot-connectivity-sdk:0.5.88'
+    compile 'com.segway.robot:visionsdk:0.6.124'
+    compile 'com.segway.robot:headsdk:0.6.119'
+    compile 'com.segway.robot:basesdk:0.6.119'
+    compile 'com.segway.robot:robot-connectivity-sdk:0.5.82'
+    compile 'com.segway.robot:mobile-connectivity-sdk:0.5.82'
 }

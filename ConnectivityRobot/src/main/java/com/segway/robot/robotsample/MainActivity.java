@@ -139,7 +139,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
                                 // the unit is mm.
                                 if (mBase.getUltrasonicDistance().getDistance() > 1500) {
                                     // set robot base linearVelocity, unit is rad/s, rand is -PI ~ PI.
-
                                     ArrayList<Pose2D> position = new ArrayList<>();
                                     position.add(mBase.getOdometryPose(System.currentTimeMillis() * 1000));
                                     mBase.setLinearVelocity(0.2f);

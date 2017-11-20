@@ -38,7 +38,7 @@
 
         <meta-data
             android:name="packageTo2"
-            android:value="com.example.tud.loomo.mobilesample" />
+            android:value="com.example.tud.loomo.robot" />
 
         <provider
             android:name="com.android.tools.ir.server.InstantRunContentProvider"

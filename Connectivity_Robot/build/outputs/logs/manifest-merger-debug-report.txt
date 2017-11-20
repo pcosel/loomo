@@ -93,9 +93,9 @@ ADDED from /home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/src/main/
 	android:name
 		ADDED from /home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/src/main/AndroidManifest.xml:21:27-74
 meta-data#packageTo2
-ADDED from /home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/src/main/AndroidManifest.xml:24:9-26:76
+ADDED from /home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/src/main/AndroidManifest.xml:24:9-26:69
 	android:value
-		ADDED from /home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/src/main/AndroidManifest.xml:26:13-63
+		ADDED from /home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/src/main/AndroidManifest.xml:26:13-56
 	android:name
 		ADDED from /home/mingze/AndroidStudioProjects/loomo/Connectivity_Robot/src/main/AndroidManifest.xml:25:13-38
 uses-sdk

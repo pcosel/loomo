@@ -159,12 +159,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         textViewTime.setText(Long.toString(message.getTimestamp()));
                         textViewContent.setText(message.getContent().toString());
 
-                        base = Base.getInstance();
-                        base.bindService(MainActivity.this, baseBindStateListener);
-
-                        sensor = Sensor.getInstance();
-                        sensor.bindService(MainActivity.this, sensorBindStateListener);
-
                         if (message.getContent().equals("start"))
                         {
                             while(sensor.getUltrasonicDistance().getDistance() > 1500)
@@ -255,6 +249,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
         mRobotMessageRouter = RobotMessageRouter.getInstance();
         //bind to connection service in robot
         mRobotMessageRouter.bindService(this, mBindStateListener);
+
+        base = Base.getInstance();
+        base.bindService(getApplicationContext(), baseBindStateListener);
+
+        sensor = Sensor.getInstance();
+        sensor.bindService(getApplicationContext(), sensorBindStateListener);
     }
 
     @Override

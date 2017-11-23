@@ -37,6 +37,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private Button sendStringButton;
     private Button sendByteButton;
     private Button bindServiceButton;
+    private Button startButton;
+    private Button stopButton;
 
     private TextView textViewId;
     private TextView textViewTime;
@@ -45,38 +47,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private int press = 0;
     private MobileMessageRouter mMobileMessageRouter = null;
     private MessageConnection mMessageConnection = null;
-
-    private ServiceBinder.BindStateListener mBindStateListener = new ServiceBinder.BindStateListener() {
-        @Override
-        public void onBind() {
-            Log.d(TAG, "onBind: ");
-            try {
-                mMobileMessageRouter.register(mMessageConnectionListener);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        @Override
-        public void onUnbind(String reason) {
-            Log.e(TAG, "onUnbind: " + reason);
-        }
-    };
-
-    private MessageRouter.MessageConnectionListener mMessageConnectionListener = new MessageRouter.MessageConnectionListener() {
-        @Override
-        public void onConnectionCreated(final MessageConnection connection) {
-            Log.d(TAG, "onConnectionCreated: " + connection.getName());
-            //get the MessageConnection instance
-            mMessageConnection = connection;
-            try {
-                mMessageConnection.setListeners(mConnectionStateListener, mMessageListener);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    };
-
     private MessageConnection.ConnectionStateListener mConnectionStateListener = new MessageConnection.ConnectionStateListener() {
         @Override
         public void onOpened() {
@@ -103,7 +73,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
             });
         }
     };
-
     private MessageConnection.MessageListener mMessageListener = new MessageConnection.MessageListener() {
         @Override
         public void onMessageReceived(final Message message) {
@@ -147,6 +116,35 @@ public class MainActivity extends Activity implements View.OnClickListener {
             Log.d(TAG, "onMessageSent: id=" + message.getId() + ";timestamp=" + message.getTimestamp());
         }
     };
+    private MessageRouter.MessageConnectionListener mMessageConnectionListener = new MessageRouter.MessageConnectionListener() {
+        @Override
+        public void onConnectionCreated(final MessageConnection connection) {
+            Log.d(TAG, "onConnectionCreated: " + connection.getName());
+            //get the MessageConnection instance
+            mMessageConnection = connection;
+            try {
+                mMessageConnection.setListeners(mConnectionStateListener, mMessageListener);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    };
+    private ServiceBinder.BindStateListener mBindStateListener = new ServiceBinder.BindStateListener() {
+        @Override
+        public void onBind() {
+            Log.d(TAG, "onBind: ");
+            try {
+                mMobileMessageRouter.register(mMessageConnectionListener);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onUnbind(String reason) {
+            Log.e(TAG, "onUnbind: " + reason);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -174,6 +172,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
         sendByteButton = (Button) findViewById(R.id.button_send_byte);
         sendByteButton.setOnClickListener(this);
 
+        startButton = (Button) findViewById(R.id.button_start);
+        startButton.setOnClickListener(this);
+
+        startButton = (Button) findViewById(R.id.button_stop);
+        startButton.setOnClickListener(this);
     }
 
     @Override
@@ -221,6 +224,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 //bind the connection service in robot
                 mMobileMessageRouter.bindService(this, mBindStateListener);
                 break;
+            case R.id.button_start:
+                // send START instruction to robot
+                startRobot();
+                break;
+            case R.id.button_stop:
+                // send STOP instruction to robot
+                stopRobot();
+                break;
             case R.id.button_send_byte:
                 //create a txt file named mobile_to_robot.txt
                 File file = createFile();
@@ -248,6 +259,32 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     }
                 }
                 break;
+        }
+    }
+
+    private void startRobot() {
+        if (mMessageConnection != null) {
+            try {
+                //message sent is StringMessage
+                mMessageConnection.sendMessage(new StringMessage("start"));
+            } catch (MobileException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
+                Log.e(TAG, "send START message failed", e);
+            }
+        }
+    }
+
+    private void stopRobot() {
+        if (mMessageConnection != null) {
+            try {
+                //message sent is StringMessage
+                mMessageConnection.sendMessage(new StringMessage("stop"));
+            } catch (MobileException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
+                Log.e(TAG, "send STOP message failed", e);
+            }
         }
     }
 

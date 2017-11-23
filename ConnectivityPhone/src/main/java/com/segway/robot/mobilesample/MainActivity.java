@@ -169,8 +169,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
         sendStringButton = (Button) findViewById(R.id.button_send_string);
         sendStringButton.setOnClickListener(this);
 
-        sendByteButton = (Button) findViewById(R.id.button_send_byte);
-        sendByteButton.setOnClickListener(this);
+//        sendByteButton = (Button) findViewById(R.id.button_send_byte);
+//        sendByteButton.setOnClickListener(this);
 
         startButton = (Button) findViewById(R.id.button_start);
         startButton.setOnClickListener(this);
@@ -232,21 +232,21 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 // send STOP instruction to robot
                 stopRobot();
                 break;
-            case R.id.button_send_byte:
-                //create a txt file named mobile_to_robot.txt
-                File file = createFile();
-                byte[] messageByte = packFile(file);
-                if (mMessageConnection != null) {
-                    try {
-                        //message sent is BufferMessage, used a txt file to test sending BufferMessage
-                        mMessageConnection.sendMessage(new BufferMessage(messageByte));
-                    } catch (MobileException e) {
-                        e.printStackTrace();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-                break;
+//            case R.id.button_send_byte:
+//                //create a txt file named mobile_to_robot.txt
+//                File file = createFile();
+//                byte[] messageByte = packFile(file);
+//                if (mMessageConnection != null) {
+//                    try {
+//                        //message sent is BufferMessage, used a txt file to test sending BufferMessage
+//                        mMessageConnection.sendMessage(new BufferMessage(messageByte));
+//                    } catch (MobileException e) {
+//                        e.printStackTrace();
+//                    } catch (Exception e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//                break;
             case R.id.button_send_string:
                 if (mMessageConnection != null) {
                     try {

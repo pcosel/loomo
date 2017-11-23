@@ -26,16 +26,8 @@
         android:id="@+id/button_stop"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/button_send_byte"
-        android:text="STOP"/>
-
-    <Button
-        android:id="@+id/button_send_byte"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
         android:layout_above="@+id/button_send_string"
-        android:layout_alignParentStart="true"
-        android:text="send bytes"/>
+        android:text="STOP"/>
 
     <TextView
         android:id="@+id/message_sent"
@@ -145,7 +137,7 @@
 
     <Button
         android:id="@+id/button_bind"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@+id/button_start"
         android:layout_centerHorizontal="true"

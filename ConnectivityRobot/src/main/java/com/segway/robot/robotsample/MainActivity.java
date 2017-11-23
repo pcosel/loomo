@@ -27,6 +27,7 @@ import com.segway.robot.sdk.connectivity.RobotMessageRouter;
 import com.segway.robot.sdk.connectivity.StringMessage;
 import com.segway.robot.sdk.locomotion.sbv.Base;
 import com.segway.robot.algo.Pose2D;
+import com.segway.robot.sdk.perception.sensor.Sensor;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -51,6 +52,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private RobotMessageRouter mRobotMessageRouter = null;
     private MessageConnection mMessageConnection = null;
 
+    /** This BindStateListener is used for the Connectivity SDK **/
     private ServiceBinder.BindStateListener mBindStateListener = new ServiceBinder.BindStateListener() {
         @Override
         public void onBind() {
@@ -66,6 +68,30 @@ public class MainActivity extends Activity implements View.OnClickListener {
         @Override
         public void onUnbind(String reason) {
             Log.e(TAG, "onUnbind: " + reason);
+        }
+    };
+
+    /** This BindStateListener is used for the Sensor SDK **/
+    private ServiceBinder.BindStateListener sensorBindStateListener = new ServiceBinder.BindStateListener() {
+        @Override
+        public void onBind() {
+
+        }
+
+        @Override
+        public void onUnbind(String reason) {
+        }
+    };
+
+    /** This BindStateListener is used for the Base SDK **/
+    private ServiceBinder.BindStateListener baseBindStateListener = new ServiceBinder.BindStateListener() {
+        @Override
+        public void onBind() {
+
+        }
+
+        @Override
+        public void onUnbind(String reason) {
         }
     };
 
@@ -129,15 +155,23 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         textViewId.setText(Integer.toString(message.getId()));
                         textViewTime.setText(Long.toString(message.getTimestamp()));
                         textViewContent.setText(message.getContent().toString());
+
                         Base mBase;
                         mBase = Base.getInstance();
+                        mBase.bindService(MainActivity.this, baseBindStateListener);
+
+                        Sensor sensor;
+                        sensor = Sensor.getInstance();
+                        sensor.bindService(MainActivity.this, sensorBindStateListener);
+
                         if (message.getContent().equals("start"))
                         {
-                            while(mBase.getUltrasonicDistance().getDistance() > 1500)
+                            while(sensor.getUltrasonicDistance().getDistance() > 1500)
                             {
+                                // TODO: Which is the right control mode to use? (RAW or NAVIGATION)
                                 mBase.setControlMode(Base.CONTROL_MODE_NAVIGATION);
                                 // the unit is mm.
-                                if (mBase.getUltrasonicDistance().getDistance() > 1500) {
+                                if (sensor.getUltrasonicDistance().getDistance() > 1500) {
                                     // set robot base linearVelocity, unit is rad/s, rand is -PI ~ PI.
                                     ArrayList<Pose2D> position = new ArrayList<>();
                                     position.add(mBase.getOdometryPose(System.currentTimeMillis() * 1000));

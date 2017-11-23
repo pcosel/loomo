@@ -52,6 +52,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private RobotMessageRouter mRobotMessageRouter = null;
     private MessageConnection mMessageConnection = null;
 
+    Base base = null;
+    Sensor sensor = null;
+
     /** This BindStateListener is used for the Connectivity SDK **/
     private ServiceBinder.BindStateListener mBindStateListener = new ServiceBinder.BindStateListener() {
         @Override
@@ -156,11 +159,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         textViewTime.setText(Long.toString(message.getTimestamp()));
                         textViewContent.setText(message.getContent().toString());
 
-                        Base mBase;
-                        mBase = Base.getInstance();
-                        mBase.bindService(MainActivity.this, baseBindStateListener);
+                        base = Base.getInstance();
+                        base.bindService(MainActivity.this, baseBindStateListener);
 
-                        Sensor sensor;
                         sensor = Sensor.getInstance();
                         sensor.bindService(MainActivity.this, sensorBindStateListener);
 
@@ -169,22 +170,22 @@ public class MainActivity extends Activity implements View.OnClickListener {
                             while(sensor.getUltrasonicDistance().getDistance() > 1500)
                             {
                                 // TODO: Which is the right control mode to use? (RAW or NAVIGATION)
-                                mBase.setControlMode(Base.CONTROL_MODE_NAVIGATION);
+                                base.setControlMode(Base.CONTROL_MODE_NAVIGATION);
                                 // the unit is mm.
                                 if (sensor.getUltrasonicDistance().getDistance() > 1500) {
                                     // set robot base linearVelocity, unit is rad/s, rand is -PI ~ PI.
                                     ArrayList<Pose2D> position = new ArrayList<>();
-                                    position.add(mBase.getOdometryPose(System.currentTimeMillis() * 1000));
-                                    mBase.setLinearVelocity(0.2f);
+                                    position.add(base.getOdometryPose(System.currentTimeMillis() * 1000));
+                                    base.setLinearVelocity(0.2f);
                                 } else {
                                     //turn left
-                                    mBase.setAngularVelocity(0.3f);
+                                    base.setAngularVelocity(0.3f);
                                 }
                             }
                         }
                         else if (message.getContent().equals("stop"))
                         {
-                            mBase.stop();
+                            base.stop();
                         }
                     }
                 });
@@ -319,6 +320,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
         mRobotMessageRouter.unbindService();
         Log.d(TAG, "onDestroy: ");
+
+        base.unbindService();
+        sensor.unbindService();
 
     }
 

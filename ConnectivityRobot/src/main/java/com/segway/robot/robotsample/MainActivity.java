@@ -17,6 +17,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.segway.robot.algo.Pose2D;
 import com.segway.robot.sdk.base.bind.ServiceBinder;
 import com.segway.robot.sdk.baseconnectivity.Message;
 import com.segway.robot.sdk.baseconnectivity.MessageConnection;
@@ -26,7 +27,6 @@ import com.segway.robot.sdk.connectivity.RobotException;
 import com.segway.robot.sdk.connectivity.RobotMessageRouter;
 import com.segway.robot.sdk.connectivity.StringMessage;
 import com.segway.robot.sdk.locomotion.sbv.Base;
-import com.segway.robot.algo.Pose2D;
 import com.segway.robot.sdk.perception.sensor.Sensor;
 
 import java.io.File;
@@ -51,30 +51,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private TextView textViewContent;
     private RobotMessageRouter mRobotMessageRouter = null;
     private MessageConnection mMessageConnection = null;
-    
+
     private Base base = null;
     private Sensor sensor = null;
-
-    /** This BindStateListener is used for the Connectivity Service **/
-    private ServiceBinder.BindStateListener mBindStateListener = new ServiceBinder.BindStateListener() {
-        @Override
-        public void onBind() {
-            Log.d(TAG, "onBind: ");
-            try {
-                //register MessageConnectionListener in the RobotMessageRouter
-                mRobotMessageRouter.register(mMessageConnectionListener);
-            } catch (RobotException e) {
-                e.printStackTrace();
-            }
-        }
-
-        @Override
-        public void onUnbind(String reason) {
-            Log.e(TAG, "onUnbind: " + reason);
-        }
-    };
-
-    /** This BindStateListener is used for the Base Service **/
+    /**
+     * This BindStateListener is used for the Base Service
+     **/
     private ServiceBinder.BindStateListener baseBindStateListener = new ServiceBinder.BindStateListener() {
         @Override
         public void onBind() {
@@ -85,8 +67,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
         public void onUnbind(String reason) {
         }
     };
-
-    /** This BindStateListener is used for the Sensor Service **/
+    /**
+     * This BindStateListener is used for the Sensor Service
+     **/
     private ServiceBinder.BindStateListener sensorBindStateListener = new ServiceBinder.BindStateListener() {
         @Override
         public void onBind() {
@@ -97,21 +80,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
         public void onUnbind(String reason) {
         }
     };
-
-    private MessageRouter.MessageConnectionListener mMessageConnectionListener = new RobotMessageRouter.MessageConnectionListener() {
-        @Override
-        public void onConnectionCreated(final MessageConnection connection) {
-            Log.d(TAG, "onConnectionCreated: " + connection.getName());
-            mMessageConnection = connection;
-            try {
-                mMessageConnection.setListeners(mConnectionStateListener, mMessageListener);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        }
-    };
-
     private MessageConnection.ConnectionStateListener mConnectionStateListener = new MessageConnection.ConnectionStateListener() {
         @Override
         public void onOpened() {
@@ -135,7 +103,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
             });
         }
     };
-
     private MessageConnection.MessageListener mMessageListener = new MessageConnection.MessageListener() {
         @Override
         public void onMessageSentError(Message message, String error) {
@@ -159,25 +126,22 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         textViewTime.setText(Long.toString(message.getTimestamp()));
                         textViewContent.setText(message.getContent().toString());
 
-                        if (message.getContent().equals("start"))
-                        {
-                            while(sensor.getUltrasonicDistance().getDistance() > 1500)
-                            {
+                        if (message.getContent().equals("start")) {
+                            while (sensor.getUltrasonicDistance().getDistance() > 1500) {
                                 base.setControlMode(Base.CONTROL_MODE_NAVIGATION);
                                 // the unit is mm.
                                 if (sensor.getUltrasonicDistance().getDistance() > 1500) {
                                     // set robot base linearVelocity, unit is rad/s, rand is -PI ~ PI.
                                     ArrayList<Pose2D> position = new ArrayList<>();
                                     position.add(base.getOdometryPose(System.currentTimeMillis() * 1000));
+                                    Log.d(TAG, "The position is: " + position);
                                     base.setLinearVelocity(0.2f);
                                 } else {
                                     //turn left
                                     base.setAngularVelocity(0.3f);
                                 }
                             }
-                        }
-                        else if (message.getContent().equals("stop"))
-                        {
+                        } else if (message.getContent().equals("stop")) {
                             base.stop();
                         }
                     }
@@ -198,6 +162,39 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     }
                 });
             }
+        }
+    };
+    private MessageRouter.MessageConnectionListener mMessageConnectionListener = new RobotMessageRouter.MessageConnectionListener() {
+        @Override
+        public void onConnectionCreated(final MessageConnection connection) {
+            Log.d(TAG, "onConnectionCreated: " + connection.getName());
+            mMessageConnection = connection;
+            try {
+                mMessageConnection.setListeners(mConnectionStateListener, mMessageListener);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
+    };
+    /**
+     * This BindStateListener is used for the Connectivity Service
+     **/
+    private ServiceBinder.BindStateListener mBindStateListener = new ServiceBinder.BindStateListener() {
+        @Override
+        public void onBind() {
+            Log.d(TAG, "onBind: ");
+            try {
+                //register MessageConnectionListener in the RobotMessageRouter
+                mRobotMessageRouter.register(mMessageConnectionListener);
+            } catch (RobotException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onUnbind(String reason) {
+            Log.e(TAG, "onUnbind: " + reason);
         }
     };
 

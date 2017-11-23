@@ -51,11 +51,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private TextView textViewContent;
     private RobotMessageRouter mRobotMessageRouter = null;
     private MessageConnection mMessageConnection = null;
+    
+    private Base base = null;
+    private Sensor sensor = null;
 
-    Base base = null;
-    Sensor sensor = null;
-
-    /** This BindStateListener is used for the Connectivity SDK **/
+    /** This BindStateListener is used for the Connectivity Service **/
     private ServiceBinder.BindStateListener mBindStateListener = new ServiceBinder.BindStateListener() {
         @Override
         public void onBind() {
@@ -74,8 +74,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
     };
 
-    /** This BindStateListener is used for the Sensor SDK **/
-    private ServiceBinder.BindStateListener sensorBindStateListener = new ServiceBinder.BindStateListener() {
+    /** This BindStateListener is used for the Base Service **/
+    private ServiceBinder.BindStateListener baseBindStateListener = new ServiceBinder.BindStateListener() {
         @Override
         public void onBind() {
 
@@ -86,8 +86,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
     };
 
-    /** This BindStateListener is used for the Base SDK **/
-    private ServiceBinder.BindStateListener baseBindStateListener = new ServiceBinder.BindStateListener() {
+    /** This BindStateListener is used for the Sensor Service **/
+    private ServiceBinder.BindStateListener sensorBindStateListener = new ServiceBinder.BindStateListener() {
         @Override
         public void onBind() {
 
@@ -169,7 +169,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         {
                             while(sensor.getUltrasonicDistance().getDistance() > 1500)
                             {
-                                // TODO: Which is the right control mode to use? (RAW or NAVIGATION)
                                 base.setControlMode(Base.CONTROL_MODE_NAVIGATION);
                                 // the unit is mm.
                                 if (sensor.getUltrasonicDistance().getDistance() > 1500) {
@@ -327,7 +326,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     private String getDeviceIp() {
-        WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         if (!wifiManager.isWifiEnabled()) {
             wifiManager.setWifiEnabled(true);
         }

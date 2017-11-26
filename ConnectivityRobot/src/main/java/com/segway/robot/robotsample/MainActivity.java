@@ -54,8 +54,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     private Base base = null;
     private Sensor sensor = null;
+
     /**
-     * This BindStateListener is used for the Base Service
+     * This BindStateListener is used for the Base Service.
      **/
     private ServiceBinder.BindStateListener baseBindStateListener = new ServiceBinder.BindStateListener() {
         @Override
@@ -67,8 +68,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
         public void onUnbind(String reason) {
         }
     };
+
     /**
-     * This BindStateListener is used for the Sensor Service
+     * This BindStateListener is used for the Sensor Service.
      **/
     private ServiceBinder.BindStateListener sensorBindStateListener = new ServiceBinder.BindStateListener() {
         @Override
@@ -80,6 +82,42 @@ public class MainActivity extends Activity implements View.OnClickListener {
         public void onUnbind(String reason) {
         }
     };
+
+    /**
+     * This BindStateListener is used for the Connectivity Service
+     **/
+    private ServiceBinder.BindStateListener mBindStateListener = new ServiceBinder.BindStateListener() {
+        @Override
+        public void onBind() {
+            Log.d(TAG, "onBind: ");
+            try {
+                //register MessageConnectionListener in the RobotMessageRouter
+                mRobotMessageRouter.register(mMessageConnectionListener);
+            } catch (RobotException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onUnbind(String reason) {
+            Log.e(TAG, "onUnbind: " + reason);
+        }
+    };
+
+    private MessageRouter.MessageConnectionListener mMessageConnectionListener = new RobotMessageRouter.MessageConnectionListener() {
+        @Override
+        public void onConnectionCreated(final MessageConnection connection) {
+            Log.d(TAG, "onConnectionCreated: " + connection.getName());
+            mMessageConnection = connection;
+            try {
+                mMessageConnection.setListeners(mConnectionStateListener, mMessageListener);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
+    };
+
     private MessageConnection.ConnectionStateListener mConnectionStateListener = new MessageConnection.ConnectionStateListener() {
         @Override
         public void onOpened() {
@@ -103,6 +141,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             });
         }
     };
+
     private MessageConnection.MessageListener mMessageListener = new MessageConnection.MessageListener() {
         @Override
         public void onMessageSentError(Message message, String error) {
@@ -162,39 +201,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     }
                 });
             }
-        }
-    };
-    private MessageRouter.MessageConnectionListener mMessageConnectionListener = new RobotMessageRouter.MessageConnectionListener() {
-        @Override
-        public void onConnectionCreated(final MessageConnection connection) {
-            Log.d(TAG, "onConnectionCreated: " + connection.getName());
-            mMessageConnection = connection;
-            try {
-                mMessageConnection.setListeners(mConnectionStateListener, mMessageListener);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        }
-    };
-    /**
-     * This BindStateListener is used for the Connectivity Service
-     **/
-    private ServiceBinder.BindStateListener mBindStateListener = new ServiceBinder.BindStateListener() {
-        @Override
-        public void onBind() {
-            Log.d(TAG, "onBind: ");
-            try {
-                //register MessageConnectionListener in the RobotMessageRouter
-                mRobotMessageRouter.register(mMessageConnectionListener);
-            } catch (RobotException e) {
-                e.printStackTrace();
-            }
-        }
-
-        @Override
-        public void onUnbind(String reason) {
-            Log.e(TAG, "onUnbind: " + reason);
         }
     };
 

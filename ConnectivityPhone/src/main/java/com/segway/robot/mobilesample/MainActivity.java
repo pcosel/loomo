@@ -2,17 +2,13 @@ package com.segway.robot.mobilesample;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.os.Environment;
-import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import com.segway.robot.mobile.sdk.connectivity.BufferMessage;
 import com.segway.robot.mobile.sdk.connectivity.MobileException;
 import com.segway.robot.mobile.sdk.connectivity.MobileMessageRouter;
 import com.segway.robot.mobile.sdk.connectivity.StringMessage;
@@ -21,13 +17,6 @@ import com.segway.robot.sdk.baseconnectivity.Message;
 import com.segway.robot.sdk.baseconnectivity.MessageConnection;
 import com.segway.robot.sdk.baseconnectivity.MessageRouter;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 public class MainActivity extends Activity implements View.OnClickListener {
 
     private static final String TAG = "MobileActivity";
@@ -35,18 +24,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private EditText editTextIp;
 
     private Button sendStringButton;
-    private Button sendByteButton;
     private Button bindServiceButton;
     private Button startButton;
     private Button stopButton;
 
-    private TextView textViewId;
-    private TextView textViewTime;
-    private TextView textViewContent;
-
     private int press = 0;
     private MobileMessageRouter mMobileMessageRouter = null;
     private MessageConnection mMessageConnection = null;
+
     private MessageConnection.ConnectionStateListener mConnectionStateListener = new MessageConnection.ConnectionStateListener() {
         @Override
         public void onOpened() {
@@ -76,33 +61,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private MessageConnection.MessageListener mMessageListener = new MessageConnection.MessageListener() {
         @Override
         public void onMessageReceived(final Message message) {
-            // message received
-            Log.d(TAG, "onMessageReceived: id=" + message.getId() + ";timestamp=" + message.getTimestamp());
-            if (message instanceof StringMessage) {
-                //message received is StringMessage
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        textViewId.setText(Integer.toString(message.getId()));
-                        textViewTime.setText(Long.toString(message.getTimestamp()));
-                        textViewContent.setText(message.getContent().toString());
-                    }
-                });
-            } else {
-                //message received is BufferMessage, used a txt file to test receiving BufferMessage
-                byte[] bytes = (byte[]) message.getContent();
-                final String name = saveFile(bytes);
-                Log.d(TAG, "onMessageReceived: file name=" + name);
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        textViewId.setText(Integer.toString(message.getId()));
-                        textViewTime.setText(Long.toString(message.getTimestamp()));
-                        textViewContent.setText(name);
-                        Toast.makeText(getApplicationContext(), "file saved: " + name, Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
+
         }
 
         @Override
@@ -155,10 +114,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         editTextContext = (EditText) findViewById(R.id.editText_context);
         editTextIp = (EditText) findViewById(R.id.editView_input_ip);
-        textViewId = (TextView) findViewById(R.id.textView_id);
-        textViewTime = (TextView) findViewById(R.id.textView_time);
-        textViewContent = (TextView) findViewById(R.id.textView_content);
-        textViewContent.setMovementMethod(ScrollingMovementMethod.getInstance());
 
         //get the MobileMessageRouter instance
         mMobileMessageRouter = MobileMessageRouter.getInstance();
@@ -169,14 +124,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
         sendStringButton = (Button) findViewById(R.id.button_send_string);
         sendStringButton.setOnClickListener(this);
 
-//        sendByteButton = (Button) findViewById(R.id.button_send_byte);
-//        sendByteButton.setOnClickListener(this);
-
         startButton = (Button) findViewById(R.id.button_start);
         startButton.setOnClickListener(this);
 
-        startButton = (Button) findViewById(R.id.button_stop);
-        startButton.setOnClickListener(this);
+        stopButton = (Button) findViewById(R.id.button_stop);
+        stopButton.setOnClickListener(this);
     }
 
     @Override
@@ -232,21 +184,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 // send STOP instruction to robot
                 stopRobot();
                 break;
-//            case R.id.button_send_byte:
-//                //create a txt file named mobile_to_robot.txt
-//                File file = createFile();
-//                byte[] messageByte = packFile(file);
-//                if (mMessageConnection != null) {
-//                    try {
-//                        //message sent is BufferMessage, used a txt file to test sending BufferMessage
-//                        mMessageConnection.sendMessage(new BufferMessage(messageByte));
-//                    } catch (MobileException e) {
-//                        e.printStackTrace();
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//                break;
             case R.id.button_send_string:
                 if (mMessageConnection != null) {
                     try {
@@ -288,107 +225,4 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
     }
 
-    private File createFile() {
-        String fileName = Environment.getExternalStorageDirectory().getPath() + "/mobile_to_robot.txt";
-        File file = new File(fileName);
-        if (!file.exists()) {
-            try {
-                file.createNewFile();
-                String content = "Segway Robotics at the Intel Developer Forum in San Francisco\n";
-                FileOutputStream fileOutputStream = null;
-                try {
-                    fileOutputStream = new FileOutputStream(file);
-                    fileOutputStream.write(content.getBytes());
-                    fileOutputStream.close();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return file;
-    }
-
-    private byte[] packFile(File file) {
-        String fileName = file.getAbsolutePath();
-        //pack txt file into byte[]
-        long fileSize = file.length();
-        if (fileSize > Integer.MAX_VALUE) {
-            Log.d(TAG, "onClick: file too big...");
-            return new byte[0];
-        }
-        byte[] fileByte = new byte[(int) fileSize];
-
-        int offset = 0;
-        int numRead = 0;
-        try {
-            FileInputStream fileIn = new FileInputStream(file);
-            while (offset < fileByte.length && (numRead = fileIn.read(fileByte, offset, fileByte.length - offset)) >= 0) {
-                offset += numRead;
-            }
-            // to be sure all the data has been read
-            if (offset != fileByte.length) {
-                throw new IOException("Could not completely read file "
-                        + file.getName());
-            }
-            fileIn.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        byte[] fileNameByte = fileName.getBytes();
-        int fileNameSize = fileNameByte.length;
-        ByteBuffer buffer = ByteBuffer.allocate(4 + 4 + fileNameSize + (int) fileSize);
-        buffer.putInt(fileNameSize);
-        buffer.putInt((int) fileSize);
-        buffer.put(fileNameByte);
-        buffer.put(fileByte);
-        buffer.flip();
-        byte[] messageByte = buffer.array();
-        return messageByte;
-    }
-
-    private String saveFile(byte[] bytes) {
-        ByteBuffer buffer = ByteBuffer.wrap(bytes);
-        int fileNameSize = buffer.getInt();
-        int fileSize = buffer.getInt();
-        byte[] nameByte = new byte[fileNameSize];
-        int position = buffer.position();
-        Log.d(TAG, "nameSize=" + fileNameSize + ";fileSize=" + fileSize + ";p=" + position + ";length=" + bytes.length);
-        buffer.mark();
-        int i = 0;
-        while (buffer.hasRemaining()) {
-            nameByte[i] = buffer.get();
-            i++;
-            if (i == fileNameSize) {
-                break;
-            }
-        }
-        final String name = new String(nameByte);
-
-        byte[] fileByte = new byte[fileSize];
-        i = 0;
-        while (buffer.hasRemaining()) {
-            fileByte[i] = buffer.get();
-            i++;
-            if (i == fileSize) {
-                break;
-            }
-        }
-        File file = new File(name);
-        try {
-            FileOutputStream fileOutputStream = new FileOutputStream(file);
-            fileOutputStream.write(fileByte);
-            Log.d(TAG, "onBufferMessageReceived: file successfully");
-            fileOutputStream.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return name;
-    }
 }

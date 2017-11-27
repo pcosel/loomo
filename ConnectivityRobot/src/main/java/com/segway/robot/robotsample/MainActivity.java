@@ -15,6 +15,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.segway.robot.algo.Pose2D;
+import com.segway.robot.algo.minicontroller.ObstacleStateChangedListener;
 import com.segway.robot.sdk.base.bind.ServiceBinder;
 import com.segway.robot.sdk.baseconnectivity.Message;
 import com.segway.robot.sdk.baseconnectivity.MessageConnection;
@@ -152,20 +153,22 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         textViewContent.setText(message.getContent().toString());
 
                         if (message.getContent().equals("start")) {
-                            while (sensor.getUltrasonicDistance().getDistance() > 1500) {
+                            if(base.getControlMode() != Base.CONTROL_MODE_NAVIGATION)
                                 base.setControlMode(Base.CONTROL_MODE_NAVIGATION);
-                                // the unit is mm.
-                                if (sensor.getUltrasonicDistance().getDistance() > 1500) {
-                                    // set robot base linearVelocity, unit is rad/s, rand is -PI ~ PI.
-                                    ArrayList<Pose2D> position = new ArrayList<>();
-                                    position.add(base.getOdometryPose(System.currentTimeMillis() * 1000));
-                                    Log.d(TAG, "The position is: " + position);
-                                    base.setLinearVelocity(0.2f);
-                                } else {
-                                    //turn left
-                                    base.setAngularVelocity(0.3f);
+                            base.cleanOriginalPoint();
+                            Pose2D pos = base.getOdometryPose(-1);
+                            base.setOriginalPoint(pos);
+                            base.setUltrasonicObstacleAvoidanceEnabled(true);
+                            base.setUltrasonicObstacleAvoidanceDistance(0.3f);
+                            base.addCheckPoint(1f, 0, (float) (Math.PI /2));
+                            base.setObstacleStateChangeListener(new ObstacleStateChangedListener() {
+                                @Override
+                                public void onObstacleStateChanged(int ObstacleAppearance) {
+                                    if (ObstacleAppearance == ObstacleStateChangedListener.OBSTACLE_APPEARED) {
+                                        base.stop();
+                                    }
                                 }
-                            }
+                            });
                         } else if (message.getContent().equals("stop")) {
                             base.stop();
                         }

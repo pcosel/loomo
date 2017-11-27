@@ -15,7 +15,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.segway.robot.algo.Pose2D;
+import com.segway.robot.algo.minicontroller.CheckPoint;
 import com.segway.robot.algo.minicontroller.ObstacleStateChangedListener;
+import com.segway.robot.algo.minicontroller.CheckPointStateListener;
 import com.segway.robot.sdk.base.bind.ServiceBinder;
 import com.segway.robot.sdk.baseconnectivity.Message;
 import com.segway.robot.sdk.baseconnectivity.MessageConnection;
@@ -26,8 +28,6 @@ import com.segway.robot.sdk.connectivity.StringMessage;
 import com.segway.robot.sdk.locomotion.sbv.Base;
 import com.segway.robot.sdk.perception.sensor.Sensor;
 
-import java.util.ArrayList;
-
 public class MainActivity extends Activity implements View.OnClickListener {
 
     private static final String TAG = "RobotActivity";
@@ -36,6 +36,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private TextView textViewId;
     private TextView textViewTime;
     private TextView textViewContent;
+    private TextView textViewTest;
     private RobotMessageRouter mRobotMessageRouter = null;
     private MessageConnection mMessageConnection = null;
 
@@ -159,13 +160,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
                             Pose2D pos = base.getOdometryPose(-1);
                             base.setOriginalPoint(pos);
                             base.setUltrasonicObstacleAvoidanceEnabled(true);
-                            base.setUltrasonicObstacleAvoidanceDistance(0.3f);
-                            base.addCheckPoint(1f, 0, (float) (Math.PI /2));
+                            base.setUltrasonicObstacleAvoidanceDistance(0.5f);
+                            base.addCheckPoint(1f, 0);
+
                             base.setObstacleStateChangeListener(new ObstacleStateChangedListener() {
                                 @Override
                                 public void onObstacleStateChanged(int ObstacleAppearance) {
                                     if (ObstacleAppearance == ObstacleStateChangedListener.OBSTACLE_APPEARED) {
-                                        base.stop();
+                                        base.addCheckPoint(0, 1f);
                                     }
                                 }
                             });
@@ -187,6 +189,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         textViewId = (TextView) findViewById(R.id.textView_id);
         textViewTime = (TextView) findViewById(R.id.textView_time);
         textViewContent = (TextView) findViewById(R.id.textView_content);
+        textViewTest = (TextView) findViewById(R.id.textView_test);
         textViewContent.setMovementMethod(ScrollingMovementMethod.getInstance());
 
         textViewIp.setText(getDeviceIp());
@@ -201,6 +204,25 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         sensor = Sensor.getInstance();
         sensor.bindService(getApplicationContext(), sensorBindStateListener);
+
+        base.setOnCheckPointArrivedListener(new CheckPointStateListener() {
+            @Override
+            public void onCheckPointArrived(CheckPoint checkPoint, Pose2D realPose, boolean isLast) {
+                if(isLast) {
+                    textViewTest.setText("TRUE");
+                    Pose2D pos = base.getOdometryPose(-1);
+                    base.setOriginalPoint(pos);
+                    base.addCheckPoint(1f, 0);
+                } else {
+                    textViewTest.setText("FALSE");
+                }
+            }
+
+            @Override
+            public void onCheckPointMiss(CheckPoint checkPoint, Pose2D realPose, boolean isLast, int reason) {
+                textViewTest.setText("MISSED CHECKPOINT");
+            }
+        });
     }
 
     @Override
@@ -271,11 +293,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
         int ipAddress = wifiInfo.getIpAddress();
-        String ip = (ipAddress & 0xFF) + "." +
+        return (ipAddress & 0xFF) + "." +
                 ((ipAddress >> 8) & 0xFF) + "." +
                 ((ipAddress >> 16) & 0xFF) + "." +
                 (ipAddress >> 24 & 0xFF);
-        return ip;
     }
 
 }

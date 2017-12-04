@@ -105,7 +105,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     mBase.setUltrasonicObstacleAvoidanceDistance(1f);
                     mBase.addCheckPoint(1f, 0);
                     mBase.addCheckPoint(2f, 0);
-                    mBase.addCheckPoint(3f, 0);
                 } else if (message.getContent().equals("stop")) {
                     mBase.clearCheckPointsAndStop();
                 }

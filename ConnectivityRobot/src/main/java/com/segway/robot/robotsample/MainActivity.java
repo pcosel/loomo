@@ -6,7 +6,6 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -30,7 +29,6 @@ import com.segway.robot.sdk.perception.sensor.Sensor;
 
 public class MainActivity extends Activity implements View.OnClickListener {
 
-    private static final String TAG = "RobotActivity";
     private int press = 0;
     private TextView textViewIp;
     private TextView textViewId;
@@ -43,59 +41,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private Base mBase = null;
     private Sensor mSensor = null;
 
-    /**
-     * This BindStateListener is used for the Base Service.
-     **/
-    private ServiceBinder.BindStateListener baseBindStateListener = new ServiceBinder.BindStateListener() {
-        @Override
-        public void onBind() {
-
-        }
-
-        @Override
-        public void onUnbind(String reason) {
-        }
-    };
-
-    /**
-     * This BindStateListener is used for the Sensor Service.
-     **/
-    private ServiceBinder.BindStateListener sensorBindStateListener = new ServiceBinder.BindStateListener() {
-        @Override
-        public void onBind() {
-
-        }
-
-        @Override
-        public void onUnbind(String reason) {
-        }
-    };
-
-    /**
-     * This BindStateListener is used for the Connectivity Service.
-     **/
-    private ServiceBinder.BindStateListener mBindStateListener = new ServiceBinder.BindStateListener() {
-        @Override
-        public void onBind() {
-            Log.d(TAG, "onBind: ");
-            try {
-                //register MessageConnectionListener in the RobotMessageRouter
-                mRobotMessageRouter.register(mMessageConnectionListener);
-            } catch (RobotException e) {
-                e.printStackTrace();
-            }
-        }
-
-        @Override
-        public void onUnbind(String reason) {
-            Log.e(TAG, "onUnbind: " + reason);
-        }
-    };
+    private int counter = 0;
 
     private MessageRouter.MessageConnectionListener mMessageConnectionListener = new RobotMessageRouter.MessageConnectionListener() {
         @Override
         public void onConnectionCreated(final MessageConnection connection) {
-            Log.d(TAG, "onConnectionCreated: " + connection.getName());
             mMessageConnection = connection;
             try {
                 mMessageConnection.setListeners(mConnectionStateListener, mMessageListener);
@@ -109,7 +59,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private MessageConnection.ConnectionStateListener mConnectionStateListener = new MessageConnection.ConnectionStateListener() {
         @Override
         public void onOpened() {
-            Log.d(TAG, "onOpened: ");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -120,7 +69,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         @Override
         public void onClosed(String error) {
-            Log.e(TAG, "onClosed: " + error);
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -132,18 +80,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     private MessageConnection.MessageListener mMessageListener = new MessageConnection.MessageListener() {
         @Override
-        public void onMessageSentError(Message message, String error) {
-
-        }
+        public void onMessageSentError(Message message, String error) {}
 
         @Override
-        public void onMessageSent(Message message) {
-            Log.d(TAG, "onBufferMessageSent: id = " + message.getId() + "; timestamp = " + message.getTimestamp());
-        }
+        public void onMessageSent(Message message) {}
 
         @Override
         public void onMessageReceived(final Message message) {
-            Log.d(TAG, "onMessageReceived: id = " + message.getId() + "; timestamp = " + message.getTimestamp());
             if (message instanceof StringMessage) {
                 //message received is StringMessage
                 runOnUiThread(new Runnable() {
@@ -152,31 +95,20 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         textViewId.setText(Integer.toString(message.getId()));
                         textViewTime.setText(Long.toString(message.getTimestamp()));
                         textViewContent.setText(message.getContent().toString());
-
-                        if (message.getContent().equals("start")) {
-                            if(mBase.getControlMode() != Base.CONTROL_MODE_NAVIGATION) {
-                                mBase.setControlMode(Base.CONTROL_MODE_NAVIGATION);
-                            }
-                            mBase.cleanOriginalPoint();
-                            Pose2D pos = mBase.getOdometryPose(-1);
-                            mBase.setOriginalPoint(pos);
-                            mBase.setUltrasonicObstacleAvoidanceEnabled(true);
-                            mBase.setUltrasonicObstacleAvoidanceDistance(0.5f);
-                            mBase.addCheckPoint(1f, 0);
-
-                            mBase.setObstacleStateChangeListener(new ObstacleStateChangedListener() {
-                                @Override
-                                public void onObstacleStateChanged(int ObstacleAppearance) {
-                                    if (ObstacleAppearance == ObstacleStateChangedListener.OBSTACLE_APPEARED) {
-                                        mBase.addCheckPoint(0, 1f);
-                                    }
-                                }
-                            });
-                        } else if (message.getContent().equals("stop")) {
-                            mBase.stop();
-                        }
                     }
                 });
+                if(message.getContent().equals("start")) {
+                    mBase.cleanOriginalPoint();
+                    Pose2D pos = mBase.getOdometryPose(-1);
+                    mBase.setOriginalPoint(pos);
+                    mBase.setUltrasonicObstacleAvoidanceEnabled(true);
+                    mBase.setUltrasonicObstacleAvoidanceDistance(1f);
+                    mBase.addCheckPoint(1f, 0);
+                    mBase.addCheckPoint(2f, 0);
+                    mBase.addCheckPoint(3f, 0);
+                } else if (message.getContent().equals("stop")) {
+                    mBase.clearCheckPointsAndStop();
+                }
             }
         }
     };
@@ -186,6 +118,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         getActionBar().setDisplayHomeAsUpEnabled(true);
+
+        initView();
+        initMessageConnection();
+        initBase();
+        initSensor();
+    }
+
+    private void initView() {
         textViewIp = (TextView) findViewById(R.id.textView_ip);
         textViewId = (TextView) findViewById(R.id.textView_id);
         textViewTime = (TextView) findViewById(R.id.textView_time);
@@ -193,42 +133,99 @@ public class MainActivity extends Activity implements View.OnClickListener {
         textViewTest = (TextView) findViewById(R.id.textView_test);
         textViewContent.setMovementMethod(ScrollingMovementMethod.getInstance());
         textViewIp.setText(getDeviceIp());
+    }
 
-        //get RobotMessageRouter
+    private void initMessageConnection() {
         mRobotMessageRouter = RobotMessageRouter.getInstance();
-        //bind to connection service in robot
-        mRobotMessageRouter.bindService(this, mBindStateListener);
-
-        mBase = Base.getInstance();
-        mBase.bindService(getApplicationContext(), baseBindStateListener);
-
-        mSensor = Sensor.getInstance();
-        mSensor.bindService(getApplicationContext(), sensorBindStateListener);
-
-        mBase.setOnCheckPointArrivedListener(new CheckPointStateListener() {
+        mRobotMessageRouter.bindService(this, new ServiceBinder.BindStateListener() {
             @Override
-            public void onCheckPointArrived(CheckPoint checkPoint, Pose2D realPose, boolean isLast) {
-                if(isLast) {
-                    textViewTest.setText("TRUE");
-                    Pose2D pos = mBase.getOdometryPose(-1);
-                    mBase.setOriginalPoint(pos);
-                    mBase.addCheckPoint(1f, 0);
-                } else {
-                    textViewTest.setText("FALSE");
+            public void onBind() {
+                try {
+                    //register MessageConnectionListener in the RobotMessageRouter
+                    mRobotMessageRouter.register(mMessageConnectionListener);
+                } catch (RobotException e) {
+                    e.printStackTrace();
                 }
             }
 
             @Override
+            public void onUnbind(String reason) {}
+        });
+    }
+
+    private void initBase() {
+        mBase = Base.getInstance();
+        mBase.bindService(getApplicationContext(), new ServiceBinder.BindStateListener() {
+            @Override
+            public void onBind() {
+                mBase.setControlMode(Base.CONTROL_MODE_NAVIGATION);
+            }
+
+            @Override
+            public void onUnbind(String reason) {}
+        });
+
+        mBase.setOnCheckPointArrivedListener(new CheckPointStateListener() {
+            @Override
+            public void onCheckPointArrived(CheckPoint checkPoint, Pose2D realPose, boolean isLast) {
+                //Log.d(TAG, "onCheckPointArrived: x: " + checkPoint.getX() + " y: " + checkPoint.getY());
+                counter++;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        textViewTest.setText("Arrived at checkpoint " + counter);
+                    }
+                });
+                mBase.cleanOriginalPoint();
+                Pose2D pos = mBase.getOdometryPose(-1);
+                mBase.setOriginalPoint(pos);
+                mBase.addCheckPoint(1f, 0);
+            }
+
+            @Override
             public void onCheckPointMiss(CheckPoint checkPoint, Pose2D realPose, boolean isLast, int reason) {
-                textViewTest.setText("MISSED CHECKPOINT");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        textViewTest.setText("Missed checkpoint");
+                    }
+                });
+            }
+        });
+
+        mBase.setObstacleStateChangeListener(new ObstacleStateChangedListener() {
+            @Override
+            public void onObstacleStateChanged(int ObstacleAppearance) {
+                if (ObstacleAppearance == ObstacleStateChangedListener.OBSTACLE_APPEARED) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            textViewContent.setText("Obstacle detected");
+                        }
+                    });
+                    mBase.cleanOriginalPoint();
+                    Pose2D pos = mBase.getOdometryPose(-1);
+                    mBase.setOriginalPoint(pos);
+                    mBase.addCheckPoint(0, 1f);
+                }
+            }
+        });
+    }
+
+    private void initSensor() {
+        mSensor = Sensor.getInstance();
+        mSensor.bindService(getApplicationContext(), new ServiceBinder.BindStateListener() {
+            @Override
+            public void onBind() {}
+
+            @Override
+            public void onUnbind(String reason) {
             }
         });
     }
 
     @Override
-    public void onClick(View v) {
-
-    }
+    public void onClick(View v) {}
 
     @Override
     public void onPause() {
@@ -279,8 +276,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
             e.printStackTrace();
         }
         mRobotMessageRouter.unbindService();
-        Log.d(TAG, "onDestroy: ");
-
         mBase.unbindService();
         mSensor.unbindService();
 

@@ -51,6 +51,11 @@ import com.microsoft.cognitiveservices.speechrecognition.RecognitionResult;
 import com.microsoft.cognitiveservices.speechrecognition.RecognitionStatus;
 import com.microsoft.cognitiveservices.speechrecognition.SpeechRecognitionMode;
 import com.microsoft.cognitiveservices.speechrecognition.SpeechRecognitionServiceFactory;
+import com.segway.robot.sdk.base.bind.ServiceBinder;
+import com.segway.robot.sdk.voice.Recognizer;
+import com.segway.robot.sdk.voice.recognition.WakeupListener;
+import com.segway.robot.sdk.voice.recognition.WakeupResult;
+
 import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
@@ -64,6 +69,48 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
     RadioGroup _radioGroup;
     Button _buttonSelectMode;
     Button _startButton;
+
+    /* ------------------------------------------------------------------------------------------ */
+
+
+    private boolean mBind;
+    private WakeupListener wakeupListener;
+
+    public void initWhatever() {
+        Recognizer.getInstance().bindService(MainActivity.this, new ServiceBinder.BindStateListener() {
+            @Override
+            public void onBind() {
+                mBind = true;
+            }
+
+            @Override
+            public void onUnbind(String reason) {
+                mBind = false;
+            }
+        });
+
+        wakeupListener = new WakeupListener() {
+            @Override
+            public void onStandby() {
+
+            }
+
+            @Override
+            public void onWakeupResult(WakeupResult wakeupResult) {
+
+            }
+
+            @Override
+            public void onWakeupError(String error) {
+
+            }
+        };
+    }
+
+
+    /* ------------------------------------------------------------------------------------------ */
+
+
 
     public enum FinalResponseStatus { NotReceived, OK, Timeout }
 
@@ -425,11 +472,11 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
     }
 
     /*
-     * Speech recognition with data (for example from a file or audio source).  
+     * Speech recognition with data (for example from a file or audio source).
      * The data is broken up into buffers and each buffer is sent to the Speech Recognition Service.
      * No modification is done to the buffers, so the user can apply their
      * own VAD (Voice Activation Detection) or Silence Detection
-     * 
+     *
      * @param dataClient
      * @param recoMode
      * @param filename
@@ -450,8 +497,8 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
             try {
                 // Note for wave files, we can just send data from the file right to the server.
                 // In the case you are not an audio file in wave format, and instead you have just
-                // raw data (for example audio coming over bluetooth), then before sending up any 
-                // audio data, you must first send up an SpeechAudioFormat descriptor to describe 
+                // raw data (for example audio coming over bluetooth), then before sending up any
+                // audio data, you must first send up an SpeechAudioFormat descriptor to describe
                 // the layout and format of your raw audio data via DataRecognitionClient's sendAudioFormat() method.
                 // String filename = recoMode == SpeechRecognitionMode.ShortPhrase ? "whatstheweatherlike.wav" : "batman.wav";
                 InputStream fileStream = getAssets().open(filename);
@@ -463,7 +510,7 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
                     bytesRead = fileStream.read(buffer);
 
                     if (bytesRead > -1) {
-                        // Send of audio data to service. 
+                        // Send of audio data to service.
                         dataClient.sendAudio(buffer, bytesRead);
                     }
                 } while (bytesRead > 0);

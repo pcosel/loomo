@@ -53,6 +53,8 @@ import com.microsoft.cognitiveservices.speechrecognition.SpeechRecognitionMode;
 import com.microsoft.cognitiveservices.speechrecognition.SpeechRecognitionServiceFactory;
 import com.segway.robot.sdk.base.bind.ServiceBinder;
 import com.segway.robot.sdk.voice.Recognizer;
+import com.segway.robot.sdk.voice.VoiceException;
+import com.segway.robot.sdk.voice.recognition.RecognitionListener;
 import com.segway.robot.sdk.voice.recognition.WakeupListener;
 import com.segway.robot.sdk.voice.recognition.WakeupResult;
 
@@ -74,10 +76,16 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
 
 
     private boolean mBind;
+    private Recognizer mRecognizer;
     private WakeupListener wakeupListener;
+    private RecognitionListener recognitionListener;
+
 
     public void initWhatever() {
-        Recognizer.getInstance().bindService(MainActivity.this, new ServiceBinder.BindStateListener() {
+        mRecognizer = Recognizer.getInstance();
+
+        //bind the recognition service
+        mRecognizer.bindService(MainActivity.this, new ServiceBinder.BindStateListener() {
             @Override
             public void onBind() {
                 mBind = true;
@@ -97,7 +105,8 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
 
             @Override
             public void onWakeupResult(WakeupResult wakeupResult) {
-
+                EditText text = (EditText) findViewById(R.id.editText1);
+                text.append("test");
             }
 
             @Override
@@ -105,6 +114,26 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
 
             }
         };
+
+        recognitionListener = new RecognitionListener() {
+            @Override
+            public void onRecognitionStart() {
+
+            }
+
+            @Override
+            public boolean onRecognitionResult(com.segway.robot.sdk.voice.recognition.RecognitionResult recognitionResult) {
+                return false;
+            }
+
+            @Override
+            public boolean onRecognitionError(String error) {
+                return false;
+            }
+        };
+        try {
+            mRecognizer.startWakeupAndRecognition(wakeupListener, recognitionListener);
+        } catch (Exception e) {}
     }
 
 
@@ -246,6 +275,8 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
         });
 
         this.ShowMenu(true);
+
+        initWhatever();
     }
 
     private void ShowMenu(boolean show) {

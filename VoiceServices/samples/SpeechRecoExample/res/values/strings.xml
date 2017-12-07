@@ -15,6 +15,6 @@
     <string name="luisAppID">yourLuisAppID</string>
     <string name="luisSubscriptionID">yourLuisSubscriptionID</string>
 
-    <string name="app_name">Project Oxford Speech Recognition Sample</string>
+    <string name="app_name">Loomo Speech</string>
     <string name="action_settings">Settings</string>
 </resources>

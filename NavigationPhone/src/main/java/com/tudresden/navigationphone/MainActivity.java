@@ -2,6 +2,7 @@ package com.tudresden.navigationphone;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -78,7 +79,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            textViewPositions.setText(textViewPositions.getText() + message.getContent().toString());
+                            if(textViewPositions.getText().toString().equals("")) {
+                                // This is necessary so that the first line isn't empty
+                                textViewPositions.setText(message.getContent().toString());
+                            } else {
+                                // Skip one line for better readability
+                                textViewPositions.setText(textViewPositions.getText() + "\n\n" + message.getContent().toString());
+                            }
                         }
                     });
                 }
@@ -123,6 +130,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         textViewTimestamp = (TextView) findViewById(R.id.edit_timestamp);
         textViewContent = (TextView) findViewById(R.id.edit_content);
         textViewPositions = (TextView) findViewById(R.id.edit_positions);
+        textViewPositions.setMovementMethod(ScrollingMovementMethod.getInstance());
 
         mMobileMessageRouter = MobileMessageRouter.getInstance();
 

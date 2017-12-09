@@ -86,6 +86,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 if(message.getContent().equals("start")) {
                     // Send reply to display on phone
                     sendMessageToPhone("Received start message");
+                    if(mBase.getControlMode() != Base.CONTROL_MODE_NAVIGATION) {
+                        mBase.setControlMode(Base.CONTROL_MODE_NAVIGATION);
+                    }
                     mBase.cleanOriginalPoint();
                     Pose2D pos = mBase.getOdometryPose(-1);
                     mBase.setOriginalPoint(pos);
@@ -96,6 +99,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 } else if(message.getContent().equals("stop")) {
                     // Send reply to display on phone
                     sendMessageToPhone("Received stop message");
+                    if(mBase.getControlMode() != Base.CONTROL_MODE_NAVIGATION) {
+                        mBase.setControlMode(Base.CONTROL_MODE_NAVIGATION);
+                    }
                     mBase.clearCheckPointsAndStop();
                 }
             }
@@ -161,9 +167,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
         mBase.setOnCheckPointArrivedListener(new CheckPointStateListener() {
             @Override
             public void onCheckPointArrived(final CheckPoint checkPoint, Pose2D realPose, boolean isLast) {
-                // TODO: Maybe better use realPose to get x and y!
                 // Send coordinates to display on phone
-                sendMessageToPhone("(" + Float.toString(checkPoint.getX()) + "," + Float.toString(checkPoint.getY()) + ")");
+                sendMessageToPhone("(" + Float.toString(realPose.getX()) + " __ " + Float.toString(realPose.getY()) + " __ " + Float.toString(realPose.getTheta()) + ")");
+                if(mBase.getControlMode() != Base.CONTROL_MODE_NAVIGATION) {
+                    mBase.setControlMode(Base.CONTROL_MODE_NAVIGATION);
+                }
                 mBase.cleanOriginalPoint();
                 Pose2D pos = mBase.getOdometryPose(-1);
                 mBase.setOriginalPoint(pos);
@@ -183,10 +191,26 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 if(ObstacleAppearance == ObstacleStateChangedListener.OBSTACLE_APPEARED) {
                     // Send message to display on phone
                     sendMessageToPhone("Obstacle detected");
+                    if(mBase.getControlMode() != Base.CONTROL_MODE_RAW) {
+                        mBase.setControlMode(Base.CONTROL_MODE_RAW);
+                    }
+                    // TODO: Check if this works
+                    mBase.setAngularVelocity(0.3f);
+//                    mBase.cleanOriginalPoint();
+//                    Pose2D pos = mBase.getOdometryPose(-1);
+//                    mBase.setOriginalPoint(pos);
+//                    mBase.addCheckPoint(0, 0, (float) (Math.PI)/2);
+                } else {
+                    // Send message to display on phone
+                    sendMessageToPhone("Obstacle disappeared");
+                    // TODO: Check if this works (Maybe add second checkpoint)
+                    if(mBase.getControlMode() != Base.CONTROL_MODE_NAVIGATION) {
+                        mBase.setControlMode(Base.CONTROL_MODE_NAVIGATION);
+                    }
                     mBase.cleanOriginalPoint();
                     Pose2D pos = mBase.getOdometryPose(-1);
                     mBase.setOriginalPoint(pos);
-                    mBase.addCheckPoint(0, 1f);
+                    mBase.addCheckPoint(1f, 0);
                 }
             }
         });

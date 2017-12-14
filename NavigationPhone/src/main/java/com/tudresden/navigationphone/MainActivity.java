@@ -88,6 +88,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                             }
                         }
                     });
+                } else if(message.getContent().equals("Obstacle detected")) {
+                    sendMessageToRobot("left");
                 }
             }
         }
@@ -118,6 +120,16 @@ public class MainActivity extends Activity implements View.OnClickListener {
         @Override
         public void onUnbind(String reason) {}
     };
+
+    private void sendMessageToRobot(String content){
+        if(mMessageConnection != null) {
+            try {
+                mMessageConnection.sendMessage(new StringMessage(content));
+            } catch(Exception e) {
+                Log.e(TAG, "Sending message (" + content + ") failed", e);
+            }
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -185,24 +197,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 mMobileMessageRouter.bindService(this, mBindStateListener);
                 break;
             case R.id.button_start:
-                // Send START instruction to robot
-                if(mMessageConnection != null) {
-                    try {
-                        mMessageConnection.sendMessage(new StringMessage("start"));
-                    } catch(Exception e) {
-                        Log.e(TAG, "Send START message failed", e);
-                    }
-                }
+                sendMessageToRobot("start");
                 break;
             case R.id.button_stop:
-                // Send STOP instruction to robot
-                if(mMessageConnection != null) {
-                    try {
-                        mMessageConnection.sendMessage(new StringMessage("stop"));
-                    } catch(Exception e) {
-                        Log.e(TAG, "Send STOP message failed", e);
-                    }
-                }
+                sendMessageToRobot("stop");
                 break;
         }
     }

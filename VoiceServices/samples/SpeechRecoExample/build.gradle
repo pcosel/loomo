@@ -19,7 +19,7 @@ dependencies {
 }
 
 android {
-    compileSdkVersion rootProject.ext.compileSdkVersion
+    compileSdkVersion 22
     buildToolsVersion rootProject.ext.buildToolsVersion
     flavorDimensions "default"
     productFlavors {
@@ -56,6 +56,7 @@ android {
     }
     buildToolsVersion '26.0.2'
     defaultConfig {
-        minSdkVersion 22
+        minSdkVersion 19
+        targetSdkVersion 22
     }
 }

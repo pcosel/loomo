@@ -12,8 +12,8 @@
     -->
     <string name="authenticationUri"></string>
 
-    <string name="luisAppID">yourLuisAppID</string>
-    <string name="luisSubscriptionID">yourLuisSubscriptionID</string>
+    <string name="luisAppID">f0b2b607f7fd4b9193024aa604337f8c</string>
+    <string name="luisSubscriptionID">8f84f210-326d-484e-8d93-6e1c189c351e</string>
 
     <string name="app_name">Loomo Speech</string>
     <string name="action_settings">Settings</string>

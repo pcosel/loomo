@@ -38,7 +38,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private Base mBase = null;
     private Sensor mSensor = null;
 
-    private int obstacleCounter = 0;
+    private int mObstacleCounter = 0;
 
     private MessageRouter.MessageConnectionListener mMessageConnectionListener = new RobotMessageRouter.MessageConnectionListener() {
         @Override
@@ -88,9 +88,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 if(message.getContent().equals("start")) {
                     // Send reply to display on phone
                     sendMessageToPhone("Received start message");
-                    if(mBase.getControlMode() != Base.CONTROL_MODE_NAVIGATION) {
-                        mBase.setControlMode(Base.CONTROL_MODE_NAVIGATION);
-                    }
                     mBase.cleanOriginalPoint();
                     Pose2D pos = mBase.getOdometryPose(-1);
                     mBase.setOriginalPoint(pos);
@@ -98,19 +95,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     mBase.setUltrasonicObstacleAvoidanceDistance(1f);
                     // It is necessary to set 2 checkpoints in the beginning
                     // With just one checkpoint, the OnCheckPointArrivedListener is not called correctly
-                    mBase.addCheckPoint(1f, 0);
-                    mBase.addCheckPoint(2f, 0);
+                    mBase.addCheckPoint(0, 0);
+                    mBase.addCheckPoint(0, 0);
                 } else if(message.getContent().equals("stop")) {
                     // Send reply to display on phone
                     sendMessageToPhone("Received stop message");
                     mBase.clearCheckPointsAndStop();
-                } else if(message.getContent().equals("left")) {
-                    sendMessageToPhone("Received left message");
-                    if(mBase.getControlMode() != Base.CONTROL_MODE_RAW) {
-                        mBase.setControlMode(Base.CONTROL_MODE_RAW);
-                    }
-                    // Turn left
-                    mBase.setAngularVelocity(2f);
                 }
             }
         }
@@ -177,9 +167,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
             public void onCheckPointArrived(final CheckPoint checkPoint, Pose2D realPose, boolean isLast) {
                 // Send coordinates to display on phone
                 sendMessageToPhone("(" + Float.toString(realPose.getX()) + "  |  " + Float.toString(realPose.getY()) + "  |  " + Float.toString(realPose.getTheta()) + ")");
-                if(mBase.getControlMode() != Base.CONTROL_MODE_NAVIGATION) {
-                    mBase.setControlMode(Base.CONTROL_MODE_NAVIGATION);
-                }
                 mBase.cleanOriginalPoint();
                 Pose2D pos = mBase.getOdometryPose(-1);
                 mBase.setOriginalPoint(pos);
@@ -198,21 +185,28 @@ public class MainActivity extends Activity implements View.OnClickListener {
             public void onObstacleStateChanged(int ObstacleAppearance) {
                 if(ObstacleAppearance == ObstacleStateChangedListener.OBSTACLE_APPEARED) {
                     // Send message to display on phone
-                    // Phone then sends "turn left" message back to make the robot turn left
-                    // This cannot be done here because you can't switch to RAW mode in this listener
-                    sendMessageToPhone("Obstacle detected");
-                    obstacleCounter++;
-                } else if(ObstacleAppearance == ObstacleStateChangedListener.OBSTACLE_DISAPPEARED && obstacleCounter > 0) {
-                    // After a left turn Loomo needs to walk to the next wall
-                    // Send message to display on phone
-                    sendMessageToPhone("Obstacle disappeared");
-                    // TODO: Check if this works (Maybe add second checkpoint)
-                    if(mBase.getControlMode() != Base.CONTROL_MODE_NAVIGATION) {
-                        mBase.setControlMode(Base.CONTROL_MODE_NAVIGATION);
-                    }
+                    sendMessageToPhone("Obstacle appeared");
+                    // The robot detects an obstacle before it reaches the current checkpoint. When an obstacle
+                    // is detected, a new checkpoint is set for the left turn but the robot still tries to reach
+                    // the last checkpoint first. But that checkpoint can't be reached, because there's an
+                    // obstacle in front of the robot, so the robot just stops walking completely.
+                    // Therefore the last checkpoint needs to be deleted before the new one is set.
+                    mBase.clearCheckPointsAndStop();
                     mBase.cleanOriginalPoint();
                     Pose2D pos = mBase.getOdometryPose(-1);
                     mBase.setOriginalPoint(pos);
+                    // Turn left (90 degrees)
+                    mBase.addCheckPoint(0, 0, (float) (Math.PI/2));
+                    mObstacleCounter++;
+                } else if(ObstacleAppearance == ObstacleStateChangedListener.OBSTACLE_DISAPPEARED && mObstacleCounter > 0) {
+                    // Send message to display on phone
+                    sendMessageToPhone("Obstacle disappeared");
+                    // Delete last checkpoint in case the turn wasn't fully completed (see explanation above)
+                    mBase.clearCheckPointsAndStop();
+                    mBase.cleanOriginalPoint();
+                    Pose2D pos = mBase.getOdometryPose(-1);
+                    mBase.setOriginalPoint(pos);
+                    // Walk to the next wall
                     mBase.addCheckPoint(1f, 0);
                 }
             }

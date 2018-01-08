@@ -88,8 +88,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
                             }
                         }
                     });
-                } else if(message.getContent().equals("Obstacle detected")) {
-                    sendMessageToRobot("left");
                 }
             }
         }

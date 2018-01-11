@@ -12,7 +12,7 @@
     -->
     <string name="authenticationUri"></string>
 
-    <string name="luisAppID">f0b2b607f7fd4b9193024aa604337f8c</string>
+    <string name="luisAppID">f448971d96d448a59fa1898cb0237fd7</string>
     <string name="luisSubscriptionID">8f84f210-326d-484e-8d93-6e1c189c351e</string>
 
     <string name="app_name">Loomo Speech</string>

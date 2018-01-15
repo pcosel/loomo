@@ -1,6 +1,7 @@
 package com.tudresden.navigationphone;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
@@ -18,6 +19,7 @@ import com.segway.robot.sdk.baseconnectivity.Message;
 import com.segway.robot.sdk.baseconnectivity.MessageConnection;
 import com.segway.robot.sdk.baseconnectivity.MessageRouter;
 
+
 public class MainActivity extends Activity implements View.OnClickListener {
 
     private static final String TAG = "MainActivity";
@@ -31,6 +33,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private int press = 0;
     private MobileMessageRouter mMobileMessageRouter = null;
     private MessageConnection mMessageConnection = null;
+
 
     private MessageConnection.ConnectionStateListener mConnectionStateListener = new MessageConnection.ConnectionStateListener() {
         @Override
@@ -93,6 +96,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 }
             }
         }
+
     };
 
     private MessageRouter.MessageConnectionListener mMessageConnectionListener = new MessageRouter.MessageConnectionListener() {
@@ -154,8 +158,16 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         Button stopButton = (Button) findViewById(R.id.button_stop);
         stopButton.setOnClickListener(this);
+
+        Button trackLoomoButton = (Button)findViewById(R.id.button_show_map);
+        trackLoomoButton.setOnClickListener(this);
     }
 
+    public void trackLoomo(View view) {
+        //Start the activity connect to the specified class
+        Intent trackLoomoIntent = new Intent(this, TrackActivity.class);
+        startActivity(trackLoomoIntent);
+    }
     @Override
     public void onPause() {
         super.onPause();
@@ -201,6 +213,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 break;
             case R.id.button_stop:
                 sendMessageToRobot("stop");
+                break;
+            case R.id.button_show_map:
+                trackLoomo(v);
                 break;
         }
     }

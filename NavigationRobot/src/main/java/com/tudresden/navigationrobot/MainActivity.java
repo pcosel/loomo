@@ -27,6 +27,8 @@ import com.segway.robot.sdk.connectivity.StringMessage;
 import com.segway.robot.sdk.locomotion.sbv.Base;
 import com.segway.robot.sdk.perception.sensor.Sensor;
 
+import java.util.LinkedList;
+
 public class MainActivity extends Activity implements View.OnClickListener {
 
     private static final String TAG = "MainActivity";
@@ -39,7 +41,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private Sensor mSensor = null;
 
     private int obstacleCounter = 0;
-
+    LinkedList<Position> positionLinkedList = new LinkedList<>();
     private MessageRouter.MessageConnectionListener mMessageConnectionListener = new RobotMessageRouter.MessageConnectionListener() {
         @Override
         public void onConnectionCreated(final MessageConnection connection) {
@@ -177,6 +179,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
             public void onCheckPointArrived(final CheckPoint checkPoint, Pose2D realPose, boolean isLast) {
                 // Send coordinates to display on phone
                 sendMessageToPhone("(" + Float.toString(realPose.getX()) + "  |  " + Float.toString(realPose.getY()) + "  |  " + Float.toString(realPose.getTheta()) + ")");
+                // Send Linkedlist format coordinates to phone
+                Position mPosition = new Position(realPose.getX(),realPose.getY());
+                positionLinkedList.add(mPosition);
+                sendMessageToPhone(positionLinkedList.toString());
                 if(mBase.getControlMode() != Base.CONTROL_MODE_NAVIGATION) {
                     mBase.setControlMode(Base.CONTROL_MODE_NAVIGATION);
                 }

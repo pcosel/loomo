@@ -22,7 +22,15 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-
+        <activity
+            android:name="com.tudresden.navigationphone.TrackActivity"
+            android:screenOrientation="portrait"
+            >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
         <meta-data
             android:name="packageTo1"
             android:value="com.tudresden.navigationrobot"></meta-data>

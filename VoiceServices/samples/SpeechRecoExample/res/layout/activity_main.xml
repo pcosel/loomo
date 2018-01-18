@@ -30,12 +30,12 @@
         android:layout_below="@+id/button1">
 
         <RadioButton
+            android:id="@+id/micRadioButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Use Microphone with ShortPhrase mode"
-            android:id="@+id/radioButton"
             android:layout_above="@+id/micRadioButton"
-            android:layout_alignRight="@+id/editText1" />
+            android:layout_alignRight="@+id/editText1"
+            android:text="Use Microphone with ShortPhrase mode" />
 
         <RadioButton
             android:layout_width="wrap_content"

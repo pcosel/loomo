@@ -174,7 +174,7 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
         int id = this._radioGroup.getCheckedRadioButtonId();
         return id == R.id.micIntentRadioButton ||
                 id == R.id.micDictationRadioButton ||
-                id == (R.id.micRadioButton - 1);
+                id == R.id.micRadioButton;
     }
 
     /**

@@ -34,8 +34,10 @@ package com.microsoft.CognitiveServicesExample;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -79,9 +81,11 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
     private Recognizer mRecognizer;
     private WakeupListener wakeupListener;
     private RecognitionListener recognitionListener;
+    private View v;
 
 
     public void initWhatever() {
+        v = findViewById(R.id.activity_main);
         mRecognizer = Recognizer.getInstance();
 
         //bind the recognition service
@@ -100,18 +104,17 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
         wakeupListener = new WakeupListener() {
             @Override
             public void onStandby() {
-
+                v.setBackgroundColor(Color.BLUE);
             }
 
             @Override
             public void onWakeupResult(WakeupResult wakeupResult) {
-                EditText text = (EditText) findViewById(R.id.editText1);
-                text.append("test");
+                Log.d()
             }
 
             @Override
             public void onWakeupError(String error) {
-
+                v.setBackgroundColor(Color.RED);
             }
         };
 

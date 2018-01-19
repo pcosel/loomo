@@ -37,6 +37,10 @@ import android.app.AlertDialog;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
+<<<<<<< Updated upstream
+=======
+import android.os.Message;
+>>>>>>> Stashed changes
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -54,14 +58,18 @@ import com.microsoft.cognitiveservices.speechrecognition.RecognitionStatus;
 import com.microsoft.cognitiveservices.speechrecognition.SpeechRecognitionMode;
 import com.microsoft.cognitiveservices.speechrecognition.SpeechRecognitionServiceFactory;
 import com.segway.robot.sdk.base.bind.ServiceBinder;
+import com.segway.robot.sdk.voice.Languages;
 import com.segway.robot.sdk.voice.Recognizer;
 import com.segway.robot.sdk.voice.VoiceException;
 import com.segway.robot.sdk.voice.recognition.RecognitionListener;
 import com.segway.robot.sdk.voice.recognition.WakeupListener;
 import com.segway.robot.sdk.voice.recognition.WakeupResult;
 
+import java.io.Console;
 import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
+
+import static android.content.ContentValues.TAG;
 
 public class MainActivity extends Activity implements ISpeechRecognitionServerEvents
 {
@@ -81,6 +89,7 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
     private Recognizer mRecognizer;
     private WakeupListener wakeupListener;
     private RecognitionListener recognitionListener;
+<<<<<<< Updated upstream
     private View v;
 
 
@@ -138,6 +147,10 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
             mRecognizer.startWakeupAndRecognition(wakeupListener, recognitionListener);
         } catch (Exception e) {}
     }
+=======
+    private ServiceBinder.BindStateListener mRecognitionBindStateListener;
+    private View layout = findViewById(R.id.layout);
+>>>>>>> Stashed changes
 
 
     /* ------------------------------------------------------------------------------------------ */
@@ -177,7 +190,11 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
         int id = this._radioGroup.getCheckedRadioButtonId();
         return id == R.id.micIntentRadioButton ||
                 id == R.id.micDictationRadioButton ||
+<<<<<<< Updated upstream
                 id == R.id.micRadioButton;
+=======
+                id == (R.id.radioButton);
+>>>>>>> Stashed changes
     }
 
     /**
@@ -241,45 +258,65 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        this._logText = (EditText) findViewById(R.id.editText1);
-        this._radioGroup = (RadioGroup)findViewById(R.id.groupMode);
-        this._buttonSelectMode = (Button)findViewById(R.id.buttonSelectMode);
-        this._startButton = (Button) findViewById(R.id.button1);
+        final View view = findViewById(R.id.layout);
 
-        if (getString(R.string.primaryKey).startsWith("Please")) {
-            new AlertDialog.Builder(this)
-                    .setTitle(getString(R.string.add_subscription_key_tip_title))
-                    .setMessage(getString(R.string.add_subscription_key_tip))
-                    .setCancelable(false)
-                    .show();
+        mRecognizer = Recognizer.getInstance();
+
+        mRecognitionBindStateListener = new ServiceBinder.BindStateListener() {
+            @Override
+            public void onBind() {
+
+            }
+
+            @Override
+            public void onUnbind(String s) {
+
+            }
+        };
+
+        mRecognizer.bindService(MainActivity.this, mRecognitionBindStateListener);
+
+        wakeupListener = new WakeupListener() {
+            @Override
+            public void onStandby() {
+                layout.setBackgroundColor(Color.BLUE);
+            }
+
+            @Override
+            public void onWakeupResult(WakeupResult wakeupResult) {
+                layout.setBackgroundColor(Color.GREEN);
+            }
+
+            @Override
+            public void onWakeupError(String error) {
+                layout.setBackgroundColor(Color.RED);
+            }
+        };
+
+        recognitionListener = new RecognitionListener() {
+            @Override
+            public void onRecognitionStart() {
+                layout.setBackgroundColor(Color.BLUE);
+            }
+
+            @Override
+            public boolean onRecognitionResult(com.segway.robot.sdk.voice.recognition.RecognitionResult recognitionResult) {
+                layout.setBackgroundColor(Color.GREEN);
+                return false;
+            }
+
+            @Override
+            public boolean onRecognitionError(String error) {
+                layout.setBackgroundColor(Color.RED);
+                return false;
+            }
+        };
+
+        try {
+            mRecognizer.startWakeupAndRecognition(wakeupListener, recognitionListener);
+        } catch (Exception e) {
+
         }
-
-        // setup the buttons
-        final MainActivity This = this;
-        this._startButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View arg0) {
-                This.StartButton_Click(arg0);
-            }
-        });
-
-        this._buttonSelectMode.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View arg0) {
-                This.ShowMenu(This._radioGroup.getVisibility() == View.INVISIBLE);
-            }
-        });
-
-        this._radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup rGroup, int checkedId) {
-                This.RadioButton_Click(rGroup, checkedId);
-            }
-        });
-
-        this.ShowMenu(true);
-
-        initWhatever();
     }
 
     private void ShowMenu(boolean show) {

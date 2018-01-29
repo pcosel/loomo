@@ -3,7 +3,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.2'
+        classpath 'com.android.tools.build:gradle:3.0.1'
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
     }
@@ -32,6 +32,7 @@ android {
 
 repositories {
     jcenter()
+    mavenCentral()
     flatDir {
         dirs file("libs")
     }
@@ -45,4 +46,5 @@ dependencies {
     compile ('com.segway.robot:speech-sdk:0.5.183', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
+    compile 'com.microsoft.projectoxford:speechrecognition:1.2.2'
 }

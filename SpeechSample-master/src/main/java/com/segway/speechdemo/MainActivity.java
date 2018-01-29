@@ -15,6 +15,9 @@ import android.view.MotionEvent;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
 
+import com.microsoft.cognitiveservices.speechrecognition.ISpeechRecognitionServerEvents;
+import com.microsoft.cognitiveservices.speechrecognition.MicrophoneRecognitionClientWithIntent;
+import com.microsoft.cognitiveservices.speechrecognition.SpeechRecognitionServiceFactory;
 import com.segway.robot.sdk.base.bind.ServiceBinder;
 import com.segway.robot.sdk.voice.Languages;
 import com.segway.robot.sdk.voice.Recognizer;
@@ -38,7 +41,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements ISpeechRecognitionServerEvents {
     private static final String TAG = "MainActivity";
     private static final String FILE_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator;
     private static final int SHOW_MSG = 0x0001;
@@ -62,6 +65,9 @@ public class MainActivity extends Activity {
     private GrammarConstraint mTwoSlotGrammar;
     private GrammarConstraint mThreeSlotGrammar;
     private VoiceHandler mHandler = new VoiceHandler(this);
+    private MicrophoneRecognitionClientWithIntent m_micClient;
+
+
 
     public static class VoiceHandler extends Handler {
         private final WeakReference<MainActivity> mActivity;
@@ -105,6 +111,17 @@ public class MainActivity extends Activity {
         mRecognizer.bindService(MainActivity.this, mRecognitionBindStateListener);
         mSpeaker.bindService(MainActivity.this, mSpeakerBindStateListener);
 
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (mRecognizer != null) {
+            mRecognizer = null;
+        }
+        if (mSpeaker != null) {
+            mSpeaker = null;
+        }
+        super.onDestroy();
     }
 
     @Override
@@ -399,14 +416,48 @@ public class MainActivity extends Activity {
         return super.onTouchEvent(event);
     }
 
+
+/*--------------------------------------AZURE-STUFF-------------------------------------------------*/
+
     @Override
-    protected void onDestroy() {
-        if (mRecognizer != null) {
-            mRecognizer = null;
-        }
-        if (mSpeaker != null) {
-            mSpeaker = null;
-        }
-        super.onDestroy();
+    public void onPartialResponseReceived(String s) {
+
     }
+
+    @Override
+    public void onFinalResponseReceived(com.microsoft.cognitiveservices.speechrecognition.RecognitionResult recognitionResult) {
+
+    }
+
+    @Override
+    public void onIntentReceived(String s) {
+
+    }
+
+    @Override
+    public void onError(int i, String s) {
+
+    }
+
+    @Override
+    public void onAudioEvent(boolean b) {
+
+    }
+
+    void initializeRecoClient()
+    {
+        String language = getResources().getConfiguration().locale.toString();
+
+        String subscriptionKey = this.getString(R.string.subscriptionKey);
+        String luisAppID = this.getString(R.string.luisAppID);
+        String luisSubscriptionID = this.getString(R.string.luisSubscriptionID);
+
+        MicrophoneRecognitionClientWithIntent intentMicClient;
+        intentMicClient = SpeechRecognitionServiceFactory.createMicrophoneClientWithIntent(this, language, this, subscriptionKey, luisAppID, luisSubscriptionID);
+
+        m_micClient = intentMicClient;
+
+    }
+
+
 }

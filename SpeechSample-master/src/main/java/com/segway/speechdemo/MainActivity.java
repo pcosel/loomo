@@ -102,6 +102,7 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
         mRecognizer = Recognizer.getInstance();
         mSpeaker = Speaker.getInstance();
         initListeners();
+        initRecognitionClient();
 
         //init textviews
         mStatusTextView = (TextView) findViewById(R.id.textView_status_msg);
@@ -220,9 +221,12 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
             @Override
             public void onWakeupResult(WakeupResult wakeupResult) {
                 //show the wakeup result and wakeup angle.
-                Log.d(TAG, "wakeup word:" + wakeupResult.getResult() + ", angle " + wakeupResult.getAngle());
+                Log.d(TAG, "Wakeup word:" + wakeupResult.getResult() + ", angle " + wakeupResult.getAngle());
                 Message resultMsg = mHandler.obtainMessage(SHOW_MSG, CLEAR, 0, getString(R.string.wakeup_result) + wakeupResult.getResult() + getString(R.string.wakeup_angle) + wakeupResult.getAngle());
                 mHandler.sendMessage(resultMsg);
+
+                //start azure recognition
+                m_micClient.startMicAndRecognition();
             }
 
             @Override
@@ -332,29 +336,6 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
 
                 mThreeSlotGrammar = new GrammarConstraint("three slots grammar", controlSlotList);
                 break;
-
-            case Languages.ZH_CN:
-                Slot helloSlot;
-                Slot friendSlot;
-                Slot otherSlot;
-                List<Slot> sayHelloSlotList = new LinkedList<>();
-
-                helloSlot = new Slot("hello", false, Arrays.asList(
-                        "你好",
-                        "你们好"));
-                friendSlot = new Slot("friend", true, Arrays.asList(
-                        "各位",
-                        "我的朋友们"
-                ));
-                otherSlot = new Slot("other", false, Arrays.asList(
-                        "我叫赛格威",
-                        "很高兴在里见到大家"
-                ));
-                sayHelloSlotList.add(helloSlot);
-                sayHelloSlotList.add(friendSlot);
-                sayHelloSlotList.add(otherSlot);
-                mThreeSlotGrammar = new GrammarConstraint("three slots grammar", sayHelloSlotList);
-                break;
         }
     }
 
@@ -421,22 +402,30 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
 
     @Override
     public void onPartialResponseReceived(String s) {
-
+        Log.d(TAG, "Partial response:" + s);
+        Message resultMsg = mHandler.obtainMessage(SHOW_MSG, CLEAR, 0, s);
+        mHandler.sendMessage(resultMsg);
     }
 
     @Override
     public void onFinalResponseReceived(com.microsoft.cognitiveservices.speechrecognition.RecognitionResult recognitionResult) {
-
+        Log.d(TAG, "Final response:" + recognitionResult.toString());
+        Message resultMsg = mHandler.obtainMessage(SHOW_MSG, CLEAR, 0, recognitionResult.toString());
+        mHandler.sendMessage(resultMsg);
     }
 
     @Override
     public void onIntentReceived(String s) {
-
+        Log.d(TAG, "Intent:" + s);
+        Message resultMsg = mHandler.obtainMessage(SHOW_MSG, CLEAR, 0, s);
+        mHandler.sendMessage(resultMsg);
     }
 
     @Override
     public void onError(int i, String s) {
-
+        Log.d(TAG, "Error:" + i + " - " + s);
+        Message resultMsg = mHandler.obtainMessage(SHOW_MSG, CLEAR, 0, s);
+        mHandler.sendMessage(resultMsg);
     }
 
     @Override
@@ -444,20 +433,17 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
 
     }
 
-    void initializeRecoClient()
+    void initRecognitionClient()
     {
+        if(m_micClient != null) {
+            return;
+        }
         String language = getResources().getConfiguration().locale.toString();
 
         String subscriptionKey = this.getString(R.string.subscriptionKey);
         String luisAppID = this.getString(R.string.luisAppID);
         String luisSubscriptionID = this.getString(R.string.luisSubscriptionID);
 
-        MicrophoneRecognitionClientWithIntent intentMicClient;
-        intentMicClient = SpeechRecognitionServiceFactory.createMicrophoneClientWithIntent(this, language, this, subscriptionKey, luisAppID, luisSubscriptionID);
-
-        m_micClient = intentMicClient;
-
+        m_micClient = SpeechRecognitionServiceFactory.createMicrophoneClientWithIntent(this, language, this, subscriptionKey, luisAppID, luisSubscriptionID);
     }
-
-
 }

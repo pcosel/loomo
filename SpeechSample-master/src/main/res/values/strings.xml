@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">SpeechSample</string>
+    <string name="app_name">Loomo Speech</string>
     <string name="bind_service">bind\n service</string>
     <string name="unbind_service">unbind\n service</string>
     <string name="start_recognition">start\nrecognition</string>
@@ -32,4 +32,12 @@
     <string name="speech_start">speech started</string>
     <string name="speech_end">speech end</string>
     <string name="speech_error">speech error:</string>
+
+    <string name="primaryKey">6509d37be254439b8debb22942db301e</string>
+    <string name="add_subscription_key_tip_title">Subscription Key is Needed</string>
+    <string name="add_subscription_key_tip">Please put your subscription key to source file \"app/res/values/strings.xml\" to enable Speech API calls.</string>
+    <string name="authenticationUri"/>
+    <string name="luisAppID">807decf3-b1de-4cf5-bd17-ed87aa435edd</string>
+    <string name="luisSubscriptionID">f448971d96d448a59fa1898cb0237fd7</string>
+    <string name="action_settings">Settings</string>
 </resources>

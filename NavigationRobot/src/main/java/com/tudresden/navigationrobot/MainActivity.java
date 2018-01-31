@@ -14,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.segway.robot.algo.Pose2D;
+import com.segway.robot.algo.PoseVLS;
 import com.segway.robot.algo.minicontroller.CheckPoint;
 import com.segway.robot.algo.minicontroller.ObstacleStateChangedListener;
 import com.segway.robot.algo.minicontroller.CheckPointStateListener;
@@ -25,6 +26,7 @@ import com.segway.robot.sdk.connectivity.RobotException;
 import com.segway.robot.sdk.connectivity.RobotMessageRouter;
 import com.segway.robot.sdk.connectivity.StringMessage;
 import com.segway.robot.sdk.locomotion.sbv.Base;
+import com.segway.robot.sdk.locomotion.sbv.StartVLSListener;
 import com.segway.robot.sdk.perception.sensor.Sensor;
 
 public class MainActivity extends Activity implements View.OnClickListener {
@@ -37,8 +39,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private MessageConnection mMessageConnection = null;
     private Base mBase = null;
     private Sensor mSensor = null;
-
-    private int mObstacleCounter = 0;
 
     private MessageRouter.MessageConnectionListener mMessageConnectionListener = new RobotMessageRouter.MessageConnectionListener() {
         @Override
@@ -86,19 +86,18 @@ public class MainActivity extends Activity implements View.OnClickListener {
         public void onMessageReceived(final Message message) {
             if(message instanceof StringMessage) {
                 if(message.getContent().equals("start")) {
-                    // Send reply to display on phone
                     sendMessageToPhone("Received start message");
                     mBase.cleanOriginalPoint();
-                    Pose2D pos = mBase.getOdometryPose(-1);
+                    PoseVLS pos = mBase.getVLSPose(-1);
                     mBase.setOriginalPoint(pos);
                     mBase.setUltrasonicObstacleAvoidanceEnabled(true);
+                    // Keep 1 meter distance from obstacles
                     mBase.setUltrasonicObstacleAvoidanceDistance(1f);
                     // It is necessary to set 2 checkpoints in the beginning
                     // With just one checkpoint, the OnCheckPointArrivedListener is not called correctly
                     mBase.addCheckPoint(0, 0);
                     mBase.addCheckPoint(0, 0);
                 } else if(message.getContent().equals("stop")) {
-                    // Send reply to display on phone
                     sendMessageToPhone("Received stop message");
                     mBase.clearCheckPointsAndStop();
                 }
@@ -152,10 +151,23 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     private void initBase() {
         mBase = Base.getInstance();
+
         mBase.bindService(getApplicationContext(), new ServiceBinder.BindStateListener() {
             @Override
             public void onBind() {
                 mBase.setControlMode(Base.CONTROL_MODE_NAVIGATION);
+
+                mBase.startVLS(true, true, new StartVLSListener() {
+                    @Override
+                    public void onOpened() {
+                        mBase.setNavigationDataSource(Base.NAVIGATION_SOURCE_TYPE_VLS);
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        Log.d(TAG, "onError() called with: errorMessage = [" + errorMessage + "]");
+                    }
+                });
             }
 
             @Override
@@ -165,17 +177,17 @@ public class MainActivity extends Activity implements View.OnClickListener {
         mBase.setOnCheckPointArrivedListener(new CheckPointStateListener() {
             @Override
             public void onCheckPointArrived(final CheckPoint checkPoint, Pose2D realPose, boolean isLast) {
-                // Send coordinates to display on phone
-                sendMessageToPhone("(" + Float.toString(realPose.getX()) + "  |  " + Float.toString(realPose.getY()) + "  |  " + Float.toString(realPose.getTheta()) + ")");
+                sendMessageToPhone("(" + Float.toString(realPose.getX()) + "  |  " + Float.toString(realPose.getY()) + ")");
+                mBase.clearCheckPointsAndStop();
                 mBase.cleanOriginalPoint();
-                Pose2D pos = mBase.getOdometryPose(-1);
+                PoseVLS pos = mBase.getVLSPose(-1);
                 mBase.setOriginalPoint(pos);
+                // Walk forward (1 meter)
                 mBase.addCheckPoint(1f, 0);
             }
 
             @Override
             public void onCheckPointMiss(CheckPoint checkPoint, Pose2D realPose, boolean isLast, int reason) {
-                // Send message to display on phone
                 sendMessageToPhone("Missed checkpoint");
             }
         });
@@ -184,7 +196,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
             @Override
             public void onObstacleStateChanged(int ObstacleAppearance) {
                 if(ObstacleAppearance == ObstacleStateChangedListener.OBSTACLE_APPEARED) {
-                    // Send message to display on phone
                     sendMessageToPhone("Obstacle appeared");
                     // The robot detects an obstacle before it reaches the current checkpoint. When an obstacle
                     // is detected, a new checkpoint is set for the left turn but the robot still tries to reach
@@ -193,21 +204,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     // Therefore the last checkpoint needs to be deleted before the new one is set.
                     mBase.clearCheckPointsAndStop();
                     mBase.cleanOriginalPoint();
-                    Pose2D pos = mBase.getOdometryPose(-1);
+                    PoseVLS pos = mBase.getVLSPose(-1);
                     mBase.setOriginalPoint(pos);
                     // Turn left (90 degrees)
                     mBase.addCheckPoint(0, 0, (float) (Math.PI/2));
-                    mObstacleCounter++;
-                } else if(ObstacleAppearance == ObstacleStateChangedListener.OBSTACLE_DISAPPEARED && mObstacleCounter > 0) {
-                    // Send message to display on phone
-                    sendMessageToPhone("Obstacle disappeared");
-                    // Delete last checkpoint in case the turn wasn't fully completed (see explanation above)
-                    mBase.clearCheckPointsAndStop();
-                    mBase.cleanOriginalPoint();
-                    Pose2D pos = mBase.getOdometryPose(-1);
-                    mBase.setOriginalPoint(pos);
-                    // Walk to the next wall
-                    mBase.addCheckPoint(1f, 0);
+                    // When the turn is finished, onCheckPointArrived() is called and Loomo walks forward to the next wall
                 }
             }
         });
@@ -220,8 +221,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             public void onBind() {}
 
             @Override
-            public void onUnbind(String reason) {
-            }
+            public void onUnbind(String reason) {}
         });
     }
 

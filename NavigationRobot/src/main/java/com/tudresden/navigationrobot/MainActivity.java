@@ -10,6 +10,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,6 +40,99 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private MessageConnection mMessageConnection = null;
     private Base mBase = null;
     private Sensor mSensor = null;
+
+    /**
+     * The current state of the robot.
+     */
+    private State mState;
+
+    /**
+     * Starts the exploration process by initialising the obstacle avoidance functionality and
+     * setting the first checkpoints.
+     */
+    public void startExploration() {
+        mState = State.START;
+        mBase.cleanOriginalPoint();
+        PoseVLS pos = mBase.getVLSPose(-1);
+        mBase.setOriginalPoint(pos);
+        mBase.setUltrasonicObstacleAvoidanceEnabled(true);
+        // Keep 1 meter distance from obstacles
+        mBase.setUltrasonicObstacleAvoidanceDistance(1.3f);
+        // It is necessary to set 2 checkpoints in the beginning
+        // With just one checkpoint, the OnCheckPointArrivedListener is not called correctly
+        mBase.addCheckPoint(0, 0);
+        mBase.addCheckPoint(0, 0);
+    }
+
+    /**
+     * Sets a new checkpoint with respect to the the current state of the robot.
+     * The strategy for setting a new checkpoint is as follows:
+     * In the initial phase of the exploration process (before the first wall is found) the new
+     * checkpoint is set to make the robot walk forward (1 meter) in order to eventually reach the
+     * first wall.
+     * In case an obstacle was detected and the left turn was performed {@see #obstacleDetected()},
+     * the new checkpoint needs to be set to make the robot walk forward (1 meter) in order to reach
+     * the next wall.
+     * After every meter that the robot walks in search of the next wall, it needs to perform a right
+     * turn (90 degrees) in order to check if the wall on its right has ended.
+     * If the wall has not ended, the robot performs a left turn (90 degrees) and continues to walk
+     * forward along the wall.
+     * If the wall has ended, the robot does not turn back but instead follows the new wall.
+     */
+    public void arrivedAtCheckpoint() {
+        mBase.clearCheckPointsAndStop();
+        mBase.cleanOriginalPoint();
+        PoseVLS pos = mBase.getVLSPose(-1);
+        mBase.setOriginalPoint(pos);
+        switch(mState) {
+            case START:
+                // As long as no wall has been found yet, keep walking forward (1 meter)
+                mBase.addCheckPoint(1f, 0);
+                break;
+            case WALK:
+                mState = State.CHECK;
+                // After every meter, turn right (90 degrees)
+                mBase.addCheckPoint(0, 0, (float) (-Math.PI / 2));
+                break;
+            case CHECK:
+                // If an obstacle is detected after the right turn, the ObstacleStateChangeListener
+                // is triggered and the robot performs a left turn so that it then looks forward again.
+                // In case after the right turn no obstacle was detected, that means that the wall
+                // next to the robot has ended and it needs to walk forward to follow the new wall.
+                mState = State.WALK;
+                // Walk forward (1 meter)
+                mBase.addCheckPoint(1f, 0);
+                break;
+            case OBSTACLE:
+                mState = State.WALK;
+                // After an obstacle was detected and the left turn was performed, walk forward (1 meter)
+                mBase.addCheckPoint(1f, 0);
+                break;
+            default:
+                // All possible cases are handled above
+        }
+    }
+
+    /**
+     * Sets a new checkpoint to make the robot perform a left turn (90 degrees) in case an obstacle
+     * was detected.
+     */
+    public void obstacleDetected() {
+        mState = State.OBSTACLE;
+        // The robot detects an obstacle before it reaches the current checkpoint. When an obstacle
+        // is detected, a new checkpoint is set for the left turn but the robot still tries to reach
+        // the last checkpoint first. But that checkpoint can't be reached, because there is an
+        // obstacle in front of the robot, so the robot just stops walking completely.
+        // Therefore the last checkpoint needs to be deleted before the new one is set.
+        mBase.clearCheckPointsAndStop();
+        mBase.cleanOriginalPoint();
+        PoseVLS pos = mBase.getVLSPose(-1);
+        mBase.setOriginalPoint(pos);
+        // Turn left (90 degrees)
+        mBase.addCheckPoint(0, 0, (float) (Math.PI/2));
+        // When the turn is finished, {@see #arrivedAtCheckpoint()} is called and the robot walks
+        // forward to the next wall
+    }
 
     private MessageRouter.MessageConnectionListener mMessageConnectionListener = new RobotMessageRouter.MessageConnectionListener() {
         @Override
@@ -87,16 +181,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             if(message instanceof StringMessage) {
                 if(message.getContent().equals("start")) {
                     sendMessageToPhone("Received start message");
-                    mBase.cleanOriginalPoint();
-                    PoseVLS pos = mBase.getVLSPose(-1);
-                    mBase.setOriginalPoint(pos);
-                    mBase.setUltrasonicObstacleAvoidanceEnabled(true);
-                    // Keep 1 meter distance from obstacles
-                    mBase.setUltrasonicObstacleAvoidanceDistance(1f);
-                    // It is necessary to set 2 checkpoints in the beginning
-                    // With just one checkpoint, the OnCheckPointArrivedListener is not called correctly
-                    mBase.addCheckPoint(0, 0);
-                    mBase.addCheckPoint(0, 0);
+                    startExploration();
                 } else if(message.getContent().equals("stop")) {
                     sendMessageToPhone("Received stop message");
                     mBase.clearCheckPointsAndStop();
@@ -130,6 +215,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private void initView() {
         TextView textViewIp = (TextView) findViewById(R.id.textView_ip);
         textViewIp.setText(getDeviceIp());
+
+        Button startButton = (Button) findViewById(R.id.button_start);
+        startButton.setOnClickListener(this);
+
+        Button stopButton = (Button) findViewById(R.id.button_stop);
+        stopButton.setOnClickListener(this);
     }
 
     private void initMessageConnection() {
@@ -178,12 +269,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             @Override
             public void onCheckPointArrived(final CheckPoint checkPoint, Pose2D realPose, boolean isLast) {
                 sendMessageToPhone("(" + Float.toString(realPose.getX()) + "  |  " + Float.toString(realPose.getY()) + ")");
-                mBase.clearCheckPointsAndStop();
-                mBase.cleanOriginalPoint();
-                PoseVLS pos = mBase.getVLSPose(-1);
-                mBase.setOriginalPoint(pos);
-                // Walk forward (1 meter)
-                mBase.addCheckPoint(1f, 0);
+                arrivedAtCheckpoint();
             }
 
             @Override
@@ -197,18 +283,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             public void onObstacleStateChanged(int ObstacleAppearance) {
                 if(ObstacleAppearance == ObstacleStateChangedListener.OBSTACLE_APPEARED) {
                     sendMessageToPhone("Obstacle appeared");
-                    // The robot detects an obstacle before it reaches the current checkpoint. When an obstacle
-                    // is detected, a new checkpoint is set for the left turn but the robot still tries to reach
-                    // the last checkpoint first. But that checkpoint can't be reached, because there's an
-                    // obstacle in front of the robot, so the robot just stops walking completely.
-                    // Therefore the last checkpoint needs to be deleted before the new one is set.
-                    mBase.clearCheckPointsAndStop();
-                    mBase.cleanOriginalPoint();
-                    PoseVLS pos = mBase.getVLSPose(-1);
-                    mBase.setOriginalPoint(pos);
-                    // Turn left (90 degrees)
-                    mBase.addCheckPoint(0, 0, (float) (Math.PI/2));
-                    // When the turn is finished, onCheckPointArrived() is called and Loomo walks forward to the next wall
+                    obstacleDetected();
                 }
             }
         });
@@ -226,7 +301,16 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     @Override
-    public void onClick(View v) {}
+    public void onClick(View v) {
+        switch(v.getId()) {
+            case R.id.button_start:
+                startExploration();
+                break;
+            case R.id.button_stop:
+                mBase.clearCheckPointsAndStop();
+                break;
+        }
+    }
 
     @Override
     public void onPause() {

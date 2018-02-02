@@ -8,6 +8,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Bundle;
+import android.text.method.ScrollingMovementMethod;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MenuItem;
@@ -106,6 +107,7 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
 
         //init textviews
         mStatusTextView = (TextView) findViewById(R.id.textView_status_msg);
+        mStatusTextView.setMovementMethod(new ScrollingMovementMethod());
         mStatus = (TextView) findViewById(R.id.textView_status);
 
         //binding
@@ -214,7 +216,7 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
             @Override
             public void onStandby() {
                 Log.d(TAG, "onStandby");
-                Message statusMsg = mHandler.obtainMessage(SHOW_MSG, CLEAR, 0, getString(R.string.wakeup_standby));
+                Message statusMsg = mHandler.obtainMessage(SHOW_MSG, APPEND, 0, getString(R.string.wakeup_standby));
                 mHandler.sendMessage(statusMsg);
             }
 
@@ -222,7 +224,7 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
             public void onWakeupResult(WakeupResult wakeupResult) {
                 //show the wakeup result and wakeup angle.
                 Log.d(TAG, "Wakeup word:" + wakeupResult.getResult() + ", angle " + wakeupResult.getAngle());
-                Message resultMsg = mHandler.obtainMessage(SHOW_MSG, CLEAR, 0, getString(R.string.wakeup_result) + wakeupResult.getResult() + getString(R.string.wakeup_angle) + wakeupResult.getAngle());
+                Message resultMsg = mHandler.obtainMessage(SHOW_MSG, APPEND, 0, getString(R.string.wakeup_result) + wakeupResult.getResult() + getString(R.string.wakeup_angle) + wakeupResult.getAngle());
                 mHandler.sendMessage(resultMsg);
 
                 //start azure recognition
@@ -233,7 +235,7 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
             public void onWakeupError(String s) {
                 //show the wakeup error reason.
                 Log.d(TAG, "onWakeupError");
-                Message errorMsg = mHandler.obtainMessage(SHOW_MSG, CLEAR, 0, getString(R.string.wakeup_error) + s);
+                Message errorMsg = mHandler.obtainMessage(SHOW_MSG, APPEND, 0, getString(R.string.wakeup_error) + s);
                 mHandler.sendMessage(errorMsg);
             }
         };
@@ -250,7 +252,7 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
             public void onSpeechStarted(String s) {
                 //s is speech content, callback this method when speech is starting.
                 Log.d(TAG, "onSpeechStarted() called with: s = [" + s + "]");
-                Message statusMsg = mHandler.obtainMessage(SHOW_MSG, CLEAR, 0, getString(R.string.speech_start));
+                Message statusMsg = mHandler.obtainMessage(SHOW_MSG, APPEND, 0, getString(R.string.speech_start));
                 mHandler.sendMessage(statusMsg);
             }
 
@@ -258,7 +260,7 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
             public void onSpeechFinished(String s) {
                 //s is speech content, callback this method when speech is finish.
                 Log.d(TAG, "onSpeechFinished() called with: s = [" + s + "]");
-                Message statusMsg = mHandler.obtainMessage(SHOW_MSG, CLEAR, 0, getString(R.string.speech_end));
+                Message statusMsg = mHandler.obtainMessage(SHOW_MSG, APPEND, 0, getString(R.string.speech_end));
                 mHandler.sendMessage(statusMsg);
             }
 
@@ -266,7 +268,7 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
             public void onSpeechError(String s, String s1) {
                 //s is speech content, callback this method when speech occurs error.
                 Log.d(TAG, "onSpeechError() called with: s = [" + s + "], s1 = [" + s1 + "]");
-                Message statusMsg = mHandler.obtainMessage(SHOW_MSG, CLEAR, 0, getString(R.string.speech_error) + s1);
+                Message statusMsg = mHandler.obtainMessage(SHOW_MSG, APPEND, 0, getString(R.string.speech_error) + s1);
                 mHandler.sendMessage(statusMsg);
             }
         };
@@ -345,7 +347,7 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
                 mStatusTextView.setText(msg);
                 break;
             case APPEND:
-                mStatusTextView.append(msg);
+                mStatusTextView.append("\n" + msg);
                 break;
         }
     }
@@ -402,29 +404,33 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
 
     @Override
     public void onPartialResponseReceived(String s) {
-        Log.d(TAG, "Partial response:" + s);
-        Message resultMsg = mHandler.obtainMessage(SHOW_MSG, CLEAR, 0, s);
+        String msg = "Partial response:" + s;
+        Log.d(TAG, msg);
+        Message resultMsg = mHandler.obtainMessage(SHOW_MSG, APPEND, 0, msg);
         mHandler.sendMessage(resultMsg);
     }
 
     @Override
     public void onFinalResponseReceived(com.microsoft.cognitiveservices.speechrecognition.RecognitionResult recognitionResult) {
-        Log.d(TAG, "Final response:" + recognitionResult.toString());
-        Message resultMsg = mHandler.obtainMessage(SHOW_MSG, CLEAR, 0, recognitionResult.toString());
+        String msg = "Final response:" + recognitionResult.toString();
+        Log.d(TAG, msg);
+        Message resultMsg = mHandler.obtainMessage(SHOW_MSG, APPEND, 0, msg);
         mHandler.sendMessage(resultMsg);
     }
 
     @Override
     public void onIntentReceived(String s) {
-        Log.d(TAG, "Intent:" + s);
-        Message resultMsg = mHandler.obtainMessage(SHOW_MSG, CLEAR, 0, s);
+        String msg = "Intent:" + s;
+        Log.d(TAG, msg);
+        Message resultMsg = mHandler.obtainMessage(SHOW_MSG, APPEND, 0, msg);
         mHandler.sendMessage(resultMsg);
     }
 
     @Override
     public void onError(int i, String s) {
-        Log.d(TAG, "Error:" + i + " - " + s);
-        Message resultMsg = mHandler.obtainMessage(SHOW_MSG, CLEAR, 0, s);
+        String msg = "Error:" + i + " - " + s;
+        Log.d(TAG, msg);
+        Message resultMsg = mHandler.obtainMessage(SHOW_MSG, APPEND, 0, msg);
         mHandler.sendMessage(resultMsg);
     }
 

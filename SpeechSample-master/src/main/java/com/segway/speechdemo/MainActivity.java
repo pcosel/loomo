@@ -18,6 +18,7 @@ import android.widget.TextView;
 
 import com.microsoft.cognitiveservices.speechrecognition.ISpeechRecognitionServerEvents;
 import com.microsoft.cognitiveservices.speechrecognition.MicrophoneRecognitionClientWithIntent;
+import com.microsoft.cognitiveservices.speechrecognition.RecognizedPhrase;
 import com.microsoft.cognitiveservices.speechrecognition.SpeechRecognitionServiceFactory;
 import com.segway.robot.sdk.base.bind.ServiceBinder;
 import com.segway.robot.sdk.voice.Languages;
@@ -412,10 +413,15 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
 
     @Override
     public void onFinalResponseReceived(com.microsoft.cognitiveservices.speechrecognition.RecognitionResult recognitionResult) {
+        m_micClient.endMicAndRecognition();
+
         String msg = "Final response:" + recognitionResult.toString();
+        for (RecognizedPhrase el: recognitionResult.Results) {
+            msg = msg.concat("\nConfidence: " + el.Confidence + " Text: \"" + el.DisplayText + "\"");
+        }
+
         Log.d(TAG, msg);
-        Message resultMsg = mHandler.obtainMessage(SHOW_MSG, APPEND, 0, msg);
-        mHandler.sendMessage(resultMsg);
+        mHandler.sendMessage(mHandler.obtainMessage(SHOW_MSG, APPEND, 0, msg));
     }
 
     @Override
@@ -435,8 +441,14 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
     }
 
     @Override
-    public void onAudioEvent(boolean b) {
+    public void onAudioEvent(boolean isRecording) {
+        String msg = "Microphone status: " + isRecording;
+        if (isRecording) { msg += "\nPlease start speaking..."; }
+        mHandler.sendMessage(mHandler.obtainMessage(SHOW_MSG, APPEND, 0, msg));
 
+        if (!isRecording) {
+            this.m_micClient.endMicAndRecognition();
+        }
     }
 
     void initRecognitionClient()

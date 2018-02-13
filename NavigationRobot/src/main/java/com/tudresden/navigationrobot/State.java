@@ -2,6 +2,7 @@ package com.tudresden.navigationrobot;
 
 /**
  * Represents the current state of the robot.
+ *
  * @author Nadja Konrad
  */
 public enum State {

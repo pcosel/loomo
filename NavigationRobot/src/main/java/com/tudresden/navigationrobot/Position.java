@@ -1,7 +1,8 @@
 package com.tudresden.navigationrobot;
 
 /**
- * This class models a position in the coordinate system.
+ * Represents a position in the coordinate system.
+ *
  * @author Nadja Konrad
  */
 public class Position {
@@ -9,19 +10,19 @@ public class Position {
     /**
      * The x-coordinate of this Position.
      */
-    private float x;
+    private double x;
 
     /**
      * The y-coordinate of this Position.
      */
-    private float y;
+    private double y;
 
     /**
      * Creates a new Position.
      * @param x the x-coordinate of this Position
      * @param y the y-coordinate of this Position
      */
-    public Position(float x, float y) {
+    public Position(double x, double y) {
         this.x = x;
         this.y = y;
     }
@@ -29,14 +30,14 @@ public class Position {
     /**
      * @return the x-coordinate of this Position
      */
-    public float getX() {
+    public double getX() {
         return x;
     }
 
     /**
      * @return the y-coordinate of this Position
      */
-    public float getY() {
+    public double getY() {
         return y;
     }
 

@@ -6,65 +6,21 @@
     android:background="#ffffff"
     tools:context="com.tudresden.navigationrobot.MainActivity">
 
-    <LinearLayout
+    <Button
+        android:id="@+id/button_start"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="horizontal">
+        android:layout_height="70dp"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="28dp"
+        android:text="START" />
 
-        <LinearLayout
-            android:id="@+id/buttons"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
-
-            <Button
-                android:id="@+id/btnReset"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:onClick="onClick"
-                android:text=" reset " />
-
-            <Button
-                android:id="@+id/button_start"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="START" />
-
-            <Button
-                android:id="@+id/button_stop"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="STOP" />
-
-            <Button
-                android:id="@+id/btnScale"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:onClick="onClick"
-                android:text=" scale map " />
-
-            <TextView
-                android:id="@+id/tvScale"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:padding="5dp"
-                android:text="Scale"
-                android:textSize="12dp" />
-        </LinearLayout>
-
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
-
-            <com.tudresden.navigationrobot.ZoomLayout
-                android:id="@+id/flMap"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingTop="5dp"></com.tudresden.navigationrobot.ZoomLayout>
-        </RelativeLayout>
-
-    </LinearLayout>
-
+    <Button
+        android:id="@+id/button_stop"
+        android:layout_width="match_parent"
+        android:layout_height="70dp"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/button_start"
+        android:layout_marginTop="22dp"
+        android:text="STOP" />
 
 </RelativeLayout>

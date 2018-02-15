@@ -31,10 +31,15 @@ import java.text.DecimalFormat;
 public class MainActivity extends Activity implements View.OnClickListener {
 
     private static final String TAG = "MainActivity";
+
+    private static final String LEFT_TURN = "left turn";
+    private static final String RIGHT_TURN = "right turn";
+
     private Draw mDraw;
     private FrameLayout mFrameLayout;
     private TextView mTextView;
     private int press = 0;
+
     private float pixelToMeter = 0.01f;
     private float lastX = 0;
     private float lastY = 0;
@@ -44,9 +49,35 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private Sensor mSensor = null;
 
     /**
-     * The current state of the robot.
+     * Indicates whether the robot is currently in the process of checking the wall on its right.
+     */
+    private boolean mCheckingWall = false;
+
+    /**
+     * The current mState of the robot.
      */
     private State mState;
+
+    /**
+     * The current mOrientation of the robot. The mState tells which way the robot is facing in
+     * relation to the origin of the coordinate system.
+     */
+    private Orientation mOrientation;
+
+    /**
+     * The current ultrasonic mDistance from the next obstacle in front of the robot.
+     */
+    private float mDistance;
+
+    /**
+     * The current x-coordinate of the robot.
+     */
+    private double mXCoordinate = 0.0;
+
+    /**
+     * The current y-coordinate of the robot.
+     */
+    private double mYCoordinate = 0.0;
 
     /**
      * Starts the exploration process by initialising the obstacle avoidance functionality and
@@ -54,11 +85,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
      */
     public void startExploration() {
         mState = State.START;
+        mOrientation = Orientation.FORWARD;
         mBase.cleanOriginalPoint();
         PoseVLS pos = mBase.getVLSPose(-1);
         mBase.setOriginalPoint(pos);
         mBase.setUltrasonicObstacleAvoidanceEnabled(true);
-        // Keep 1 meter distance from obstacles
+        // Keep 1.3 meter mDistance from obstacles
         mBase.setUltrasonicObstacleAvoidanceDistance(1.3f);
         // It is necessary to set 2 checkpoints in the beginning
         // With just one checkpoint, the OnCheckPointArrivedListener is not called correctly
@@ -67,12 +99,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     /**
-     * Sets a new checkpoint with respect to the the current state of the robot.
+     * Sets a new checkpoint depending on the current mState of the robot.
      * The strategy for setting a new checkpoint is as follows:
      * In the initial phase of the exploration process (before the first wall is found) the new
      * checkpoint is set to make the robot walk forward (1 meter) in order to eventually reach the
      * first wall.
-     * In case an obstacle was detected and the left turn was performed {@see #obstacleDetected()},
+     * In case an obstacle was detected and the left turn was performed ({@see #obstacleDetected()}),
      * the new checkpoint needs to be set to make the robot walk forward (1 meter) in order to reach
      * the next wall.
      * After every meter that the robot walks in search of the next wall, it needs to perform a right
@@ -92,21 +124,36 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 mBase.addCheckPoint(1f, 0);
                 break;
             case WALK:
+                updateCoordinates();
                 mState = State.CHECK;
+                mDistance = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
                 // After every meter, turn right (90 degrees)
                 mBase.addCheckPoint(0, 0, (float) (-Math.PI / 2));
                 break;
             case CHECK:
-                // If an obstacle is detected after the right turn, the ObstacleStateChangeListener
-                // is triggered and the robot performs a left turn so that it then looks forward again.
-                // In case after the right turn no obstacle was detected, that means that the wall
+                // In case after the right turn no obstacle is detected, that means that the wall
                 // next to the robot has ended and it needs to walk forward to follow the new wall.
+                // In case after the right turn an obstacle is detected, the ObstacleStateChangeListener
+                // is triggered (after the code in this switch case is executed) and the robot
+                // performs a left turn so that it looks forward again and keeps following the wall.
+                // The boolean mCheckingWall is only relevant for the second scenario, because in that
+                // case in the ObstacleStateChangeListener the coordinates are not supposed to be
+                // updated. mCheckingWall allows to distinguish between the following cases:
+                // 1. The robot is walking towards a new wall and an obstacle appears in front of him
+                // 2. An obstacle appears while checking the wall next to the robot
+                // In both cases the mState of the robot is WALK, but in the ObstacleStateChangeListener
+                // different things need to happen.
+                // Without setting the mState to WALK in this switch case, the robot would not continue
+                // walking if after the right turn no obstacle is found.
+                mCheckingWall = true;
                 mState = State.WALK;
+                updateOrientation(RIGHT_TURN);
                 // Walk forward (1 meter)
                 mBase.addCheckPoint(1f, 0);
                 break;
             case OBSTACLE:
                 mState = State.WALK;
+                mDistance = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
                 // After an obstacle was detected and the left turn was performed, walk forward (1 meter)
                 mBase.addCheckPoint(1f, 0);
                 break;
@@ -120,20 +167,125 @@ public class MainActivity extends Activity implements View.OnClickListener {
      * was detected.
      */
     public void obstacleDetected() {
-        mState = State.OBSTACLE;
+        if(mState == State.START) {
+            // This is the first obstacle that the robot has detected (the coordinates are 0.0)
+            Log.d(TAG, "State: " + mState +
+                    " | Orientation: " + mOrientation +
+                    " | Position: x = " + mXCoordinate + " | y = " + mYCoordinate);
+            // TODO: Save position to JSON file
+            mState = State.OBSTACLE;
+        } else if(mState == State.WALK){
+            mState = State.OBSTACLE;
+            // Concerning mCheckingWall see explanation in arrivedAtCheckpoint() (case CHECK)
+            if(!mCheckingWall) {
+                updateCoordinates();
+            } else {
+                mCheckingWall = false;
+            }
+        }
         // The robot detects an obstacle before it reaches the current checkpoint. When an obstacle
         // is detected, a new checkpoint is set for the left turn but the robot still tries to reach
-        // the last checkpoint first. But that checkpoint can't be reached, because there is an
+        // the last checkpoint first. That checkpoint obviously can't be reached, because there is an
         // obstacle in front of the robot, so the robot just stops walking completely.
         // Therefore the last checkpoint needs to be deleted before the new one is set.
         mBase.clearCheckPointsAndStop();
         mBase.cleanOriginalPoint();
         PoseVLS pos = mBase.getVLSPose(-1);
         mBase.setOriginalPoint(pos);
+        updateOrientation(LEFT_TURN);
         // Turn left (90 degrees)
         mBase.addCheckPoint(0, 0, (float) (Math.PI / 2));
         // When the turn is finished, {@see #arrivedAtCheckpoint()} is called and the robot walks
         // forward to the next wall
+    }
+
+    /**
+     * Sets the x- or y-coordinate according to the current mOrientation of the robot.
+     */
+    public void updateCoordinates() {
+        if(mState == State.WALK) {
+            switch(mOrientation) {
+                case FORWARD:
+                    mXCoordinate += 1;
+                    break;
+                case BACKWARD:
+                    mXCoordinate -= 1;
+                    break;
+                case LEFT:
+                    mYCoordinate += 1;
+                    break;
+                case RIGHT:
+                    mYCoordinate -= 1;
+                    break;
+                default:
+                    // All possible cases are handled above
+            }
+        } else if(mState == State.OBSTACLE) {
+            switch(mOrientation) {
+                case FORWARD:
+                    mXCoordinate += (mDistance - mSensor.getUltrasonicDistance().getDistance() / 1000); // convert mm to m
+                    break;
+                case BACKWARD:
+                    mXCoordinate -= (mDistance - mSensor.getUltrasonicDistance().getDistance() / 1000); // convert mm to m
+                    break;
+                case LEFT:
+                    mYCoordinate += (mDistance - mSensor.getUltrasonicDistance().getDistance() / 1000); // convert mm to m
+                    break;
+                case RIGHT:
+                    mYCoordinate -= (mDistance - mSensor.getUltrasonicDistance().getDistance() / 1000); // convert mm to m
+                    break;
+                default:
+                    // All possible cases are handled above
+            }
+        }
+        Log.d(TAG, "State: " + mState +
+                " | Orientation: " + mOrientation +
+                " | Position: x = " + mXCoordinate + " | y = " + mYCoordinate);
+        // TODO: Save position to JSON file
+    }
+
+    /**
+     * Sets the mOrientation of the robot in relation to the origin of the coordinate system.
+     * The new mOrientation of the robot depends on whether a left or a right turn is to be performed.
+     *
+     * @param direction Indicates whether the turn to be performed is a left turn or a right turn.
+     */
+    public void updateOrientation(String direction) {
+        if(direction.equals(LEFT_TURN)) {
+            switch(mOrientation) {
+                case FORWARD:
+                    mOrientation = Orientation.LEFT;
+                    break;
+                case BACKWARD:
+                    mOrientation = Orientation.RIGHT;
+                    break;
+                case LEFT:
+                    mOrientation = Orientation.BACKWARD;
+                    break;
+                case RIGHT:
+                    mOrientation = Orientation.FORWARD;
+                    break;
+                default:
+                    // All possible cases are handled above
+            }
+        } else {
+            switch(mOrientation) {
+                case FORWARD:
+                    mOrientation = Orientation.RIGHT;
+                    break;
+                case BACKWARD:
+                    mOrientation = Orientation.LEFT;
+                    break;
+                case LEFT:
+                    mOrientation = Orientation.FORWARD;
+                    break;
+                case RIGHT:
+                    mOrientation = Orientation.BACKWARD;
+                    break;
+                default:
+                    // All possible cases are handled above
+            }
+        }
     }
 
     @Override
@@ -243,7 +395,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         mBase.setObstacleStateChangeListener(new ObstacleStateChangedListener() {
             @Override
             public void onObstacleStateChanged(int ObstacleAppearance) {
-                if (ObstacleAppearance == ObstacleStateChangedListener.OBSTACLE_APPEARED) {
+                if(ObstacleAppearance == ObstacleStateChangedListener.OBSTACLE_APPEARED) {
                     obstacleDetected();
                 }
             }

@@ -6,31 +6,11 @@
     android:background="#ffffff"
     tools:context="com.tudresden.navigationrobot.MainActivity">
 
-    <TextView
-        android:id="@+id/robot_ip"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#d6d7d7"
-        android:text="Loomo IP:"
-        android:textColor="#000000"
-        android:textSize="15sp"/>
-
-    <TextView
-        android:id="@+id/textView_ip"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/robot_ip"
-        android:background="#fffbab"
-        android:text="IP"
-        android:textColor="#000000"
-        android:textSize="15dp"/>
-
     <Button
         android:id="@+id/button_start"
         android:layout_width="match_parent"
         android:layout_height="70dp"
         android:layout_alignParentStart="true"
-        android:layout_below="@+id/textView_ip"
         android:layout_marginTop="28dp"
         android:text="START" />
 

@@ -165,10 +165,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
     public void obstacleDetected() {
         if(state == State.START) {
             // This is the first obstacle that the robot has detected (the coordinates are 0.0)
-            // TODO: Write position to JSON file
             Log.d(TAG, "State: " + state +
                     " | Orientation: " + orientation +
                     " | Position: x = " + xCoordinate + " | y = " + yCoordinate);
+            // TODO: Save position to JSON file
             state = State.OBSTACLE;
         } else if(state == State.WALK){
             state = State.OBSTACLE;
@@ -234,10 +234,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     // All possible cases are handled above
             }
         }
-        // TODO: Write position to JSON file
         Log.d(TAG, "State: " + state +
                 " | Orientation: " + orientation +
                 " | Position: x = " + xCoordinate + " | y = " + yCoordinate);
+        // TODO: Save position to JSON file
     }
 
     /**

@@ -427,9 +427,20 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
     @Override
     public void onIntentReceived(String s) {
         String msg = "Intent:" + s;
-        Log.d(TAG, msg);
+//        Log.d(TAG, msg);
+        Log.d(TAG, "Intent received!!!");
         Message resultMsg = mHandler.obtainMessage(SHOW_MSG, APPEND, 0, msg);
         mHandler.sendMessage(resultMsg);
+        m_micClient.endMicAndRecognition();
+
+
+
+        //start the wakeup
+        try {
+            mRecognizer.startWakeupMode(mWakeupListener);
+        } catch (VoiceException e) {
+            Log.e(TAG, "Exception: ", e);
+        }
     }
 
     @Override
@@ -447,7 +458,7 @@ public class MainActivity extends Activity implements ISpeechRecognitionServerEv
         mHandler.sendMessage(mHandler.obtainMessage(SHOW_MSG, APPEND, 0, msg));
 
         if (!isRecording) {
-            this.m_micClient.endMicAndRecognition();
+            m_micClient.endMicAndRecognition();
         }
     }
 

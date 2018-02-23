@@ -10,8 +10,10 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.Holo.Light">
-        <activity android:name="com.segway.speechdemo.MainActivity"
+        android:theme="@android:style/Theme.Holo.Light"
+        android:hardwareAccelerated="false">
+        <activity
+            android:name="com.segway.speechdemo.MainActivity"
             android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

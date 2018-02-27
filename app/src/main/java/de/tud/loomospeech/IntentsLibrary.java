@@ -7,6 +7,7 @@ class IntentsLibrary {
 
     public void callByName(String functionName) {
         // Ignoring any possible result
+        //functionName.replace(".", "");
         try {
             this.getClass().getDeclaredMethod(functionName).invoke(this);
         } catch (Exception e) {

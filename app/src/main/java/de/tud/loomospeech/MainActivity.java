@@ -223,7 +223,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onStandby() {
                 Log.d(TAG, "WakeUp onStandby");
-                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, 0, getString(R.string.wakeup_standby)));
+                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, 0,"\n" + getString(R.string.wakeup_standby)));
             }
 
             @Override

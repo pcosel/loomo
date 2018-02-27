@@ -2,8 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/LoomoSpeech.iml" filepath="$PROJECT_DIR$/LoomoSpeech.iml" />
+      <module fileurl="file://C:\Users\Casymoo\Desktop\KPMCI\loomo\LoomoSpeech.iml" filepath="C:\Users\Casymoo\Desktop\KPMCI\loomo\LoomoSpeech.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://C:\Users\Casymoo\Desktop\KPMCI\loomo\app\app.iml" filepath="C:\Users\Casymoo\Desktop\KPMCI\loomo\app\app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/loomo.iml" filepath="$PROJECT_DIR$/loomo.iml" />
     </modules>
   </component>
 </project>

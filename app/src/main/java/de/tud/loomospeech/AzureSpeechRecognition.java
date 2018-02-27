@@ -10,6 +10,7 @@ import com.microsoft.cognitiveservices.speechrecognition.RecognitionStatus;
 import com.microsoft.cognitiveservices.speechrecognition.RecognizedPhrase;
 import com.microsoft.cognitiveservices.speechrecognition.SpeechRecognitionServiceFactory;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 
@@ -27,9 +28,10 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
 
     @Override
     public void onPartialResponseReceived(String s) {
-        String msg = "Partial response: " + s;
+        /* String msg = "Partial response: " + s;
         Log.d(TAG, msg);
         mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, 0, msg));
+        */
     }
 
     @Override
@@ -37,9 +39,9 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         recognitionClientWithIntent.endMicAndRecognition();
 
         String msg = "Final response: " + recognitionResult.RecognitionStatus;
-        for (RecognizedPhrase el: recognitionResult.Results) {
+        /* for (RecognizedPhrase el: recognitionResult.Results) {
             msg += "\nConfidence: " + el.Confidence + " Text: \"" + el.DisplayText + "\"";
-        }
+        }*/
 
         Log.d(TAG, msg);
         mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, 0, msg));
@@ -51,12 +53,31 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
 
     @Override
     public void onIntentReceived(String s) {
-        String msg = "Intent:\n";
+        String msg = "";
 
-        JSONObject lol = null;
+        JSONObject json = null;
+        JSONArray intentsArray, entitesArray;
         try {
-            lol = new JSONObject(s);
-            msg += lol.get("query") + "\n" + lol.getJSONArray("intents").getJSONObject(0);
+            json = new JSONObject(s);
+            intentsArray = json.getJSONArray("intents");
+            msg += "Text: " + json.get("query");
+            for(int i = 0; i<= 2; i++) {
+                String confidence = intentsArray.getJSONObject(i).get("score").toString().substring(2,4) + "%";
+                String intent = intentsArray.getJSONObject(i).get("intent").toString();
+                msg += "\n" + confidence + " " + intent;
+            }
+            entitesArray = json.getJSONArray("entities");
+
+            if(entitesArray.length() != 0) {
+                msg += "\nParameters: ";
+                for(int i = 0; i <= entitesArray.length(); i++) {
+                    String confidence = entitesArray.getJSONObject(i).get("score").toString().substring(2,4) + "%";
+                    String entity = entitesArray.getJSONObject(i).get("entity").toString();
+                    String type = entitesArray.getJSONObject(i).get("type").toString();
+                    msg += "\n" + confidence + " " + type + " " + entity;
+                }
+            }
+
         } catch (Exception e) {
             Log.d(TAG, "Exception onIntentReceived: ", e);
         }

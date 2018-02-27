@@ -30,7 +30,7 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
     public void onPartialResponseReceived(String s) {
         /* String msg = "Partial response: " + s;
         Log.d(TAG, msg);
-        mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, 0, msg));
+        mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
         */
     }
 
@@ -44,8 +44,8 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         }*/
 
         Log.d(TAG, msg);
-        mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, 0, msg));
-
+        mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
+        mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.SET, MessageHandler.STATUS, activity.getString(R.string.statusProcessing)));
         if (recognitionResult.RecognitionStatus != RecognitionStatus.RecognitionSuccess) {
             activity.startWakeUpListener();
         }
@@ -83,7 +83,7 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         }
 
         Log.d(TAG, "Intent received!!!");
-        mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, 0, msg));
+        mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
 
 //        recognitionClientWithIntent.endMicAndRecognition();
         activity.startWakeUpListener();
@@ -93,7 +93,7 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
     public void onError(int i, String s) {
         String msg = "Error:" + i + " - " + s;
         Log.d(TAG, msg);
-        mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, 0, msg));
+        mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
 
         activity.startWakeUpListener();
     }
@@ -102,7 +102,7 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
     public void onAudioEvent(boolean isRecording) {
         String msg = "Microphone status: " + isRecording;
         if (isRecording) { msg += "\nPlease start speaking..."; }
-        mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, 0, msg));
+        mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
         activity.toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP);
 
         if (!isRecording) {

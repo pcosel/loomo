@@ -18,6 +18,9 @@ public class MessageHandler extends Handler {
     static final int APPEND = 10;
     static final int SET = 11;
 
+    static final int OUTPUT = 12;
+    static final int STATUS = 13;
+
     private final WeakReference<Activity> activityWeakReference;
 
     MessageHandler(Activity instance) {
@@ -29,15 +32,28 @@ public class MessageHandler extends Handler {
         super.handleMessage(msg);
 
         TextView textView;
-        if ((textView = getTextView(R.id.output)) == null) {
+        TextView statusView;
+        if (((textView = getTextView(R.id.output)) == null) || ((statusView = getTextView(R.id.status_msg)) == null)) {
             return;
         }
 
         if (msg.arg1 == APPEND) {
-            textView.append("\n" + msg.obj.toString());
+            if (msg.arg2 == OUTPUT) {
+                textView.append("\n" + msg.obj.toString());
+            } else if (msg.arg2 == STATUS) {
+                statusView.append("\n" + msg.obj.toString());
+            } else {
+                return;
+            }
         }
         else {
-            textView.setText(msg.obj.toString());
+            if (msg.arg2 == OUTPUT) {
+                textView.setText(msg.obj.toString());
+            } else if (msg.arg2 == STATUS) {
+                statusView.setText(msg.obj.toString());
+            } else {
+                return;
+            }
         }
     }
 

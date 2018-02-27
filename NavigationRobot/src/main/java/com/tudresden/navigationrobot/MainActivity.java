@@ -1,6 +1,7 @@
 package com.tudresden.navigationrobot;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
@@ -10,6 +11,8 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.segway.robot.algo.Pose2D;
 import com.segway.robot.algo.PoseVLS;
 import com.segway.robot.algo.minicontroller.CheckPoint;
@@ -20,6 +23,15 @@ import com.segway.robot.sdk.locomotion.sbv.Base;
 import com.segway.robot.sdk.locomotion.sbv.StartVLSListener;
 import com.segway.robot.sdk.perception.sensor.Sensor;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.LinkedList;
+
+/**
+ * This Activity handles the exploration process.
+ */
 public class MainActivity extends Activity implements View.OnClickListener {
 
     private static final String TAG = "MainActivity";
@@ -62,6 +74,44 @@ public class MainActivity extends Activity implements View.OnClickListener {
      * The current y-coordinate of the robot.
      */
     private double mYCoordinate = 0.0;
+
+    /**
+     * All the positions that the robot has reached so far.
+     */
+    private LinkedList<Position> positions = new LinkedList<>();
+
+    /**
+     * The Gson instance for serialization and deserialization.
+     */
+    private Gson gson = new Gson();
+
+    /**
+     * The Type LinkedList<Position> that is needed for serialization and deserialization with Gson.
+     */
+    private Type listType = new TypeToken<LinkedList<Position>>() {}.getType();
+
+    /**
+     * Serializes the list that contains all the positions that the robot has reached so far with
+     * Gson and writes the String to the file "positions.json" in the internal storage.
+     */
+    public void storePositions() {
+        String json = gson.toJson(positions, listType);
+        try {
+            FileOutputStream fileOutputStream = openFileOutput("positions.json", Context.MODE_PRIVATE);
+            if(json != null) {
+                fileOutputStream.write(json.getBytes());
+            }
+            fileOutputStream.close();
+        } catch(FileNotFoundException fileNotFound) {
+            Log.e(TAG, "File not found: positions.json");
+            Toast toast = Toast.makeText(getApplicationContext(), "File not found!", Toast.LENGTH_LONG);
+            toast.show();
+        } catch(IOException ioException) {
+            Log.e(TAG, "Error when writing to file positions.json");
+            Toast toast = Toast.makeText(getApplicationContext(), "File not found!", Toast.LENGTH_LONG);
+            toast.show();
+        }
+    }
 
     /**
      * Starts the exploration process by initialising the obstacle avoidance functionality and
@@ -156,7 +206,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             Log.d(TAG, "State: " + mState +
                     " | Orientation: " + mOrientation +
                     " | Position: x = " + mXCoordinate + " | y = " + mYCoordinate);
-            // TODO: Save position to JSON file
+            positions.add(new Position(mXCoordinate, mYCoordinate));
             mState = State.OBSTACLE;
         } else if(mState == State.WALK){
             mState = State.OBSTACLE;
@@ -225,14 +275,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
         Log.d(TAG, "State: " + mState +
                 " | Orientation: " + mOrientation +
                 " | Position: x = " + mXCoordinate + " | y = " + mYCoordinate);
-        // TODO: Save position to JSON file
+        positions.add(new Position(mXCoordinate, mYCoordinate));
     }
 
     /**
      * Sets the mOrientation of the robot in relation to the origin of the coordinate system.
      * The new mOrientation of the robot depends on whether a left or a right turn is to be performed.
      *
-     * @param direction Indicates whether the turn to be performed is a left turn or a right turn.
+     * @param direction indicates whether the turn to be performed is a left turn or a right turn
      */
     public void updateOrientation(String direction) {
         if(direction.equals(LEFT_TURN)) {
@@ -355,6 +405,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 break;
             case R.id.button_stop:
                 mBase.clearCheckPointsAndStop();
+                storePositions();
+                // TODO: Start navigation Activity
                 break;
         }
     }

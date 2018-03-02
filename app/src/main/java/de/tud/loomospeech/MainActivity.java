@@ -267,12 +267,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void startWakeUpListener() {
-        if (mRecognizer == null) {
-            return;
-        }
-
         try {
-            mRecognizer.startWakeupMode(mWakeupListener);
+            if (mRecognizer != null) {
+                mRecognizer.startWakeupMode(mWakeupListener);
+            } else {
+                throw new VoiceException("mRecognizer is null");
+            }
         } catch (VoiceException e) {
             Log.e(TAG, "Exception: ", e);
         }

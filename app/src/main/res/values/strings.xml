@@ -43,8 +43,8 @@
     <string name="authenticationUri"/>
     <string name="luisAppID">807decf3-b1de-4cf5-bd17-ed87aa435edd</string>
     <string name="luisSubscriptionID">f448971d96d448a59fa1898cb0237fd7</string>
-    
+
     <string name="statusReady">Ready</string>
-    <string name="statusListening">Listening...</string>
-    <string name="statusProcessing">Processing...</string>
+    <string name="statusListening">Listening…</string>
+    <string name="statusProcessing">Processing…</string>
 </resources>

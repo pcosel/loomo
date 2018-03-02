@@ -52,26 +52,28 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
     @Override
     public void onIntentReceived(String s) {
         String msg = "";
+        JSONObject json;
+        JSONArray intentsArray, entitiesArray;
 
-        JSONObject json = null;
-        JSONArray intentsArray, entitesArray;
         try {
             json = new JSONObject(s);
             intentsArray = json.getJSONArray("intents");
             msg += "Text: " + json.get("query");
+
             for(int i = 0; i<= 2; i++) {
                 String confidence = intentsArray.getJSONObject(i).get("score").toString().substring(2,4) + "%";
                 String intent = intentsArray.getJSONObject(i).get("intent").toString();
                 msg += "\n" + confidence + " " + intent;
             }
-            entitesArray = json.getJSONArray("entities");
 
-            if(entitesArray.length() != 0) {
+            entitiesArray = json.getJSONArray("entities");
+
+            if(entitiesArray.length() != 0) {
                 msg += "\nParameters: ";
-                for(int i = 0; i <= entitesArray.length(); i++) {
-                    String confidence = entitesArray.getJSONObject(i).get("score").toString().substring(2,4) + "%";
-                    String entity = entitesArray.getJSONObject(i).get("entity").toString();
-                    String type = entitesArray.getJSONObject(i).get("type").toString();
+                for(int i = 0; i <= entitiesArray.length(); i++) {
+                    String confidence = entitiesArray.getJSONObject(i).get("score").toString().substring(2,4) + "%";
+                    String entity = entitiesArray.getJSONObject(i).get("entity").toString();
+                    String type = entitiesArray.getJSONObject(i).get("type").toString();
                     msg += "\n" + confidence + " " + type + " " + entity;
                 }
             }
@@ -82,6 +84,7 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
 
         Log.d(TAG, "Intent received!!!");
         mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
+        activity.loomoSoundPool.play("success");
 
 //        recognitionClientWithIntent.endMicAndRecognition();
         activity.startWakeUpListener();
@@ -92,6 +95,7 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         String msg = "Error:" + i + " - " + s;
         Log.d(TAG, msg);
         mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
+        activity.loomoSoundPool.play("error");
 
         activity.startWakeUpListener();
     }

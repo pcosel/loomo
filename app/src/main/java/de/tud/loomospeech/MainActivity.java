@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.media.AudioManager;
+import android.media.SoundPool;
 import android.media.ToneGenerator;
 import android.os.Bundle;
 import android.os.Environment;
@@ -41,8 +42,8 @@ public class MainActivity extends AppCompatActivity {
     private AzureSpeechRecognition azureSpeechRecognition;
     private Button btnAction;
 
-    ToneGenerator toneGenerator;
     MessageHandler mHandler;
+    LoomoSoundPool loomoSoundPool;
 
 
     @Override
@@ -59,9 +60,9 @@ public class MainActivity extends AppCompatActivity {
         switchLanguage(Locale.getDefault());
         mHandler = new MessageHandler(this);
         azureSpeechRecognition = new AzureSpeechRecognition(this);
+        loomoSoundPool = new LoomoSoundPool(this);
 
 
-        initAudio();
         initWakeUp();
         initRecognizer();
 //        initSpeaker();
@@ -98,18 +99,6 @@ public class MainActivity extends AppCompatActivity {
         return super.onTouchEvent(event);
     }
 
-    protected void initAudio() {
-        int volume = 5;
-
-        AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        try { volume = audioManager.getStreamVolume(AudioManager.STREAM_RING); } catch (Exception e) {
-            Log.d(TAG, "Exeption: Could not read system notification volume. Using 50%.", e);
-            mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, 0, "Could not read system notification volume. Using 50%."));
-        }
-        volume = (volume * 10) % 100;
-        toneGenerator = new ToneGenerator(AudioManager.STREAM_RING, volume);
-    }
-
     protected void initRecognizer() {
         mRecognizer = Recognizer.getInstance();
         mRecognizer.bindService(MainActivity.this, new ServiceBinder.BindStateListener() {
@@ -119,56 +108,6 @@ public class MainActivity extends AppCompatActivity {
                 mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, 0, getString(R.string.recognition_connected)));
 
 //                showTip("start to wake up and recognize speech");
-
-//                try {
-//                    Slot moveSlot = new Slot("move");
-//                    Slot toSlot = new Slot("to");
-//                    Slot orientationSlot = new Slot("orientation");
-//                    List<Slot> controlSlotList = new LinkedList<>();
-//                    moveSlot.setOptional(false);
-//                    moveSlot.addWord("turn");
-//                    moveSlot.addWord("move");
-//                    controlSlotList.add(moveSlot);
-//
-//                    toSlot.setOptional(true);
-//                    toSlot.addWord("to the");
-//                    controlSlotList.add(toSlot);
-//
-//                    orientationSlot.setOptional(false);
-//                    orientationSlot.addWord("right");
-//                    orientationSlot.addWord("left");
-//                    controlSlotList.add(orientationSlot);
-//
-//                    GrammarConstraint mThreeSlotGrammar = new GrammarConstraint("three slots grammar", controlSlotList);
-//
-//                    String grammarJson = "{\n" +
-//                            "         \"name\": \"play_media\",\n" +
-//                            "         \"slotList\": [\n" +
-//                            "             {\n" +
-//                            "                 \"name\": \"play_cmd\",\n" +
-//                            "                 \"isOptional\": false,\n" +
-//                            "                 \"word\": [\n" +
-//                            "                     \"play\",\n" +
-//                            "                     \"close\",\n" +
-//                            "                     \"pause\"\n" +
-//                            "                 ]\n" +
-//                            "             },\n" +
-//                            "             {\n" +
-//                            "                 \"name\": \"media\",\n" +
-//                            "                 \"isOptional\": false,\n" +
-//                            "                 \"word\": [\n" +
-//                            "                     \"the music\",\n" +
-//                            "                     \"the video\"\n" +
-//                            "                 ]\n" +
-//                            "             }\n" +
-//                            "         ]\n" +
-//                            "     }";
-//                    GrammarConstraint mTwoSlotGrammar = mRecognizer.createGrammarConstraint(grammarJson);
-//                    mRecognizer.addGrammarConstraint(mTwoSlotGrammar);
-//                    mRecognizer.addGrammarConstraint(mThreeSlotGrammar);
-//                } catch (VoiceException e) {
-//                    Log.e(TAG, "Exception: ", e);
-//                }
 
                 startWakeUpListener();
             }

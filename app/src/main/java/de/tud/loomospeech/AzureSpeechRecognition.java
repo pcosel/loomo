@@ -1,13 +1,11 @@
 package de.tud.loomospeech;
 
-import android.media.ToneGenerator;
 import android.util.Log;
 
 import com.microsoft.cognitiveservices.speechrecognition.ISpeechRecognitionServerEvents;
 import com.microsoft.cognitiveservices.speechrecognition.MicrophoneRecognitionClientWithIntent;
 import com.microsoft.cognitiveservices.speechrecognition.RecognitionResult;
 import com.microsoft.cognitiveservices.speechrecognition.RecognitionStatus;
-import com.microsoft.cognitiveservices.speechrecognition.RecognizedPhrase;
 import com.microsoft.cognitiveservices.speechrecognition.SpeechRecognitionServiceFactory;
 
 import org.json.JSONArray;
@@ -39,9 +37,9 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         recognitionClientWithIntent.endMicAndRecognition();
 
         String msg = "Final response: " + recognitionResult.RecognitionStatus;
-        /* for (RecognizedPhrase el: recognitionResult.Results) {
-            msg += "\nConfidence: " + el.Confidence + " Text: \"" + el.DisplayText + "\"";
-        }*/
+//        for (RecognizedPhrase el: recognitionResult.Results) {
+//            msg += "\nConfidence: " + el.Confidence + " Text: \"" + el.DisplayText + "\"";
+//        }
 
         Log.d(TAG, msg);
         mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, 0, msg));
@@ -103,7 +101,7 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         String msg = "Microphone status: " + isRecording;
         if (isRecording) { msg += "\nPlease start speaking..."; }
         mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, 0, msg));
-        activity.toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP);
+        activity.loomoSoundPool.play("listening");
 
         if (!isRecording) {
             recognitionClientWithIntent.endMicAndRecognition();

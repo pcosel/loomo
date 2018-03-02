@@ -105,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onBind() {
                 Log.d(TAG, "Recognition service onBind");
-                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, 0, getString(R.string.recognition_connected)));
+                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.recognition_connected)));
 
 //                showTip("start to wake up and recognize speech");
 
@@ -115,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onUnbind(String s) {
                 Log.d(TAG, "Recognition service onUnbind");
-                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, 0, getString(R.string.recognition_disconnected)));
+                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.recognition_disconnected)));
                 //speaker service or recognition service unbind, disable function buttons.
             }
         });
@@ -127,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
 //            @Override
 //            public void onBind() {
 //                Log.d(TAG, "Speaker service onBind");
-//                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, 0, getString(R.string.speaker_connected)));
+//                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speaker_connected)));
 ////                try {
 ////                    //get speaker service language.
 ////                    mSpeakerLanguage = mSpeaker.getLanguage();
@@ -152,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
 //            public void onUnbind(String s) {
 //                Log.d(TAG, "Speaker service onUnbind");
 //                //speaker service or recognition service unbind, disable function buttons.
-//                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, 0, getString(R.string.speaker_disconnected)));
+//                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speaker_disconnected)));
 //            }
 //        });
 //    }
@@ -162,15 +162,16 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onStandby() {
                 Log.d(TAG, "WakeUp onStandby");
-                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, 0,"\n" + getString(R.string.wakeup_standby)));
+                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT,"\n" + getString(R.string.wakeup_standby)));
+                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.SET, MessageHandler.STATUS, getString(R.string.statusReady)));
             }
 
             @Override
             public void onWakeupResult(WakeupResult wakeupResult) {
                 //show the wakeup result and wakeup angle.
                 Log.d(TAG, "Wakeup result:" + wakeupResult.getResult() + ", angle " + wakeupResult.getAngle());
-                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, 0, getString(R.string.wakeup_result) + wakeupResult.getResult() + getString(R.string.wakeup_angle) + wakeupResult.getAngle()));
-
+                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.wakeup_result) + wakeupResult.getResult() + getString(R.string.wakeup_angle) + wakeupResult.getAngle()));
+                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.SET, MessageHandler.STATUS, getString(R.string.statusListening)));
                 //start azure recognition
                 azureSpeechRecognition.getRecognitionClientWithIntent().startMicAndRecognition();
 
@@ -182,7 +183,7 @@ public class MainActivity extends AppCompatActivity {
             public void onWakeupError(String s) {
                 //show the wakeup error reason.
                 Log.d(TAG, "WakeUp onWakeupError");
-                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, 0, getString(R.string.wakeup_error) + s));
+                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.wakeup_error) + s));
             }
         };
     }
@@ -213,21 +214,21 @@ public class MainActivity extends AppCompatActivity {
 //            public void onSpeechStarted(String s) {
 //                //s is speech content, callback this method when speech is starting.
 //                Log.d(TAG, "TTS onSpeechStarted() called with: s = [" + s + "]");
-//                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, 0, getString(R.string.speech_start)));
+//                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speech_start)));
 //            }
 //
 //            @Override
 //            public void onSpeechFinished(String s) {
 //                //s is speech content, callback this method when speech is finish.
 //                Log.d(TAG, "TTS onSpeechFinished() called with: s = [" + s + "]");
-//                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, 0, getString(R.string.speech_end)));
+//                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speech_end)));
 //            }
 //
 //            @Override
 //            public void onSpeechError(String s, String s1) {
 //                //s is speech content, callback this method when speech occurs error.
 //                Log.d(TAG, "TTS onSpeechError() called with: s = [" + s + "], s1 = [" + s1 + "]");
-//                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, 0, getString(R.string.speech_error) + s1));
+//                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speech_error) + s1));
 //            }
 //        };
 //    }

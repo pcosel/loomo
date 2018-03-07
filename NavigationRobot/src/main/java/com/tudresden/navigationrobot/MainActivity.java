@@ -3,6 +3,7 @@ package com.tudresden.navigationrobot;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -23,7 +24,6 @@ import com.segway.robot.sdk.locomotion.sbv.Base;
 import com.segway.robot.sdk.locomotion.sbv.StartVLSListener;
 import com.segway.robot.sdk.perception.sensor.Sensor;
 
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -35,13 +35,25 @@ import java.util.LinkedList;
 public class MainActivity extends Activity implements View.OnClickListener {
 
     private static final String TAG = "MainActivity";
-
     private static final String LEFT_TURN = "left turn";
     private static final String RIGHT_TURN = "right turn";
 
-    private int press = 0;
+    private int mPress = 0;
 
+    /**
+     * A handler for delaying the execution of the code in #obstacleDetected() in order to reduce
+     * the number of false positives in obstacle detection.
+     */
+    private Handler mHandler = new Handler();
+
+    /**
+     * The Base instance that is used for controlling the robots movements.
+     */
     private Base mBase = null;
+
+    /**
+     * The Sensor instance that is used for every action related to the ultrasonic sensor.
+     */
     private Sensor mSensor = null;
 
     /**
@@ -50,18 +62,18 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private boolean mCheckingWall = false;
 
     /**
-     * The current mState of the robot.
+     * The current state of the robot.
      */
     private State mState;
 
     /**
-     * The current mOrientation of the robot. The mState tells which way the robot is facing in
+     * The current orientation of the robot. The state tells which way the robot is facing in
      * relation to the origin of the coordinate system.
      */
     private Orientation mOrientation;
 
     /**
-     * The current ultrasonic mDistance from the next obstacle in front of the robot.
+     * The current ultrasonic distance from the next obstacle in front of the robot.
      */
     private float mDistance;
 
@@ -78,38 +90,33 @@ public class MainActivity extends Activity implements View.OnClickListener {
     /**
      * All the positions that the robot has reached so far.
      */
-    private LinkedList<Position> positions = new LinkedList<>();
+    private LinkedList<Position> mPositions = new LinkedList<>();
 
     /**
      * The Gson instance for serialization and deserialization.
      */
-    private Gson gson = new Gson();
+    private Gson mGson = new Gson();
 
     /**
      * The Type LinkedList<Position> that is needed for serialization and deserialization with Gson.
      */
-    private Type listType = new TypeToken<LinkedList<Position>>() {}.getType();
+    private Type mListType = new TypeToken<LinkedList<Position>>(){}.getType();
 
     /**
      * Serializes the list that contains all the positions that the robot has reached so far with
      * Gson and writes the String to the file "positions.json" in the internal storage.
      */
     public void storePositions() {
-        String json = gson.toJson(positions, listType);
+        String json = mGson.toJson(mPositions, mListType);
         try {
             FileOutputStream fileOutputStream = openFileOutput("positions.json", Context.MODE_PRIVATE);
             if(json != null) {
                 fileOutputStream.write(json.getBytes());
             }
             fileOutputStream.close();
-        } catch(FileNotFoundException fileNotFound) {
-            Log.e(TAG, "File not found: positions.json");
-            Toast toast = Toast.makeText(getApplicationContext(), "File not found!", Toast.LENGTH_LONG);
-            toast.show();
-        } catch(IOException ioException) {
-            Log.e(TAG, "Error when writing to file positions.json");
-            Toast toast = Toast.makeText(getApplicationContext(), "File not found!", Toast.LENGTH_LONG);
-            toast.show();
+        } catch(IOException e) {
+            e.printStackTrace();
+            Toast.makeText(getApplicationContext(), "File not found!", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -158,6 +165,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 mBase.addCheckPoint(1f, 0);
                 break;
             case WALK:
+                if(mCheckingWall) {
+                    mCheckingWall = false;
+                }
                 updateCoordinates();
                 mState = State.CHECK;
                 mDistance = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
@@ -201,40 +211,47 @@ public class MainActivity extends Activity implements View.OnClickListener {
      * was detected.
      */
     public void obstacleDetected() {
-        if(mState == State.START) {
-            // This is the first obstacle that the robot has detected (the coordinates are 0.0)
-            Log.d(TAG, "State: " + mState +
-                    " | Orientation: " + mOrientation +
-                    " | Position: x = " + mXCoordinate + " | y = " + mYCoordinate);
-            positions.add(new Position(mXCoordinate, mYCoordinate));
-            mState = State.OBSTACLE;
-        } else if(mState == State.WALK){
-            mState = State.OBSTACLE;
-            // Concerning mCheckingWall see explanation in arrivedAtCheckpoint() (case CHECK)
-            if(!mCheckingWall) {
-                updateCoordinates();
-            } else {
-                mCheckingWall = false;
+        // Delay the execution of the code for 1 second, then check if there really is an obstacle
+        mHandler.postDelayed(new Runnable() {
+            public void run() {
+                if(mSensor.getUltrasonicDistance().getDistance() <= 1300) {
+                    if(mState == State.START) {
+                        // This is the first obstacle that the robot has detected (the coordinates are 0.0)
+                        Log.d(TAG, "State: " + mState +
+                                " | Orientation: " + mOrientation +
+                                " | Position: (" + mXCoordinate + " , " + mYCoordinate + ")");
+                        mPositions.add(new Position(mXCoordinate, mYCoordinate));
+                        mState = State.OBSTACLE;
+                    } else if(mState == State.WALK) {
+                        mState = State.OBSTACLE;
+                        // Concerning mCheckingWall see explanation in arrivedAtCheckpoint() (case CHECK)
+                        if(!mCheckingWall) {
+                            updateCoordinates();
+                        } else {
+                            mCheckingWall = false;
+                        }
+                    }
+                    // The robot detects an obstacle before it reaches the current checkpoint. When an obstacle
+                    // is detected, a new checkpoint is set for the left turn but the robot still tries to reach
+                    // the last checkpoint first. That checkpoint obviously can't be reached, because there is an
+                    // obstacle in front of the robot, so the robot just stops walking completely.
+                    // Therefore the last checkpoint needs to be deleted before the new one is set.
+                    mBase.clearCheckPointsAndStop();
+                    mBase.cleanOriginalPoint();
+                    PoseVLS pos = mBase.getVLSPose(-1);
+                    mBase.setOriginalPoint(pos);
+                    updateOrientation(LEFT_TURN);
+                    // Turn left (90 degrees)
+                    mBase.addCheckPoint(0, 0, (float) (Math.PI / 2));
+                    // When the turn is finished, {@see #arrivedAtCheckpoint()} is called and the robot walks
+                    // forward to the next wall
+                }
             }
-        }
-        // The robot detects an obstacle before it reaches the current checkpoint. When an obstacle
-        // is detected, a new checkpoint is set for the left turn but the robot still tries to reach
-        // the last checkpoint first. That checkpoint obviously can't be reached, because there is an
-        // obstacle in front of the robot, so the robot just stops walking completely.
-        // Therefore the last checkpoint needs to be deleted before the new one is set.
-        mBase.clearCheckPointsAndStop();
-        mBase.cleanOriginalPoint();
-        PoseVLS pos = mBase.getVLSPose(-1);
-        mBase.setOriginalPoint(pos);
-        updateOrientation(LEFT_TURN);
-        // Turn left (90 degrees)
-        mBase.addCheckPoint(0, 0, (float) (Math.PI/2));
-        // When the turn is finished, {@see #arrivedAtCheckpoint()} is called and the robot walks
-        // forward to the next wall
+        }, 1000);
     }
 
     /**
-     * Sets the x- or y-coordinate according to the current mOrientation of the robot.
+     * Sets the x- or y-coordinate according to the current orientation of the robot.
      */
     public void updateCoordinates() {
         if(mState == State.WALK) {
@@ -274,13 +291,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
         Log.d(TAG, "State: " + mState +
                 " | Orientation: " + mOrientation +
-                " | Position: x = " + mXCoordinate + " | y = " + mYCoordinate);
-        positions.add(new Position(mXCoordinate, mYCoordinate));
+                " | Position: (" + mXCoordinate + " , " + mYCoordinate + ")");
+        mPositions.add(new Position(mXCoordinate, mYCoordinate));
     }
 
     /**
-     * Sets the mOrientation of the robot in relation to the origin of the coordinate system.
-     * The new mOrientation of the robot depends on whether a left or a right turn is to be performed.
+     * Sets the orientation of the robot in relation to the origin of the coordinate system.
+     * The new orientation of the robot depends on whether a left or a right turn is to be performed.
      *
      * @param direction indicates whether the turn to be performed is a left turn or a right turn
      */
@@ -334,10 +351,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     private void initView() {
-        Button startButton = (Button) findViewById(R.id.button_start);
+        Button startButton = (Button) findViewById(R.id.buttonStart);
         startButton.setOnClickListener(this);
 
-        Button stopButton = (Button) findViewById(R.id.button_stop);
+        Button stopButton = (Button) findViewById(R.id.buttonStop);
         stopButton.setOnClickListener(this);
     }
 
@@ -400,13 +417,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
     @Override
     public void onClick(View v) {
         switch(v.getId()) {
-            case R.id.button_start:
+            case R.id.buttonStart:
                 startExploration();
                 break;
-            case R.id.button_stop:
+            case R.id.buttonStop:
                 mBase.clearCheckPointsAndStop();
                 storePositions();
-                // TODO: Start navigation Activity
                 break;
         }
     }
@@ -423,11 +439,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     @Override
     public void onBackPressed() {
-        if(press == 0) {
+        if(mPress == 0) {
             Toast.makeText(this, "Press again to exit", Toast.LENGTH_SHORT).show();
         }
-        press++;
-        if(press == 2) {
+        mPress++;
+        if(mPress == 2) {
             super.onBackPressed();
         }
     }
@@ -456,6 +472,5 @@ public class MainActivity extends Activity implements View.OnClickListener {
         super.onDestroy();
         mBase.unbindService();
         mSensor.unbindService();
-
     }
 }

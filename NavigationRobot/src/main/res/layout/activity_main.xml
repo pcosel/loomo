@@ -7,20 +7,20 @@
     tools:context="com.tudresden.navigationrobot.MainActivity">
 
     <Button
-        android:id="@+id/button_start"
+        android:id="@+id/buttonStart"
         android:layout_width="match_parent"
         android:layout_height="70dp"
         android:layout_alignParentStart="true"
         android:layout_marginTop="28dp"
-        android:text="START" />
+        android:text="@string/button_start" />
 
     <Button
-        android:id="@+id/button_stop"
+        android:id="@+id/buttonStop"
         android:layout_width="match_parent"
         android:layout_height="70dp"
         android:layout_alignParentStart="true"
-        android:layout_below="@+id/button_start"
+        android:layout_below="@+id/buttonStart"
         android:layout_marginTop="22dp"
-        android:text="STOP" />
+        android:text="@string/button_stop" />
 
 </RelativeLayout>

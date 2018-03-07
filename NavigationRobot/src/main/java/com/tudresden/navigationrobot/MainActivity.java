@@ -2,6 +2,7 @@ package com.tudresden.navigationrobot;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -343,7 +344,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        getActionBar().setDisplayHomeAsUpEnabled(true);
 
         initView();
         initBase();
@@ -351,10 +351,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     private void initView() {
-        Button startButton = (Button) findViewById(R.id.buttonStart);
+        Button startButton = (Button)findViewById(R.id.buttonStart);
         startButton.setOnClickListener(this);
 
-        Button stopButton = (Button) findViewById(R.id.buttonStop);
+        Button stopButton = (Button)findViewById(R.id.buttonStop);
         stopButton.setOnClickListener(this);
     }
 
@@ -423,6 +423,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
             case R.id.buttonStop:
                 mBase.clearCheckPointsAndStop();
                 storePositions();
+                Intent intent = new Intent(this, NavigationActivity.class);
+                startActivity(intent);
                 break;
         }
     }

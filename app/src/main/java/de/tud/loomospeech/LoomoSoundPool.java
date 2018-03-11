@@ -20,7 +20,7 @@ class LoomoSoundPool implements SoundPool.OnLoadCompleteListener {
         soundPool = new SoundPool.Builder().setMaxStreams(10).build();
         soundPool.setOnLoadCompleteListener(this);
 
-        NamedSounds.put("error", soundPool.load(ctx, R.raw.error, 1));
+        NamedSounds.put("error", soundPool.load(ctx, R.raw.error, 2));
         NamedSounds.put("success", soundPool.load(ctx, R.raw.success, 1));
         NamedSounds.put("listening", soundPool.load(ctx, R.raw.listening, 1));
         NamedSounds.put("fart", soundPool.load(ctx, R.raw.fart, 1));

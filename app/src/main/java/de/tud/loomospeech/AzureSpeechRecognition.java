@@ -52,37 +52,15 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
     @Override
     public void onIntentReceived(String s) {
         String msg = "";
-        JSONObject json;
-        JSONArray intentsArray, entitiesArray;
+
+        Log.d(TAG, "Intent received!!!");
 
         try {
-            json = new JSONObject(s);
-            intentsArray = json.getJSONArray("intents");
-            msg += "Text: " + json.get("query");
-
-            for(int i = 0; i<= 2; i++) {
-                String confidence = intentsArray.getJSONObject(i).get("score").toString().substring(2,4) + "%";
-                String intent = intentsArray.getJSONObject(i).get("intent").toString();
-                msg += "\n" + confidence + " " + intent;
-            }
-
-            entitiesArray = json.getJSONArray("entities");
-
-            if(entitiesArray.length() != 0) {
-                msg += "\nParameters: ";
-                for(int i = 0; i <= entitiesArray.length(); i++) {
-                    String confidence = entitiesArray.getJSONObject(i).get("score").toString().substring(2,4) + "%";
-                    String entity = entitiesArray.getJSONObject(i).get("entity").toString();
-                    String type = entitiesArray.getJSONObject(i).get("type").toString();
-                    msg += "\n" + confidence + " " + type + " " + entity;
-                }
-            }
-
+            msg = prettyPrintResponse(s);
         } catch (Exception e) {
             Log.d(TAG, "Exception onIntentReceived: ", e);
         }
 
-        Log.d(TAG, "Intent received!!!");
         mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
         activity.loomoSoundPool.play("success");
 
@@ -92,8 +70,8 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
 
     @Override
     public void onError(int i, String s) {
-        String msg = "Error:" + i + " - " + s;
-        Log.d(TAG, msg);
+        String msg = "Error: " + i + " - " + s;
+        Log.e(TAG, msg);
         mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
         activity.loomoSoundPool.play("error");
 
@@ -103,9 +81,11 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
     @Override
     public void onAudioEvent(boolean isRecording) {
         String msg = "Microphone status: " + isRecording;
-        if (isRecording) { msg += "\nPlease start speaking..."; }
+        if (isRecording) {
+            activity.loomoSoundPool.play("listening");
+            msg += "\nPlease start speaking...";
+        }
         mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
-        activity.loomoSoundPool.play("listening");
 
         if (!isRecording) {
             recognitionClientWithIntent.endMicAndRecognition();
@@ -128,6 +108,41 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         recognitionClientWithIntent.setAuthenticationUri(activity.getString(R.string.authenticationUri));
 
         return recognitionClientWithIntent;
+    }
+
+    String prettyPrintResponse(String response) throws Exception {
+        StringBuilder sb = new StringBuilder();
+        JSONObject json;
+        JSONArray intentsArray, entitiesArray;
+
+        json = new JSONObject(response);
+        intentsArray = json.getJSONArray("intents");
+        sb.append("Text: ").append(json.get("query"));
+
+        for(int i = 0; i<= 2; i++) {
+            Double score = (double)intentsArray.getJSONObject(i).get("score") * 100;
+            sb.append("\n")
+                    .append(score.intValue()).append("%")
+                    .append(" ")
+                    .append(intentsArray.getJSONObject(i).get("intent"));
+        }
+
+        entitiesArray = json.getJSONArray("entities");
+
+        if(entitiesArray.length() > 0) {
+            sb.append("\nParameters: ");
+            for(int i = 0; i < entitiesArray.length(); i++) {
+                Double score = (double)entitiesArray.getJSONObject(i).get("score") * 100;
+                sb.append("\n")
+                        .append(score.intValue()).append("%")
+                        .append(" ")
+                        .append(entitiesArray.getJSONObject(i).get("type"))
+                        .append(" ")
+                        .append(entitiesArray.getJSONObject(i).get("entity"));
+            }
+        }
+
+        return sb.toString();
     }
 
 }

@@ -14,9 +14,14 @@ public class MapView extends View implements View.OnTouchListener {
 
     private Canvas mCanvas;
     private Bitmap mBitmap;
-    private Paint mPaint = new Paint();
+    private Paint mPaintBackground = new Paint();
+    private Paint mPaintStartPoint = new Paint();
+    private Paint mPaintPoint = new Paint();
+    private Paint mPaintTouchPoint = new Paint();
+    private Paint mPaintLine = new Paint();
+    private Paint mPaintText = new Paint();
 
-    private LinkedList<Position> mPositions = new LinkedList<>();
+    private LinkedList<Position> mScreenPositions = new LinkedList<>();
 
     private int mWidth;
     private int mHeight;
@@ -38,34 +43,47 @@ public class MapView extends View implements View.OnTouchListener {
 
         mNavigationActivity = (NavigationActivity)context;
 
-        mPositions = positions;
+        mScreenPositions = positions;
         mWidth = width;
         mHeight = height;
+
+        mPaintBackground.setColor(Color.WHITE);
+
+        mPaintStartPoint.setAntiAlias(true);
+        mPaintStartPoint.setStyle(Paint.Style.FILL);
+        mPaintStartPoint.setColor(Color.RED);
+
+        mPaintPoint.setAntiAlias(true);
+        mPaintPoint.setStyle(Paint.Style.FILL);
+        mPaintPoint.setColor(Color.BLACK);
+
+        mPaintTouchPoint.setAntiAlias(true);
+        mPaintTouchPoint.setStyle(Paint.Style.FILL);
+        mPaintTouchPoint.setColor(Color.GREEN);
+
+        mPaintLine.setAntiAlias(true);
+        mPaintLine.setStyle(Paint.Style.STROKE);
+        mPaintLine.setColor(Color.BLACK);
+        mPaintLine.setStrokeWidth(4);
+
+        mPaintLine.setAntiAlias(true);
+        mPaintText.setColor(Color.BLACK);
+        mPaintText.setTextSize(20);
     }
 
     private void initMap() {
         mBitmap = Bitmap.createBitmap(mWidth, mHeight, Bitmap.Config.RGB_565);
         mCanvas = new Canvas(mBitmap);
 
-        mPaint.setAntiAlias(true);
-        mPaint.setColor(Color.WHITE);
-        mPaint.setStyle(Paint.Style.FILL);
-        mPaint.setStrokeWidth(4);
+        mCanvas.drawPaint(mPaintBackground);
 
-        mCanvas.drawPaint(mPaint);
-
-        for(Position p : mPositions) {
-            if(mPositions.indexOf(p) == 0) {
-                mPaint.setColor(Color.RED);
-                mCanvas.drawCircle((float)p.getX(), (float)p.getY(), 8, mPaint);
+        for(Position p : mScreenPositions) {
+            if(mScreenPositions.indexOf(p) == 0) {
+                mCanvas.drawCircle((float)p.getX(), (float)p.getY(), 8, mPaintStartPoint);
             } else {
-                mPaint.setColor(Color.BLACK);
-                mCanvas.drawCircle((float)p.getX(), (float)p.getY(), 8, mPaint);
-            }
-            if(mPositions.indexOf(p) > 0) {
-                mPaint.setColor(Color.BLACK);
-                Position start = mPositions.get(mPositions.indexOf(p) - 1);
-                mCanvas.drawLine((float)start.getX(), (float)start.getY(), (float)p.getX(), (float)p.getY(), mPaint);
+                mCanvas.drawCircle((float)p.getX(), (float)p.getY(), 8, mPaintPoint);
+                Position start = mScreenPositions.get(mScreenPositions.indexOf(p) - 1);
+                mCanvas.drawLine((float)start.getX(), (float)start.getY(), (float)p.getX(), (float)p.getY(), mPaintLine);
             }
         }
     }
@@ -79,17 +97,15 @@ public class MapView extends View implements View.OnTouchListener {
         } else {
             initMap();
         }
-
-        canvas.drawBitmap(mBitmap, 0, 0, mPaint);
+        canvas.drawBitmap(mBitmap, 0, 0, mPaintBackground);
     }
 
     public boolean onTouch(View view, MotionEvent event) {
         mTouchEvent = true;
         initMap();
-        mPaint.setColor(Color.GREEN);
-        Position p = mNavigationActivity.calculateRealCoordinates(event.getX(), event.getY());
-        mCanvas.drawCircle(event.getX(), event.getY(), 8, mPaint);
-        // mCanvas.drawText("(" + p.getX() + " , " + p.getY() + ")", event.getX(), event.getY(), mPaint);
+        Position p = mNavigationActivity.calculateRealPosition(event.getX(), event.getY());
+        mCanvas.drawCircle(event.getX(), event.getY(), 8, mPaintTouchPoint);
+        mCanvas.drawText("(" + event.getX() + " , " + event.getY() + ")", event.getX() + 10, event.getY() + 6, mPaintText);
         invalidate();
         return true;
     }

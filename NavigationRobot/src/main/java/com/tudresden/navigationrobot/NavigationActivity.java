@@ -1,7 +1,6 @@
 package com.tudresden.navigationrobot;
 
 import android.app.Activity;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
@@ -24,7 +23,12 @@ public class NavigationActivity extends Activity {
 
     private Position mTargetPosition;
 
+    private double mDistance;
+
     private Gson mGson = new Gson();
+
+    private LinkedList<Position> mInputPositions = new LinkedList<>();
+    private LinkedList<Position> mScreenPositions = new LinkedList<>();
 
     private Type mListType = new TypeToken<LinkedList<Position>>(){}.getType();
 
@@ -52,62 +56,54 @@ public class NavigationActivity extends Activity {
         }
     }
 
-    public LinkedList<Position> calculateScreenCoordinates(int width, int height) {
-        double greatestAbsX = 0;
-        double greatestAbsY = 0;
+    public void calculateScreenPositions(int width, int height) {
+        double greatestAbsX = 0.0;
+        double greatestAbsY = 0.0;
 
-        LinkedList<Position> screenPositions = new LinkedList<>();
-
-        if(isFilePresent()) {
-            LinkedList<Position> inputPositions = mGson.fromJson(read(), mListType);
-
-            for(Position p : inputPositions) {
-                if(Math.abs(p.getX()) > greatestAbsX) {
-                    greatestAbsX = Math.abs(p.getX());
-                }
-                if(Math.abs(p.getY()) > greatestAbsY) {
-                    greatestAbsY = Math.abs(p.getY());
-                }
+        for(Position p : mInputPositions) {
+            if(Math.abs(p.getX()) > greatestAbsX) {
+                greatestAbsX = Math.abs(p.getX());
             }
-
-            int distance;
-            if(greatestAbsX == 0 && greatestAbsY == 0) {
-                distance = 0;
-            } else if(greatestAbsX == 0) {
-                distance = (int)(((height - 20) / 2) / greatestAbsY);
-            } else if(greatestAbsY == 0) {
-                distance = (int)(((width - 20) / 2) / greatestAbsX);
-            } else if(((width - 20) / 2) / greatestAbsX <= ((height - 20) / 2) / greatestAbsY) {
-                distance = (int)(((width - 20) / 2) / greatestAbsX);
-            } else {
-                distance = (int)(((height - 20) / 2) / greatestAbsY);
-            }
-
-            for(Position p : inputPositions) {
-                double x;
-                double y;
-                if(distance == 0) {
-                    x = width / 2;
-                    y = height / 2;
-                } else {
-                    if(p.getX() <= 0) {
-                        x = (width / 2) + (Math.abs(p.getX()) * distance);
-                    } else {
-                        x = (width / 2) - (p.getX() * distance);
-                    }
-                    if(p.getY() <= 0) {
-                        y = (height / 2) + (Math.abs(p.getY()) * distance);
-                    } else {
-                        y = (height / 2) - (p.getY() * distance);
-                    }
-                }
-                screenPositions.add(new Position(x, y));
+            if(Math.abs(p.getY()) > greatestAbsY) {
+                greatestAbsY = Math.abs(p.getY());
             }
         }
-        return screenPositions;
+
+        if(Double.compare(greatestAbsX, 0.0) == 0 && Double.compare(greatestAbsY, 0.0) == 0) {
+            mDistance = 0.0;
+        } else if(Double.compare(greatestAbsX, 0.0) == 0) {
+            mDistance = ((height - 20) / 2) / greatestAbsY;
+        } else if(Double.compare(greatestAbsY, 0.0) == 0) {
+            mDistance = ((width - 20) / 2) / greatestAbsX;
+        } else if(Double.compare(((width - 20) / 2) / greatestAbsX, ((height - 20) / 2) / greatestAbsY) > 0) {
+            mDistance = ((height - 20) / 2) / greatestAbsY;
+        } else {
+            mDistance = ((width - 20) / 2) / greatestAbsX;
+        }
+
+        for(Position p : mInputPositions) {
+            double x;
+            double y;
+            if(Double.compare(mDistance, 0.0) == 0) {
+                x = width / 2;
+                y = height / 2;
+            } else {
+                if(Double.compare(p.getX(), 0.0) > 0) {
+                    x = (width / 2) - (p.getX() * mDistance);
+                } else {
+                    x = (width / 2) + (Math.abs(p.getX()) * mDistance);
+                }
+                if(Double.compare(p.getY(), 0.0) > 0) {
+                    y = (height / 2) - (p.getY() * mDistance);
+                } else {
+                    y = (height / 2) + (Math.abs(p.getY()) * mDistance);
+                }
+            }
+            mScreenPositions.add(new Position(x, y));
+        }
     }
 
-    public Position calculateRealCoordinates(float x, float y) {
+    public Position calculateRealPosition(float x, float y) {
         return mTargetPosition;
     }
 
@@ -121,9 +117,9 @@ public class NavigationActivity extends Activity {
                 int width = layout.getWidth();
                 int height = layout.getHeight();
 
-                LinkedList<Position> screenPositions = calculateScreenCoordinates(width, height);
+                calculateScreenPositions(width, height);
 
-                mFrameLayout.addView(new MapView(NavigationActivity.this, screenPositions, width, height));
+                mFrameLayout.addView(new MapView(NavigationActivity.this, mScreenPositions, width, height));
             }
         });
     }
@@ -135,6 +131,10 @@ public class NavigationActivity extends Activity {
         getActionBar().setDisplayHomeAsUpEnabled(true);
 
         mFrameLayout = (FrameLayout)findViewById(R.id.frameLayout);
+
+        if(isFilePresent()) {
+            mInputPositions = mGson.fromJson(read(), mListType);
+        }
 
         initFrameLayoutListener();
     }

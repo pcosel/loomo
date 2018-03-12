@@ -76,7 +76,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     /**
      * The current ultrasonic distance from the next obstacle in front of the robot.
      */
-    private float mDistance;
+    private double mDistance;
 
     /**
      * The current x-coordinate of the robot.

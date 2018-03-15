@@ -12,6 +12,8 @@ import java.util.LinkedList;
 
 public class MapView extends View implements View.OnTouchListener {
 
+    private static final int RADIUS = 10;
+
     private Canvas mCanvas;
     private Bitmap mBitmap;
     private Paint mPaintBackground = new Paint();
@@ -64,7 +66,7 @@ public class MapView extends View implements View.OnTouchListener {
         mPaintLine.setAntiAlias(true);
         mPaintLine.setStyle(Paint.Style.STROKE);
         mPaintLine.setColor(Color.BLACK);
-        mPaintLine.setStrokeWidth(4);
+        mPaintLine.setStrokeWidth(5);
 
         mPaintLine.setAntiAlias(true);
         mPaintText.setColor(Color.BLACK);
@@ -79,9 +81,9 @@ public class MapView extends View implements View.OnTouchListener {
 
         for(Position p : mScreenPositions) {
             if(mScreenPositions.indexOf(p) == 0) {
-                mCanvas.drawCircle((float)p.getX(), (float)p.getY(), 8, mPaintStartPoint);
+                mCanvas.drawCircle((float)p.getX(), (float)p.getY(), RADIUS, mPaintStartPoint);
             } else {
-                mCanvas.drawCircle((float)p.getX(), (float)p.getY(), 8, mPaintPoint);
+                mCanvas.drawCircle((float)p.getX(), (float)p.getY(), RADIUS, mPaintPoint);
                 Position start = mScreenPositions.get(mScreenPositions.indexOf(p) - 1);
                 mCanvas.drawLine((float)start.getX(), (float)start.getY(), (float)p.getX(), (float)p.getY(), mPaintLine);
             }
@@ -104,8 +106,8 @@ public class MapView extends View implements View.OnTouchListener {
         mTouchEvent = true;
         initMap();
         Position p = mNavigationActivity.calculateRealPosition(event.getX(), event.getY());
-        mCanvas.drawCircle(event.getX(), event.getY(), 8, mPaintTouchPoint);
-        mCanvas.drawText("(" + event.getX() + " , " + event.getY() + ")", event.getX() + 10, event.getY() + 6, mPaintText);
+        mCanvas.drawCircle(event.getX(), event.getY(), RADIUS, mPaintTouchPoint);
+        mCanvas.drawText("(" + event.getX() + " , " + event.getY() + ")", event.getX() + RADIUS, event.getY() + 6, mPaintText);
         invalidate();
         return true;
     }

@@ -19,11 +19,13 @@ import java.util.LinkedList;
 
 public class NavigationActivity extends Activity {
 
+    private static final int PADDING = 30;
+
     private FrameLayout mFrameLayout;
 
     private Position mTargetPosition;
 
-    private double mDistance;
+    private double mDistanceBetweenPoints;
 
     private Gson mGson = new Gson();
 
@@ -57,53 +59,78 @@ public class NavigationActivity extends Activity {
     }
 
     public void calculateScreenPositions(int width, int height) {
-        double greatestAbsX = 0.0;
-        double greatestAbsY = 0.0;
+        double greatestPosX = 0.0;
+        double greatestNegX = 0.0;
+        double greatestPosY = 0.0;
+        double greatestNegY = 0.0;
 
         for(Position p : mInputPositions) {
-            if(Math.abs(p.getX()) > greatestAbsX) {
-                greatestAbsX = Math.abs(p.getX());
-            }
-            if(Math.abs(p.getY()) > greatestAbsY) {
-                greatestAbsY = Math.abs(p.getY());
-            }
-        }
-
-        if(Double.compare(greatestAbsX, 0.0) == 0 && Double.compare(greatestAbsY, 0.0) == 0) {
-            mDistance = 0.0;
-        } else if(Double.compare(greatestAbsX, 0.0) == 0) {
-            mDistance = ((height - 20) / 2) / greatestAbsY;
-        } else if(Double.compare(greatestAbsY, 0.0) == 0) {
-            mDistance = ((width - 20) / 2) / greatestAbsX;
-        } else if(Double.compare(((width - 20) / 2) / greatestAbsX, ((height - 20) / 2) / greatestAbsY) > 0) {
-            mDistance = ((height - 20) / 2) / greatestAbsY;
-        } else {
-            mDistance = ((width - 20) / 2) / greatestAbsX;
-        }
-
-        for(Position p : mInputPositions) {
-            double x;
-            double y;
-            if(Double.compare(mDistance, 0.0) == 0) {
-                x = width / 2;
-                y = height / 2;
+            double x = p.getX();
+            double y = p.getY();
+            if(Double.compare(x, 0.0) > 0) {
+                if(Double.compare(x, greatestPosX) > 0) {
+                    greatestPosX = x;
+                }
             } else {
-                if(Double.compare(p.getX(), 0.0) > 0) {
-                    x = (width / 2) - (p.getX() * mDistance);
+                if(Double.compare(Math.abs(x), greatestNegX) > 0) {
+                    greatestNegX = Math.abs(x);
+                }
+            }
+            if(Double.compare(y, 0.0) > 0) {
+                if(Double.compare(y, greatestPosY) > 0) {
+                    greatestPosY = y;
+                }
+            } else {
+                if(Double.compare(Math.abs(y), greatestNegY) > 0) {
+                    greatestNegY = Math.abs(y);
+                }
+            }
+        }
+
+        double sumX = greatestPosX + greatestNegX;
+        double sumY = greatestPosY + greatestNegY;
+
+        if(Double.compare(sumX, 0.0) == 0 && Double.compare(sumY, 0.0) == 0) {
+            mDistanceBetweenPoints = 0.0;
+        } else if(Double.compare(sumX, 0.0) == 0) {
+            mDistanceBetweenPoints = (height - PADDING) / sumY;
+        } else if(Double.compare(sumY, 0.0) == 0) {
+            mDistanceBetweenPoints = (width - PADDING) / sumX;
+        } else if(Double.compare((width - PADDING) / sumX, (height - PADDING) / sumY) > 0) {
+            mDistanceBetweenPoints = (height - PADDING) / sumY;
+        } else {
+            mDistanceBetweenPoints = (width - PADDING) / sumX;
+        }
+
+        double startX = mDistanceBetweenPoints * greatestPosX + (PADDING / 2);
+        double startY = mDistanceBetweenPoints * greatestPosY + (PADDING / 2);
+
+        for(Position p : mInputPositions) {
+            double inX = p.getX();
+            double inY = p.getY();
+            double outX;
+            double outY;
+            if(Double.compare(mDistanceBetweenPoints, 0.0) == 0) {
+                outX = width / 2;
+                outY = height / 2;
+            } else {
+                if(Double.compare(inX, 0.0) > 0) {
+                    outX = startX - (inX * mDistanceBetweenPoints);
                 } else {
-                    x = (width / 2) + (Math.abs(p.getX()) * mDistance);
+                    outX = startX + (Math.abs(inX) * mDistanceBetweenPoints);
                 }
                 if(Double.compare(p.getY(), 0.0) > 0) {
-                    y = (height / 2) - (p.getY() * mDistance);
+                    outY = startY - (inY * mDistanceBetweenPoints);
                 } else {
-                    y = (height / 2) + (Math.abs(p.getY()) * mDistance);
+                    outY = startY + (Math.abs(inY) * mDistanceBetweenPoints);
                 }
             }
-            mScreenPositions.add(new Position(x, y));
+            mScreenPositions.add(new Position(outX, outY));
         }
     }
 
     public Position calculateRealPosition(float x, float y) {
+        // TODO: Calculate the position in the room from the position on the screen
         return mTargetPosition;
     }
 
@@ -127,7 +154,7 @@ public class NavigationActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_map);
+        setContentView(R.layout.activity_navigation);
         getActionBar().setDisplayHomeAsUpEnabled(true);
 
         mFrameLayout = (FrameLayout)findViewById(R.id.frameLayout);

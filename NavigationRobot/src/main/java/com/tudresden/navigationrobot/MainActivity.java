@@ -1,6 +1,7 @@
 package com.tudresden.navigationrobot;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -422,10 +423,19 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 break;
             case R.id.buttonStop:
                 mBase.clearCheckPointsAndStop();
-                storePositions();
-                Intent intent = new Intent(this, NavigationActivity.class);
-                startActivity(intent);
-                break;
+                if(mPositions.size() == 0) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    builder.setTitle("No map could be created!");
+                    builder.setMessage("Please run the exploration process first.");
+                    builder.setPositiveButton("OK", null);
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                } else {
+                    storePositions();
+                    Intent intent = new Intent(this, NavigationActivity.class);
+                    startActivity(intent);
+                    break;
+                }
         }
     }
 

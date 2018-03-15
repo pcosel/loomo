@@ -1,7 +1,9 @@
 package com.tudresden.navigationrobot;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.os.Bundle;
+import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.Toast;
@@ -23,6 +25,8 @@ public class NavigationActivity extends Activity {
 
     private FrameLayout mFrameLayout;
 
+    private Position mStartPosition;
+
     private Position mTargetPosition;
 
     private double mDistanceBetweenPoints;
@@ -30,6 +34,7 @@ public class NavigationActivity extends Activity {
     private Gson mGson = new Gson();
 
     private LinkedList<Position> mInputPositions = new LinkedList<>();
+
     private LinkedList<Position> mScreenPositions = new LinkedList<>();
 
     private Type mListType = new TypeToken<LinkedList<Position>>(){}.getType();
@@ -105,6 +110,8 @@ public class NavigationActivity extends Activity {
         double startX = mDistanceBetweenPoints * greatestPosX + (PADDING / 2);
         double startY = mDistanceBetweenPoints * greatestPosY + (PADDING / 2);
 
+        mStartPosition = new Position(startX, startY);
+
         for(Position p : mInputPositions) {
             double inX = p.getX();
             double inY = p.getY();
@@ -132,6 +139,19 @@ public class NavigationActivity extends Activity {
     public Position calculateRealPosition(float x, float y) {
         // TODO: Calculate the position in the room from the position on the screen
         return mTargetPosition;
+    }
+
+    public void startNavigation(View view) {
+        if(mTargetPosition == null) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("No destination selected!");
+            builder.setMessage("Please tap a point on the map to select your destination.");
+            builder.setPositiveButton("OK", null);
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        } else {
+            //TODO: Implement Navigation
+        }
     }
 
     private void initFrameLayoutListener() {

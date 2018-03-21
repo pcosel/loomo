@@ -107,7 +107,7 @@ public class MapView extends View implements View.OnTouchListener {
         initMap();
         Position p = mNavigationActivity.calculateRealPosition(event.getX(), event.getY());
         mCanvas.drawCircle(event.getX(), event.getY(), RADIUS, mPaintTouchPoint);
-        mCanvas.drawText("(" + event.getX() + " , " + event.getY() + ")", event.getX() + RADIUS, event.getY() + 6, mPaintText);
+        mCanvas.drawText("(" + p.getX() + " , " + p.getY() + ")", event.getX() + RADIUS, event.getY() + 6, mPaintText);
         invalidate();
         return true;
     }

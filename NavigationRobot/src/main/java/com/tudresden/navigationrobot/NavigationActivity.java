@@ -17,6 +17,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.LinkedList;
 
 public class NavigationActivity extends Activity {
@@ -38,6 +40,8 @@ public class NavigationActivity extends Activity {
     private LinkedList<Position> mScreenPositions = new LinkedList<>();
 
     private Type mListType = new TypeToken<LinkedList<Position>>(){}.getType();
+
+    DecimalFormatSymbols mDecimalFormatSymbols = DecimalFormatSymbols.getInstance();
 
     public boolean isFilePresent() {
         String path = getApplicationContext().getFilesDir().getAbsolutePath() + "/positions.json";
@@ -135,9 +139,35 @@ public class NavigationActivity extends Activity {
             mScreenPositions.add(new Position(outX, outY));
         }
     }
-
+    
     public Position calculateRealPosition(float x, float y) {
-        // TODO: Calculate the position in the room from the position on the screen
+        double targetX = 0.0;
+        double targetY = 0.0;
+
+        if (Double.compare(mDistanceBetweenPoints, 0.0) != 0) {
+            if (Double.compare(x, mStartPosition.getX()) == 0) {
+                targetX = 0;
+            } else if (Double.compare(x, mStartPosition.getX()) < 0) {
+                targetX = -((x - mStartPosition.getX()) / mDistanceBetweenPoints);
+            } else {
+                targetX = (mStartPosition.getX() - x) / mDistanceBetweenPoints;
+            }
+
+            if (Double.compare(y, mStartPosition.getY()) == 0) {
+                targetY = 0;
+            } else if (Double.compare(y, mStartPosition.getY()) < 0) {
+                targetY = -((y - mStartPosition.getY()) / mDistanceBetweenPoints);
+            } else {
+                targetY = (mStartPosition.getY() - y) / mDistanceBetweenPoints;
+            }
+        }
+
+        mDecimalFormatSymbols.setDecimalSeparator('.');
+        DecimalFormat df = new DecimalFormat("#.##", mDecimalFormatSymbols);
+        targetX = Double.parseDouble(df.format(targetX));
+        targetY = Double.parseDouble(df.format(targetY));
+
+        mTargetPosition = new Position(targetX, targetY);
         return mTargetPosition;
     }
 

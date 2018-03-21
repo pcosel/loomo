@@ -26,8 +26,12 @@ import com.segway.robot.sdk.locomotion.sbv.Base;
 import com.segway.robot.sdk.locomotion.sbv.StartVLSListener;
 import com.segway.robot.sdk.perception.sensor.Sensor;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.util.LinkedList;
 
@@ -103,6 +107,30 @@ public class MainActivity extends Activity implements View.OnClickListener {
      * The Type LinkedList<Position> that is needed for serialization and deserialization with Gson.
      */
     private Type mListType = new TypeToken<LinkedList<Position>>(){}.getType();
+
+    public boolean isFilePresent() {
+        String path = getApplicationContext().getFilesDir().getAbsolutePath() + "/positions.json";
+        File file = new File(path);
+        return file.exists();
+    }
+
+    public String read() {
+        try {
+            FileInputStream fileInputStream = getApplicationContext().openFileInput("positions.json");
+            InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
+            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+            StringBuilder stringBuilder = new StringBuilder();
+            String line;
+            while((line = bufferedReader.readLine()) != null) {
+                stringBuilder.append(line);
+            }
+            return stringBuilder.toString();
+        } catch(IOException e) {
+            e.printStackTrace();
+            Toast.makeText(getApplicationContext(), "File not found!", Toast.LENGTH_SHORT).show();
+            return "Error!";
+        }
+    }
 
     /**
      * Serializes the list that contains all the positions that the robot has reached so far with
@@ -349,6 +377,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
         initView();
         initBase();
         initSensor();
+
+        if(isFilePresent()) {
+            mPositions = mGson.fromJson(read(), mListType);
+        }
     }
 
     private void initView() {
@@ -366,7 +398,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
             @Override
             public void onBind() {
                 mBase.setControlMode(Base.CONTROL_MODE_NAVIGATION);
-
                 mBase.startVLS(true, true, new StartVLSListener() {
                     @Override
                     public void onOpened() {

@@ -139,7 +139,7 @@ public class NavigationActivity extends Activity {
             mScreenPositions.add(new Position(outX, outY));
         }
     }
-    
+
     public Position calculateRealPosition(float x, float y) {
         double targetX = 0.0;
         double targetY = 0.0;

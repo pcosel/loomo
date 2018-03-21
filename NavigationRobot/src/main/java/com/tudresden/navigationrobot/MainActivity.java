@@ -26,12 +26,9 @@ import com.segway.robot.sdk.locomotion.sbv.Base;
 import com.segway.robot.sdk.locomotion.sbv.StartVLSListener;
 import com.segway.robot.sdk.perception.sensor.Sensor;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.util.LinkedList;
 
@@ -112,24 +109,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
         String path = getApplicationContext().getFilesDir().getAbsolutePath() + "/positions.json";
         File file = new File(path);
         return file.exists();
-    }
-
-    public String read() {
-        try {
-            FileInputStream fileInputStream = getApplicationContext().openFileInput("positions.json");
-            InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
-            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-            StringBuilder stringBuilder = new StringBuilder();
-            String line;
-            while((line = bufferedReader.readLine()) != null) {
-                stringBuilder.append(line);
-            }
-            return stringBuilder.toString();
-        } catch(IOException e) {
-            e.printStackTrace();
-            Toast.makeText(getApplicationContext(), "File not found!", Toast.LENGTH_SHORT).show();
-            return "Error!";
-        }
     }
 
     /**
@@ -377,10 +356,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
         initView();
         initBase();
         initSensor();
-
-        if(isFilePresent()) {
-            mPositions = mGson.fromJson(read(), mListType);
-        }
     }
 
     private void initView() {
@@ -455,17 +430,21 @@ public class MainActivity extends Activity implements View.OnClickListener {
             case R.id.buttonStop:
                 mBase.clearCheckPointsAndStop();
                 if(mPositions.size() == 0) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                    builder.setTitle("No map could be created!");
-                    builder.setMessage("Please run the exploration process first.");
-                    builder.setPositiveButton("OK", null);
-                    AlertDialog dialog = builder.create();
-                    dialog.show();
+                    if(!isFilePresent()) {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                        builder.setTitle("No map could be created!");
+                        builder.setMessage("Please run the exploration process first.");
+                        builder.setPositiveButton("OK", null);
+                        AlertDialog dialog = builder.create();
+                        dialog.show();
+                    } else {
+                        Intent intent = new Intent(this, NavigationActivity.class);
+                        startActivity(intent);
+                    }
                 } else {
                     storePositions();
                     Intent intent = new Intent(this, NavigationActivity.class);
                     startActivity(intent);
-                    break;
                 }
         }
     }

@@ -3,6 +3,7 @@ package com.tudresden.navigationrobot;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
@@ -10,6 +11,14 @@ import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.segway.robot.algo.Pose2D;
+import com.segway.robot.algo.minicontroller.CheckPoint;
+import com.segway.robot.algo.minicontroller.CheckPointStateListener;
+import com.segway.robot.algo.minicontroller.ObstacleStateChangedListener;
+import com.segway.robot.sdk.base.bind.ServiceBinder;
+import com.segway.robot.sdk.locomotion.sbv.Base;
+import com.segway.robot.sdk.locomotion.sbv.StartVLSListener;
+import com.segway.robot.sdk.perception.sensor.Sensor;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -22,6 +31,24 @@ import java.text.DecimalFormatSymbols;
 import java.util.LinkedList;
 
 public class NavigationActivity extends Activity {
+
+    private static final String TAG = "MainActivity";
+
+    private ServiceBinder.BindStateListener mBaseBindStateListener;
+    private ServiceBinder.BindStateListener mSensorBindStateListener;
+
+    /**
+     * The Base instance that is used for controlling the robots movements.
+     */
+    private Base mBase = null;
+
+    /**
+     * The Sensor instance that is used for every action related to the ultrasonic sensor.
+     */
+    private Sensor mSensor = null;
+
+
+    private static final String FILENAME = "positions.json";
 
     private static final int PADDING = 30;
 
@@ -44,14 +71,14 @@ public class NavigationActivity extends Activity {
     DecimalFormatSymbols mDecimalFormatSymbols = DecimalFormatSymbols.getInstance();
 
     public boolean isFilePresent() {
-        String path = getApplicationContext().getFilesDir().getAbsolutePath() + "/positions.json";
+        String path = getApplicationContext().getFilesDir().getAbsolutePath() + "/" + FILENAME;
         File file = new File(path);
         return file.exists();
     }
 
     public String read() {
         try {
-            FileInputStream fileInputStream = getApplicationContext().openFileInput("positions.json");
+            FileInputStream fileInputStream = getApplicationContext().openFileInput(FILENAME);
             InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
             BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
             StringBuilder stringBuilder = new StringBuilder();
@@ -184,6 +211,54 @@ public class NavigationActivity extends Activity {
         }
     }
 
+    private void initListeners() {
+        mBaseBindStateListener = new ServiceBinder.BindStateListener() {
+            @Override
+            public void onBind() {
+                mBase.setControlMode(Base.CONTROL_MODE_NAVIGATION);
+                mBase.startVLS(true, true, new StartVLSListener() {
+                    @Override
+                    public void onOpened() {
+                        mBase.setNavigationDataSource(Base.NAVIGATION_SOURCE_TYPE_VLS);
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        Log.d(TAG, "onError() called with: errorMessage = [" + errorMessage + "]");
+                    }
+                });
+                mBase.setOnCheckPointArrivedListener(new CheckPointStateListener() {
+                    @Override
+                    public void onCheckPointArrived(final CheckPoint checkPoint, Pose2D realPose, boolean isLast) {
+                        // TODO: Go to next checkpoint
+                    }
+
+                    @Override
+                    public void onCheckPointMiss(CheckPoint checkPoint, Pose2D realPose, boolean isLast, int reason) {}
+                });
+                mBase.setObstacleStateChangeListener(new ObstacleStateChangedListener() {
+                    @Override
+                    public void onObstacleStateChanged(int ObstacleAppearance) {
+                        if(ObstacleAppearance == ObstacleStateChangedListener.OBSTACLE_APPEARED) {
+                            // TODO: Handle obstacle detection
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void onUnbind(String reason) {}
+        };
+
+        mSensorBindStateListener = new ServiceBinder.BindStateListener() {
+            @Override
+            public void onBind() {}
+
+            @Override
+            public void onUnbind(String reason) {}
+        };
+    }
+
     private void initFrameLayoutListener() {
         final FrameLayout layout = (FrameLayout)findViewById(R.id.frameLayout);
         layout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
@@ -201,6 +276,18 @@ public class NavigationActivity extends Activity {
         });
     }
 
+    private void bindServices() {
+        mSensor = Sensor.getInstance();
+        mSensor.bindService(this, mSensorBindStateListener);
+        mBase = Base.getInstance();
+        mBase.bindService(this, mBaseBindStateListener);
+    }
+
+    private void unbindServices() {
+        mBase.unbindService();
+        mSensor.unbindService();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -214,5 +301,18 @@ public class NavigationActivity extends Activity {
         }
 
         initFrameLayoutListener();
+        initListeners();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        unbindServices();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        bindServices();
     }
 }

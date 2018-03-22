@@ -40,6 +40,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private static final String TAG = "MainActivity";
     private static final String LEFT_TURN = "left turn";
     private static final String RIGHT_TURN = "right turn";
+    private static final String FILENAME = "positions.json";
 
     private int mPress = 0;
 
@@ -48,6 +49,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
      * the number of false positives in obstacle detection.
      */
     private Handler mHandler = new Handler();
+
+    private ServiceBinder.BindStateListener mBaseBindStateListener;
+    private ServiceBinder.BindStateListener mSensorBindStateListener;
 
     /**
      * The Base instance that is used for controlling the robots movements.
@@ -106,7 +110,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private Type mListType = new TypeToken<LinkedList<Position>>(){}.getType();
 
     public boolean isFilePresent() {
-        String path = getApplicationContext().getFilesDir().getAbsolutePath() + "/positions.json";
+        String path = getApplicationContext().getFilesDir().getAbsolutePath() + "/" + FILENAME;
         File file = new File(path);
         return file.exists();
     }
@@ -118,7 +122,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     public void storePositions() {
         String json = mGson.toJson(mPositions, mListType);
         try {
-            FileOutputStream fileOutputStream = openFileOutput("positions.json", Context.MODE_PRIVATE);
+            FileOutputStream fileOutputStream = openFileOutput(FILENAME, Context.MODE_PRIVATE);
             if(json != null) {
                 fileOutputStream.write(json.getBytes());
             }
@@ -353,23 +357,16 @@ public class MainActivity extends Activity implements View.OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        initView();
-        initBase();
-        initSensor();
-    }
-
-    private void initView() {
         Button startButton = (Button)findViewById(R.id.buttonStart);
         startButton.setOnClickListener(this);
-
         Button stopButton = (Button)findViewById(R.id.buttonStop);
         stopButton.setOnClickListener(this);
+
+        initListeners();
     }
 
-    private void initBase() {
-        mBase = Base.getInstance();
-
-        mBase.bindService(getApplicationContext(), new ServiceBinder.BindStateListener() {
+    private void initListeners() {
+        mBaseBindStateListener = new ServiceBinder.BindStateListener() {
             @Override
             public void onBind() {
                 mBase.setControlMode(Base.CONTROL_MODE_NAVIGATION);
@@ -384,41 +381,48 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         Log.d(TAG, "onError() called with: errorMessage = [" + errorMessage + "]");
                     }
                 });
+                mBase.setOnCheckPointArrivedListener(new CheckPointStateListener() {
+                    @Override
+                    public void onCheckPointArrived(final CheckPoint checkPoint, Pose2D realPose, boolean isLast) {
+                        arrivedAtCheckpoint();
+                    }
+
+                    @Override
+                    public void onCheckPointMiss(CheckPoint checkPoint, Pose2D realPose, boolean isLast, int reason) {}
+                });
+                mBase.setObstacleStateChangeListener(new ObstacleStateChangedListener() {
+                    @Override
+                    public void onObstacleStateChanged(int ObstacleAppearance) {
+                        if(ObstacleAppearance == ObstacleStateChangedListener.OBSTACLE_APPEARED) {
+                            obstacleDetected();
+                        }
+                    }
+                });
             }
 
             @Override
             public void onUnbind(String reason) {}
-        });
+        };
 
-        mBase.setOnCheckPointArrivedListener(new CheckPointStateListener() {
-            @Override
-            public void onCheckPointArrived(final CheckPoint checkPoint, Pose2D realPose, boolean isLast) {
-                arrivedAtCheckpoint();
-            }
-
-            @Override
-            public void onCheckPointMiss(CheckPoint checkPoint, Pose2D realPose, boolean isLast, int reason) {}
-        });
-
-        mBase.setObstacleStateChangeListener(new ObstacleStateChangedListener() {
-            @Override
-            public void onObstacleStateChanged(int ObstacleAppearance) {
-                if(ObstacleAppearance == ObstacleStateChangedListener.OBSTACLE_APPEARED) {
-                    obstacleDetected();
-                }
-            }
-        });
-    }
-
-    private void initSensor() {
-        mSensor = Sensor.getInstance();
-        mSensor.bindService(getApplicationContext(), new ServiceBinder.BindStateListener() {
+        mSensorBindStateListener = new ServiceBinder.BindStateListener() {
             @Override
             public void onBind() {}
 
             @Override
             public void onUnbind(String reason) {}
-        });
+        };
+    }
+
+    private void bindServices() {
+        mSensor = Sensor.getInstance();
+        mSensor.bindService(this, mSensorBindStateListener);
+        mBase = Base.getInstance();
+        mBase.bindService(this, mBaseBindStateListener);
+    }
+
+    private void unbindServices() {
+        mBase.unbindService();
+        mSensor.unbindService();
     }
 
     @Override
@@ -452,11 +456,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
     @Override
     public void onPause() {
         super.onPause();
+        unbindServices();
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        bindServices();
     }
 
     @Override
@@ -487,12 +493,5 @@ public class MainActivity extends Activity implements View.OnClickListener {
             return mInputMethodManager.hideSoftInputFromWindow(this.getCurrentFocus().getWindowToken(), 0);
         }
         return super.onTouchEvent(event);
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mBase.unbindService();
-        mSensor.unbindService();
     }
 }

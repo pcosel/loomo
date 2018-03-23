@@ -1,8 +1,8 @@
 package com.tudresden.navigationrobot;
 
 /**
- * Represents the current orientation (respectively the direction of movement) of the robot with
- * respect to the origin of the coordinate system.
+ * Represents the current orientation (respectively the direction of movement) of the robot. At the
+ * starting point the orientation is always FORWARD.
  *
  * @author Nadja Konrad
  */

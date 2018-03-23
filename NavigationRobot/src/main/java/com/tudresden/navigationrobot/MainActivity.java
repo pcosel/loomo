@@ -74,8 +74,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private State mState;
 
     /**
-     * The current orientation of the robot. The state tells which way the robot is facing in
-     * relation to the origin of the coordinate system.
+     * The current orientation (respectively the direction of movement) of the robot. At the
+     * starting point the orientation is always FORWARD.
      */
     private Orientation mOrientation;
 
@@ -233,7 +233,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         Log.d(TAG, "State: " + mState +
                                 " | Orientation: " + mOrientation +
                                 " | Position: (" + mXCoordinate + " , " + mYCoordinate + ")");
-                        mPositions.add(new Position(mXCoordinate, mYCoordinate));
+                        mPositions.add(new Position(mXCoordinate, mYCoordinate, mOrientation));
                         mState = State.OBSTACLE;
                     } else if(mState == State.WALK) {
                         mState = State.OBSTACLE;
@@ -305,7 +305,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         Log.d(TAG, "State: " + mState +
                 " | Orientation: " + mOrientation +
                 " | Position: (" + mXCoordinate + " , " + mYCoordinate + ")");
-        mPositions.add(new Position(mXCoordinate, mYCoordinate));
+        mPositions.add(new Position(mXCoordinate, mYCoordinate, mOrientation));
     }
 
     /**

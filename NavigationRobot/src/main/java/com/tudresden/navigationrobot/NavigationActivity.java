@@ -58,6 +58,8 @@ public class NavigationActivity extends Activity {
 
     private Position mTargetPosition;
 
+    private Position mClosestKnownPosition;
+
     private double mDistanceBetweenPoints;
 
     private Gson mGson = new Gson();
@@ -198,6 +200,21 @@ public class NavigationActivity extends Activity {
         return mTargetPosition;
     }
 
+    public void findClosestKnownPosition() {
+        double distance = Double.MAX_VALUE;
+        double targetX = mTargetPosition.getX();
+        double targetY = mTargetPosition.getY();
+        for(Position p : mInputPositions) {
+            double x = p.getX() - targetX;
+            double y = p.getY() - targetY;
+            double result = Math.sqrt(x * x + y * y);
+            if(result < distance) {
+                distance = result;
+                mClosestKnownPosition = p;
+            }
+        }
+    }
+
     public void startNavigation(View view) {
         if(mTargetPosition == null) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -208,6 +225,14 @@ public class NavigationActivity extends Activity {
             dialog.show();
         } else {
             //TODO: Implement Navigation
+            findClosestKnownPosition();
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Closest known position:");
+            builder.setMessage("(" + mClosestKnownPosition.getX() + " , " + mClosestKnownPosition.getY() + ")");
+            builder.setPositiveButton("OK", null);
+            AlertDialog dialog = builder.create();
+            dialog.show();
         }
     }
 

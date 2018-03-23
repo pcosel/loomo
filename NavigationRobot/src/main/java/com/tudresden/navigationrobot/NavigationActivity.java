@@ -33,6 +33,9 @@ import java.util.LinkedList;
 public class NavigationActivity extends Activity {
 
     private static final String TAG = "MainActivity";
+    private static final String FILENAME = "positions.json";
+    private static final String FORWARD = "forward";
+    private static final String BACKWARD = "backward";
 
     private ServiceBinder.BindStateListener mBaseBindStateListener;
     private ServiceBinder.BindStateListener mSensorBindStateListener;
@@ -47,9 +50,6 @@ public class NavigationActivity extends Activity {
      */
     private Sensor mSensor = null;
 
-
-    private static final String FILENAME = "positions.json";
-
     private static final int PADDING = 30;
 
     private FrameLayout mFrameLayout;
@@ -59,6 +59,10 @@ public class NavigationActivity extends Activity {
     private Position mTargetPosition;
 
     private Position mClosestKnownPosition;
+
+    private Position mCurrentPosition;
+
+    private String mDirection;
 
     private double mDistanceBetweenPoints;
 
@@ -215,6 +219,29 @@ public class NavigationActivity extends Activity {
         }
     }
 
+    public void findShortestPath() {
+        int indexCurrentPosition = mInputPositions.indexOf(mCurrentPosition);
+        int indexClosestKnownPosition = mInputPositions.indexOf(mClosestKnownPosition);
+        int distanceForward;
+        int distanceBackward;
+        if(indexCurrentPosition < indexClosestKnownPosition) {
+            distanceForward = indexClosestKnownPosition - indexCurrentPosition;
+            distanceBackward = (mInputPositions.size() - indexClosestKnownPosition) + indexCurrentPosition;
+        } else {
+            distanceBackward = indexCurrentPosition - indexClosestKnownPosition;
+            distanceForward = (mInputPositions.size() - indexCurrentPosition) + indexClosestKnownPosition;
+        }
+        if(distanceForward < distanceBackward) {
+            mDirection = FORWARD;
+        } else {
+            mDirection = BACKWARD;
+        }
+    }
+
+    public void goToTargetPosition() {
+        //TODO: Implement Navigation
+    }
+
     public void startNavigation(View view) {
         if(mTargetPosition == null) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -224,12 +251,13 @@ public class NavigationActivity extends Activity {
             AlertDialog dialog = builder.create();
             dialog.show();
         } else {
-            //TODO: Implement Navigation
             findClosestKnownPosition();
+            findShortestPath();
+            goToTargetPosition();
 
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Closest known position:");
-            builder.setMessage("(" + mClosestKnownPosition.getX() + " , " + mClosestKnownPosition.getY() + ")");
+            builder.setMessage("(" + mClosestKnownPosition.getX() + " , " + mClosestKnownPosition.getY() + ") --> " + mDirection);
             builder.setPositiveButton("OK", null);
             AlertDialog dialog = builder.create();
             dialog.show();
@@ -323,6 +351,7 @@ public class NavigationActivity extends Activity {
 
         if(isFilePresent()) {
             mInputPositions = mGson.fromJson(read(), mListType);
+            mCurrentPosition = mInputPositions.getLast();
         }
 
         initFrameLayoutListener();

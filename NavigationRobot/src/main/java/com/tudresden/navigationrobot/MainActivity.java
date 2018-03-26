@@ -270,16 +270,16 @@ public class MainActivity extends Activity implements View.OnClickListener {
         if(mState == State.WALK) {
             switch(mOrientation) {
                 case FORWARD:
-                    mYCoordinate += 1;
-                    break;
-                case BACKWARD:
-                    mYCoordinate -= 1;
-                    break;
-                case LEFT:
                     mXCoordinate += 1;
                     break;
+                case BACKWARD:
+                    mXCoordinate += -1;
+                    break;
+                case LEFT:
+                    mYCoordinate += 1;
+                    break;
                 case RIGHT:
-                    mXCoordinate -= 1;
+                    mYCoordinate += -1;
                     break;
                 default:
                     // All possible cases are handled above
@@ -287,16 +287,16 @@ public class MainActivity extends Activity implements View.OnClickListener {
         } else if(mState == State.OBSTACLE) {
             switch(mOrientation) {
                 case FORWARD:
-                    mYCoordinate += (mDistance - mSensor.getUltrasonicDistance().getDistance() / 1000); // convert mm to m
-                    break;
-                case BACKWARD:
-                    mYCoordinate -= (mDistance - mSensor.getUltrasonicDistance().getDistance() / 1000); // convert mm to m
-                    break;
-                case LEFT:
                     mXCoordinate += (mDistance - mSensor.getUltrasonicDistance().getDistance() / 1000); // convert mm to m
                     break;
-                case RIGHT:
+                case BACKWARD:
                     mXCoordinate -= (mDistance - mSensor.getUltrasonicDistance().getDistance() / 1000); // convert mm to m
+                    break;
+                case LEFT:
+                    mYCoordinate += (mDistance - mSensor.getUltrasonicDistance().getDistance() / 1000); // convert mm to m
+                    break;
+                case RIGHT:
+                    mYCoordinate -= (mDistance - mSensor.getUltrasonicDistance().getDistance() / 1000); // convert mm to m
                     break;
                 default:
                     // All possible cases are handled above

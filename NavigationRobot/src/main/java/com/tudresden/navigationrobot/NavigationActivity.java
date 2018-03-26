@@ -135,17 +135,17 @@ public class NavigationActivity extends Activity {
         if(Double.compare(sumX, 0.0) == 0 && Double.compare(sumY, 0.0) == 0) {
             mDistanceBetweenPoints = 0.0;
         } else if(Double.compare(sumX, 0.0) == 0) {
-            mDistanceBetweenPoints = (height - PADDING) / sumY;
+            mDistanceBetweenPoints = (width - PADDING) / sumY;
         } else if(Double.compare(sumY, 0.0) == 0) {
-            mDistanceBetweenPoints = (width - PADDING) / sumX;
-        } else if(Double.compare((width - PADDING) / sumX, (height - PADDING) / sumY) > 0) {
-            mDistanceBetweenPoints = (height - PADDING) / sumY;
+            mDistanceBetweenPoints = (height - PADDING) / sumX;
+        } else if(Double.compare((height - PADDING) / sumX, (width - PADDING) / sumY) > 0) {
+            mDistanceBetweenPoints = (width - PADDING) / sumY;
         } else {
-            mDistanceBetweenPoints = (width - PADDING) / sumX;
+            mDistanceBetweenPoints = (height - PADDING) / sumX;
         }
 
-        double startX = mDistanceBetweenPoints * greatestPosX + (PADDING / 2);
-        double startY = mDistanceBetweenPoints * greatestPosY + (PADDING / 2);
+        double startX = mDistanceBetweenPoints * greatestPosY + (PADDING / 2);
+        double startY = mDistanceBetweenPoints * greatestPosX + (PADDING / 2);
 
         mStartPosition = new Position(startX, startY);
 
@@ -159,14 +159,14 @@ public class NavigationActivity extends Activity {
                 outY = height / 2;
             } else {
                 if(Double.compare(inX, 0.0) > 0) {
-                    outX = startX - (inX * mDistanceBetweenPoints);
+                    outY = startY - (inX * mDistanceBetweenPoints);
                 } else {
-                    outX = startX + (Math.abs(inX) * mDistanceBetweenPoints);
+                    outY = startY + (Math.abs(inX) * mDistanceBetweenPoints);
                 }
-                if(Double.compare(p.getY(), 0.0) > 0) {
-                    outY = startY - (inY * mDistanceBetweenPoints);
+                if(Double.compare(inY, 0.0) > 0) {
+                    outX = startX - (inY * mDistanceBetweenPoints);
                 } else {
-                    outY = startY + (Math.abs(inY) * mDistanceBetweenPoints);
+                    outX = startX + (Math.abs(inY) * mDistanceBetweenPoints);
                 }
             }
             mScreenPositions.add(new Position(outX, outY));
@@ -178,20 +178,20 @@ public class NavigationActivity extends Activity {
         double targetY = 0.0;
 
         if (Double.compare(mDistanceBetweenPoints, 0.0) != 0) {
-            if (Double.compare(x, mStartPosition.getX()) == 0) {
-                targetX = 0;
-            } else if (Double.compare(x, mStartPosition.getX()) < 0) {
-                targetX = -((x - mStartPosition.getX()) / mDistanceBetweenPoints);
+            if(Double.compare(x, mStartPosition.getX()) == 0) {
+                targetY = 0;
+            } else if(Double.compare(x, mStartPosition.getX()) < 0) {
+                targetY = -((x - mStartPosition.getX()) / mDistanceBetweenPoints);
             } else {
-                targetX = (mStartPosition.getX() - x) / mDistanceBetweenPoints;
+                targetY = (mStartPosition.getX() - x) / mDistanceBetweenPoints;
             }
 
-            if (Double.compare(y, mStartPosition.getY()) == 0) {
-                targetY = 0;
-            } else if (Double.compare(y, mStartPosition.getY()) < 0) {
-                targetY = -((y - mStartPosition.getY()) / mDistanceBetweenPoints);
+            if(Double.compare(y, mStartPosition.getY()) == 0) {
+                targetX = 0;
+            } else if(Double.compare(y, mStartPosition.getY()) < 0) {
+                targetX = -((y - mStartPosition.getY()) / mDistanceBetweenPoints);
             } else {
-                targetY = (mStartPosition.getY() - y) / mDistanceBetweenPoints;
+                targetX = (mStartPosition.getY() - y) / mDistanceBetweenPoints;
             }
         }
 
@@ -254,13 +254,6 @@ public class NavigationActivity extends Activity {
             findClosestKnownPosition();
             findShortestPath();
             goToTargetPosition();
-
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("Closest known position:");
-            builder.setMessage("(" + mClosestKnownPosition.getX() + " , " + mClosestKnownPosition.getY() + ") --> " + mDirection);
-            builder.setPositiveButton("OK", null);
-            AlertDialog dialog = builder.create();
-            dialog.show();
         }
     }
 

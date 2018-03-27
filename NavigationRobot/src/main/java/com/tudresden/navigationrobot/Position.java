@@ -8,12 +8,12 @@ package com.tudresden.navigationrobot;
 public class Position {
 
     /**
-     * The x-coordinate of this Position.
+     * The x-coordinate of this position.
      */
     private double x;
 
     /**
-     * The y-coordinate of this Position.
+     * The y-coordinate of this position.
      */
     private double y;
 
@@ -24,10 +24,10 @@ public class Position {
     private Orientation orientation;
 
     /**
-     * Creates a new Position.
-     * @param x the x-coordinate of this Position
-     * @param y the y-coordinate of this Position
-     * @param orientation the orientation of the robot at this Position
+     * Creates a new position.
+     * @param x the x-coordinate of this position
+     * @param y the y-coordinate of this position
+     * @param orientation the orientation of the robot at this position
      */
     public Position(double x, double y, Orientation orientation) {
         this.x = x;
@@ -36,30 +36,30 @@ public class Position {
     }
 
     /**
-     * Creates a new Position without orientation.
-     * @param x the x-coordinate of this Position
-     * @param y the y-coordinate of this Position
+     * Creates a new position without orientation.
+     * @param x the x-coordinate of this position
+     * @param y the y-coordinate of this position
      */
     public Position(double x, double y) {
         this(x, y, null);
     }
 
     /**
-     * @return the x-coordinate of this Position
+     * @return the x-coordinate of this position
      */
     public double getX() {
         return x;
     }
 
     /**
-     * @return the y-coordinate of this Position
+     * @return the y-coordinate of this position
      */
     public double getY() {
         return y;
     }
 
     /**
-     * @return the orientation of the robot at this Position
+     * @return the orientation of the robot at this position
      */
     public Orientation getOrientation() {
         return orientation;

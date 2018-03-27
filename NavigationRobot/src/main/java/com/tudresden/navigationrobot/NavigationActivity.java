@@ -12,6 +12,7 @@ import android.widget.Toast;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.segway.robot.algo.Pose2D;
+import com.segway.robot.algo.PoseVLS;
 import com.segway.robot.algo.minicontroller.CheckPoint;
 import com.segway.robot.algo.minicontroller.CheckPointStateListener;
 import com.segway.robot.algo.minicontroller.ObstacleStateChangedListener;
@@ -30,14 +31,41 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.LinkedList;
 
+/**
+ * This Activity handles the navigation process.
+ *
+ * @author Nadja Konrad
+ */
 public class NavigationActivity extends Activity {
 
-    private static final String TAG = "MainActivity";
+    /**
+     * The tag that is used for log messages.
+     */
+    private static final String TAG = "NavigationActivity";
+
+    /**
+     * The filename of the file that the positions are stored in.
+     */
     private static final String FILENAME = "positions.json";
+
+    /**
+     * Indicates that the list of positions should be traversed in sequential order.
+     */
     private static final String FORWARD = "forward";
+
+    /**
+     * Indicates that the list of positions should be traversed in reverse sequential order.
+     */
     private static final String BACKWARD = "backward";
 
+    /**
+     * The listener for the bind status of the base instance.
+     */
     private ServiceBinder.BindStateListener mBaseBindStateListener;
+
+    /**
+     * The listener for the bind status of the sensor instance.
+     */
     private ServiceBinder.BindStateListener mSensorBindStateListener;
 
     /**
@@ -46,42 +74,89 @@ public class NavigationActivity extends Activity {
     private Base mBase = null;
 
     /**
-     * The Sensor instance that is used for every action related to the ultrasonic sensor.
+     * The Sensor instance that is used for actions related to the ultrasonic sensor.
      */
     private Sensor mSensor = null;
 
+    /**
+     * The padding for the map.
+     */
     private static final int PADDING = 30;
 
+    /**
+     * The layout that contains the map.
+     */
     private FrameLayout mFrameLayout;
 
+    /**
+     * The position that marks the starting point on the screen. Not the real coordinates of the
+     * starting point!
+     */
     private Position mStartPosition;
 
+    /**
+     * The position that the user selected on the screen (real coordinates).
+     */
     private Position mTargetPosition;
 
+    /**
+     * The position from the list of known positions that is closest to the target position (real
+     * coordinates).
+     */
     private Position mClosestKnownPosition;
 
+    /**
+     * The current position of the robot (real coordinates).
+     */
     private Position mCurrentPosition;
 
+    /**
+     * Indicates whether the list of positions should be traversed in sequential order or in reverse
+     * sequential order.
+     */
     private String mDirection;
 
+    /**
+     * The distance between the points on the screen (if assumed that the points are evenly
+     * distributed across the screen).
+     */
     private double mDistanceBetweenPoints;
 
+    /**
+     * The Gson instance for serialization and deserialization.
+     */
     private Gson mGson = new Gson();
 
+    /**
+     * All the positions that the robot has reached during the exploration phase.
+     */
     private LinkedList<Position> mInputPositions = new LinkedList<>();
 
+    /**
+     * All the positions that the robot has reached during the exploration phase converted to
+     * positions that can be displayed on the screen.
+     */
     private LinkedList<Position> mScreenPositions = new LinkedList<>();
 
+    /**
+     * The Type LinkedList<Position> that is needed for serialization and deserialization with Gson.
+     */
     private Type mListType = new TypeToken<LinkedList<Position>>(){}.getType();
 
-    DecimalFormatSymbols mDecimalFormatSymbols = DecimalFormatSymbols.getInstance();
-
-    public boolean isFilePresent() {
+    /**
+     * Checks whether the file with the filename positions.json already exists.
+     * @return true if the file already exists; false otherwise
+     */
+    public boolean fileExists() {
         String path = getApplicationContext().getFilesDir().getAbsolutePath() + "/" + FILENAME;
         File file = new File(path);
         return file.exists();
     }
 
+    /**
+     * Reads the list of positions from the previous exploration from the file positions.json.
+     * @return a Json String representation of the list of positions from the previous exploration
+     */
     public String read() {
         try {
             FileInputStream fileInputStream = getApplicationContext().openFileInput(FILENAME);
@@ -100,6 +175,12 @@ public class NavigationActivity extends Activity {
         }
     }
 
+    /**
+     * Converts all the positions that the robot has reached during the exploration phase to
+     * positions that can be displayed on the screen.
+     * @param width the width of the layout that contains the map
+     * @param height the height of the layout that contains the map
+     */
     public void calculateScreenPositions(int width, int height) {
         double greatestPosX = 0.0;
         double greatestNegX = 0.0;
@@ -129,14 +210,20 @@ public class NavigationActivity extends Activity {
             }
         }
 
+        // Find out how many points need to fit in the width and height
         double sumX = greatestPosX + greatestNegX;
         double sumY = greatestPosY + greatestNegY;
 
+        // Choose the distance between the points as big as possible in order to make the map as big
+        // as possible but also make sure that all the points fit on the screen
         if(Double.compare(sumX, 0.0) == 0 && Double.compare(sumY, 0.0) == 0) {
+            // Only the starting point was in the list
             mDistanceBetweenPoints = 0.0;
         } else if(Double.compare(sumX, 0.0) == 0) {
+            // No vertical space needed
             mDistanceBetweenPoints = (width - PADDING) / sumY;
         } else if(Double.compare(sumY, 0.0) == 0) {
+            // No horizontal space needed
             mDistanceBetweenPoints = (height - PADDING) / sumX;
         } else if(Double.compare((height - PADDING) / sumX, (width - PADDING) / sumY) > 0) {
             mDistanceBetweenPoints = (width - PADDING) / sumY;
@@ -144,6 +231,7 @@ public class NavigationActivity extends Activity {
             mDistanceBetweenPoints = (height - PADDING) / sumX;
         }
 
+        // Calculate the screen position of the starting point (0,0)
         double startX = mDistanceBetweenPoints * greatestPosY + (PADDING / 2);
         double startY = mDistanceBetweenPoints * greatestPosX + (PADDING / 2);
 
@@ -155,9 +243,17 @@ public class NavigationActivity extends Activity {
             double outX;
             double outY;
             if(Double.compare(mDistanceBetweenPoints, 0.0) == 0) {
+                // Only the starting point was in the list so it needs to be displayed in the center
+                // of the screen
                 outX = width / 2;
                 outY = height / 2;
             } else {
+                // Convert the coordinates of the real positions to the coordinates on the screen.
+                // Be aware that the coordinate system of the robot is exactly the opposite of the
+                // coordinate system of the screen:
+                // Robot: Positive x --> forward, positive y --> left
+                // Screen: Positive x --> width, positive y --> height (origin in the left upper
+                // corner of the screen
                 if(Double.compare(inX, 0.0) > 0) {
                     outY = startY - (inX * mDistanceBetweenPoints);
                 } else {
@@ -173,11 +269,21 @@ public class NavigationActivity extends Activity {
         }
     }
 
+    /**
+     * Converts a position on the screen to a real position in the room. Inverts the calculations of
+     * {@see #calculateScreenPositions(int width, int height)}
+     * @param x the x-coordinate of the selected position on the screen
+     * @param y the y-coordinate of the selected position on the screen
+     * @return the real position in the room
+     */
     public Position calculateRealPosition(float x, float y) {
         double targetX = 0.0;
         double targetY = 0.0;
 
-        if (Double.compare(mDistanceBetweenPoints, 0.0) != 0) {
+        // If only the starting point is displayed on the map, all selected positions around the
+        // starting point should be treated as point (0,0) because in this case no navigation is
+        // possible
+        if(Double.compare(mDistanceBetweenPoints, 0.0) != 0) {
             if(Double.compare(x, mStartPosition.getX()) == 0) {
                 targetY = 0;
             } else if(Double.compare(x, mStartPosition.getX()) < 0) {
@@ -185,7 +291,6 @@ public class NavigationActivity extends Activity {
             } else {
                 targetY = (mStartPosition.getX() - x) / mDistanceBetweenPoints;
             }
-
             if(Double.compare(y, mStartPosition.getY()) == 0) {
                 targetX = 0;
             } else if(Double.compare(y, mStartPosition.getY()) < 0) {
@@ -195,8 +300,10 @@ public class NavigationActivity extends Activity {
             }
         }
 
-        mDecimalFormatSymbols.setDecimalSeparator('.');
-        DecimalFormat df = new DecimalFormat("#.##", mDecimalFormatSymbols);
+        // Set decimal separator as '.' instead of ','
+        DecimalFormatSymbols dfs = DecimalFormatSymbols.getInstance();
+        dfs.setDecimalSeparator('.');
+        DecimalFormat df = new DecimalFormat("#.##", dfs);
         targetX = Double.parseDouble(df.format(targetX));
         targetY = Double.parseDouble(df.format(targetY));
 
@@ -204,11 +311,15 @@ public class NavigationActivity extends Activity {
         return mTargetPosition;
     }
 
+    /**
+     * Finds the position in the list of known positions that is closest to the target position.
+     */
     public void findClosestKnownPosition() {
         double distance = Double.MAX_VALUE;
         double targetX = mTargetPosition.getX();
         double targetY = mTargetPosition.getY();
         for(Position p : mInputPositions) {
+            // Calculate euclidian distance for every position
             double x = p.getX() - targetX;
             double y = p.getY() - targetY;
             double result = Math.sqrt(x * x + y * y);
@@ -219,6 +330,10 @@ public class NavigationActivity extends Activity {
         }
     }
 
+    /**
+     * Calculates whether the list of positions should be traversed in sequential order or in reverse
+     * sequential order for shortest navigation.
+     */
     public void findShortestPath() {
         int indexCurrentPosition = mInputPositions.indexOf(mCurrentPosition);
         int indexClosestKnownPosition = mInputPositions.indexOf(mClosestKnownPosition);
@@ -238,10 +353,18 @@ public class NavigationActivity extends Activity {
         }
     }
 
-    public void goToTargetPosition() {
-        //TODO: Implement Navigation
+    /**
+     * Finds the next position and tells the robot to go there.
+     */
+    public void goToNextPosition() {
+        // TODO: Implement Navigation
     }
 
+    /**
+     * Starts the navigation process by finding the closest known position to the target position
+     * and the shortest path. Also initializes the obstacle avoidance functionality and tells the
+     * robot to go to the first position.
+     */
     public void startNavigation(View view) {
         if(mTargetPosition == null) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -253,10 +376,17 @@ public class NavigationActivity extends Activity {
         } else {
             findClosestKnownPosition();
             findShortestPath();
-            goToTargetPosition();
+            mBase.setUltrasonicObstacleAvoidanceEnabled(true);
+            mBase.setUltrasonicObstacleAvoidanceDistance(1.3f);
+            goToNextPosition();
         }
     }
 
+    /**
+     * Initializes the listeners for the base instance and the sensor instance. For the base
+     * instance the Visual Localization System is started, the CheckPointStateListener is registered
+     * and the ObstacleStateChangeListener is registered.
+     */
     private void initListeners() {
         mBaseBindStateListener = new ServiceBinder.BindStateListener() {
             @Override
@@ -276,7 +406,7 @@ public class NavigationActivity extends Activity {
                 mBase.setOnCheckPointArrivedListener(new CheckPointStateListener() {
                     @Override
                     public void onCheckPointArrived(final CheckPoint checkPoint, Pose2D realPose, boolean isLast) {
-                        // TODO: Go to next checkpoint
+                        goToNextPosition();
                     }
 
                     @Override
@@ -305,6 +435,12 @@ public class NavigationActivity extends Activity {
         };
     }
 
+    /**
+     * Retrieves the width and the height of the layout that contains the map as soon as said layout
+     * is created.
+     * The listener is needed because problems occur if the width and the height of the layout are
+     * queried before the UI has been successfully created.
+     */
     private void initFrameLayoutListener() {
         final FrameLayout layout = (FrameLayout)findViewById(R.id.frameLayout);
         layout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
@@ -322,6 +458,9 @@ public class NavigationActivity extends Activity {
         });
     }
 
+    /**
+     * Binds the base instance and the sensor instance to the respective services.
+     */
     private void bindServices() {
         mSensor = Sensor.getInstance();
         mSensor.bindService(this, mSensorBindStateListener);
@@ -329,6 +468,9 @@ public class NavigationActivity extends Activity {
         mBase.bindService(this, mBaseBindStateListener);
     }
 
+    /**
+     * Unbinds the base instance and the sensor instance from the respective services.
+     */
     private void unbindServices() {
         mBase.unbindService();
         mSensor.unbindService();
@@ -342,8 +484,10 @@ public class NavigationActivity extends Activity {
 
         mFrameLayout = (FrameLayout)findViewById(R.id.frameLayout);
 
-        if(isFilePresent()) {
+        if(fileExists()) {
             mInputPositions = mGson.fromJson(read(), mListType);
+            // When the exploration is finished, the robot stands on the position that it last
+            // reached
             mCurrentPosition = mInputPositions.getLast();
         }
 

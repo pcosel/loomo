@@ -37,11 +37,29 @@ import java.util.LinkedList;
  */
 public class MainActivity extends Activity implements View.OnClickListener {
 
+    /**
+     * The tag that is used for log messages.
+     */
     private static final String TAG = "MainActivity";
+
+    /**
+     * Indicates that a left turn is about to be performed.
+     */
     private static final String LEFT_TURN = "left turn";
+
+    /**
+     * Indicates that a right turn is about to be performed.
+     */
     private static final String RIGHT_TURN = "right turn";
+
+    /**
+     * The filename of the file that the positions are stored in.
+     */
     private static final String FILENAME = "positions.json";
 
+    /**
+     * A counter for handling exiting the app by pressing the back button.
+     */
     private int mPress = 0;
 
     /**
@@ -50,16 +68,23 @@ public class MainActivity extends Activity implements View.OnClickListener {
      */
     private Handler mHandler = new Handler();
 
+    /**
+     * The listener for the bind status of the base instance.
+     */
     private ServiceBinder.BindStateListener mBaseBindStateListener;
+
+    /**
+     * The listener for the bind status of the sensor instance.
+     */
     private ServiceBinder.BindStateListener mSensorBindStateListener;
 
     /**
-     * The Base instance that is used for controlling the robots movements.
+     * The base instance that is used for controlling the robots movements.
      */
     private Base mBase = null;
 
     /**
-     * The Sensor instance that is used for every action related to the ultrasonic sensor.
+     * The sensor instance that is used for actions related to the ultrasonic sensor.
      */
     private Sensor mSensor = null;
 
@@ -109,7 +134,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
      */
     private Type mListType = new TypeToken<LinkedList<Position>>(){}.getType();
 
-    public boolean isFilePresent() {
+    /**
+     * Checks whether the file with the filename positions.json already exists.
+     * @return true if the file already exists; false otherwise
+     */
+    public boolean fileExists() {
         String path = getApplicationContext().getFilesDir().getAbsolutePath() + "/" + FILENAME;
         File file = new File(path);
         return file.exists();
@@ -117,7 +146,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     /**
      * Serializes the list that contains all the positions that the robot has reached so far with
-     * Gson and writes the String to the file "positions.json" in the internal storage.
+     * Gson and writes the resulting String to the file positions.json in the internal storage.
      */
     public void storePositions() {
         String json = mGson.toJson(mPositions, mListType);
@@ -135,7 +164,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     /**
      * Starts the exploration process by initialising the obstacle avoidance functionality and
-     * setting the first checkpoints.
+     * setting the first checkpoints. After reaching those checkpoints, the CheckPointStateListener
+     * is triggered and the exploration goes on.
      */
     public void startExploration() {
         mState = State.START;
@@ -153,7 +183,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     /**
-     * Sets a new checkpoint depending on the current mState of the robot.
+     * Sets a new checkpoint depending on the current state of the robot.
      * The strategy for setting a new checkpoint is as follows:
      * In the initial phase of the exploration process (before the first wall is found) the new
      * checkpoint is set to make the robot walk forward (1 meter) in order to eventually reach the
@@ -309,9 +339,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     /**
-     * Sets the orientation of the robot in relation to the origin of the coordinate system.
-     * The new orientation of the robot depends on whether a left or a right turn is to be performed.
-     *
+     * Sets the orientation of the robot. The new orientation of the robot depends on whether a left
+     * or a right turn is to be performed.
      * @param direction indicates whether the turn to be performed is a left turn or a right turn
      */
     public void updateOrientation(String direction) {
@@ -365,6 +394,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
         initListeners();
     }
 
+    /**
+     * Initializes the listeners for the base instance and the sensor instance. For the base
+     * instance the Visual Localization System is started, the CheckPointStateListener is registered
+     * and the ObstacleStateChangeListener is registered.
+     */
     private void initListeners() {
         mBaseBindStateListener = new ServiceBinder.BindStateListener() {
             @Override
@@ -413,6 +447,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
         };
     }
 
+    /**
+     * Binds the base instance and the sensor instance to the respective services.
+     */
     private void bindServices() {
         mSensor = Sensor.getInstance();
         mSensor.bindService(this, mSensorBindStateListener);
@@ -420,6 +457,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
         mBase.bindService(this, mBaseBindStateListener);
     }
 
+    /**
+     * Unbinds the base instance and the sensor instance from the respective services.
+     */
     private void unbindServices() {
         mBase.unbindService();
         mSensor.unbindService();
@@ -434,7 +474,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
             case R.id.buttonStop:
                 mBase.clearCheckPointsAndStop();
                 if(mPositions.size() == 0) {
-                    if(!isFilePresent()) {
+                    // If no new exploration was performed and no positions from a previous
+                    // exploration can be found, tell the user to perform an exploration in order
+                    // to be able to create the map
+                    if(!fileExists()) {
                         AlertDialog.Builder builder = new AlertDialog.Builder(this);
                         builder.setTitle("No map could be created!");
                         builder.setMessage("Please run the exploration process first.");
@@ -442,10 +485,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         AlertDialog dialog = builder.create();
                         dialog.show();
                     } else {
+                        // Use old positions from a previous exploration to create the map
                         Intent intent = new Intent(this, NavigationActivity.class);
                         startActivity(intent);
                     }
                 } else {
+                    // Store the new positions and use those to create the map
                     storePositions();
                     Intent intent = new Intent(this, NavigationActivity.class);
                     startActivity(intent);

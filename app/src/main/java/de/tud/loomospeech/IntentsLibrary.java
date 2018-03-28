@@ -5,6 +5,7 @@ import android.util.Log;
 import android.view.WindowManager;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 class IntentsLibrary {
     private static final String TAG = "IntentsLibrary";
@@ -42,8 +43,35 @@ class IntentsLibrary {
     private void UtilitiesStop() {}
 
     private void OnDeviceSetBrightness (JSONArray entities) {
+        int brightness = activity.brightness;
+        try {
+            JSONObject entity = entities.getJSONObject(0);
+            if(entity.get("type").toString() == "OnDevice.Brightnesslevel") {
+                String value = entity.get("entity").toString();
+                switch(value) {
+                    case "low":
+                        brightness = 0;
+                        break;
+                    case "medium":
+                        brightness = 127;
+                        break;
+                    case "high":
+                        brightness = 255;
+                        break;
+                    default:
+                        int result = Math.max(Math.min(Integer.parseInt(value), 100), 0);
+                        brightness = (int) (result * 2.55);
+                }
+                brightness = entity.getInt("entity");
+            }
+        }
+        catch (NumberFormatException e) {
+            Log.d(TAG, "NaN", e);
+        }
+        catch (Exception e) {
+            Log.d(TAG, "Exception: ", e);
+        }
         Log.d(TAG, "OnDeviceSetBrightness" + entities.toString());
-        int brightness = 50;
 
         //Set the system brightness using the brightness variable value
         Settings.System.putInt(activity.cResolver, Settings.System.SCREEN_BRIGHTNESS, brightness);

@@ -2,14 +2,16 @@ package de.tud.loomospeech;
 
 import android.util.Log;
 
+import org.json.JSONArray;
+
 class IntentsLibrary {
     private static final String TAG = "IntentsLibrary";
 
-    public void callByName(String functionName) {
-        // Ignoring any possible result
+    public void callByName(String functionName, JSONArray entities) {
+        //Ignoring any possible result
         //functionName.replace(".", "");
         try {
-            this.getClass().getDeclaredMethod(functionName).invoke(this);
+            this.getClass().getDeclaredMethod(functionName).invoke(this, entities);
         } catch (Exception e) {
 //            Log.d(TAG, e.getMessage());
             Log.d(TAG, "Exception: ", e);
@@ -32,4 +34,7 @@ class IntentsLibrary {
 
     private void UtilitiesStop() {}
 
+    private void OnDeviceSetBrightness (JSONArray entities) {
+
+    }
 }

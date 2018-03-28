@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
 
         initWakeUp();
         initRecognizer();
-//        initSpeaker();
+//      initSpeaker();
 
         initBtnAction();
 

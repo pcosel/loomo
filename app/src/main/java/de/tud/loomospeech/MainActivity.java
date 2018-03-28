@@ -1,6 +1,7 @@
 package de.tud.loomospeech;
 
 import android.app.ActionBar;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -9,6 +10,7 @@ import android.media.SoundPool;
 import android.media.ToneGenerator;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.text.method.ScrollingMovementMethod;
 import android.util.DisplayMetrics;
@@ -16,6 +18,7 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -44,6 +47,9 @@ public class MainActivity extends AppCompatActivity {
 
     MessageHandler mHandler;
     LoomoSoundPool loomoSoundPool;
+    int brightness;
+    ContentResolver cResolver;
+    Window window;
 
 
     @Override
@@ -61,6 +67,20 @@ public class MainActivity extends AppCompatActivity {
         mHandler = new MessageHandler(this);
         azureSpeechRecognition = new AzureSpeechRecognition(this);
         loomoSoundPool = new LoomoSoundPool(this);
+        //Get the content resolver
+        cResolver = getContentResolver();
+        //Get the current window
+        window = getWindow();
+
+        try {
+            // To handle the auto
+            Settings.System.putInt(cResolver, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
+            brightness = Settings.System.getInt(cResolver, Settings.System.SCREEN_BRIGHTNESS);
+        } catch (Settings.SettingNotFoundException e) {
+            //Throw an error case it couldn't be retrieved
+            Log.e(TAG, "Error: Cannot access system brightness");
+            e.printStackTrace();
+        }
 
 
         initWakeUp();
@@ -162,7 +182,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onStandby() {
                 Log.d(TAG, "WakeUp onStandby");
-                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT,"\n" + getString(R.string.wakeup_standby)));
+                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, "\n" + getString(R.string.wakeup_standby)));
                 mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.SET, MessageHandler.STATUS, getString(R.string.statusReady)));
             }
 

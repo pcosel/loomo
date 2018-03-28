@@ -18,11 +18,12 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
     private MainActivity activity;
     private MessageHandler mHandler;
     private MicrophoneRecognitionClientWithIntent recognitionClientWithIntent;
-    private IntentsLibrary intentsLibrary = new IntentsLibrary();
+    private IntentsLibrary intentsLibrary;
 
     AzureSpeechRecognition(MainActivity myActivity) {
         activity = myActivity;
         mHandler = myActivity.mHandler;
+        intentsLibrary  = new IntentsLibrary(activity);
     }
 
     @Override

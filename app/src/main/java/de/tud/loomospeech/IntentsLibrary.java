@@ -9,9 +9,9 @@ class IntentsLibrary {
 
     public void callByName(String functionName, JSONArray entities) {
         //Ignoring any possible result
-        //functionName.replace(".", "");
+        functionName = functionName.replace(".", "");
         try {
-            this.getClass().getDeclaredMethod(functionName).invoke(this, entities);
+            this.getClass().getDeclaredMethod(functionName, JSONArray.class).invoke(this, entities);
         } catch (Exception e) {
 //            Log.d(TAG, e.getMessage());
             Log.d(TAG, "Exception: ", e);
@@ -35,6 +35,6 @@ class IntentsLibrary {
     private void UtilitiesStop() {}
 
     private void OnDeviceSetBrightness (JSONArray entities) {
-
+        Log.d(TAG, "OnDeviceSetBrightness" + entities.toString());
     }
 }

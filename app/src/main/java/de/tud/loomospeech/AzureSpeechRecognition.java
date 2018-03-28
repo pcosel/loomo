@@ -116,7 +116,7 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         return recognitionClientWithIntent;
     }
 
-    String prettyPrintResponse(JSONObject json) throws Exception {
+   private String prettyPrintResponse(JSONObject json) throws Exception {
         StringBuilder sb = new StringBuilder();
         JSONArray intentsArray, entitiesArray;
 

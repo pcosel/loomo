@@ -18,6 +18,7 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
     private MainActivity activity;
     private MessageHandler mHandler;
     private MicrophoneRecognitionClientWithIntent recognitionClientWithIntent;
+    private IntentsLibrary intentsLibrary = new IntentsLibrary();
 
     AzureSpeechRecognition(MainActivity myActivity) {
         activity = myActivity;
@@ -51,12 +52,17 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
 
     @Override
     public void onIntentReceived(String s) {
+        JSONObject json;
         String msg = "";
 
         Log.d(TAG, "Intent received!!!");
 
         try {
-            msg = prettyPrintResponse(s);
+            json = new JSONObject(s);
+            msg = prettyPrintResponse(json);
+            String intent = json.getJSONArray("intents").getJSONObject(0).get("intent").toString();
+            JSONArray entities = json.getJSONArray("entities");
+            intentsLibrary.callByName(intent, entities);
         } catch (Exception e) {
             Log.d(TAG, "Exception onIntentReceived: ", e);
         }
@@ -110,12 +116,10 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         return recognitionClientWithIntent;
     }
 
-    private String prettyPrintResponse(String response) throws Exception {
+   private String prettyPrintResponse(JSONObject json) throws Exception {
         StringBuilder sb = new StringBuilder();
-        JSONObject json;
         JSONArray intentsArray, entitiesArray;
 
-        json = new JSONObject(response);
         intentsArray = json.getJSONArray("intents");
         sb.append("Text: ").append(json.get("query"));
 

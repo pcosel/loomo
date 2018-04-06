@@ -2,7 +2,7 @@
     <string name="app_name">LoomoSpeech</string>
     <string name="action_settings">Settings</string>
     <string name="status">Status:</string>
-    <string name="output"></string>
+    <string name="output"/>
     <string name="btn_action">Action</string>
     <string name="status_msg">Status message</string>
 
@@ -25,8 +25,8 @@
     <string name="disconnect">Recognition service and speaker service both disconnect!</string>
     <string name="recognition_connected">The recognition service is connected</string>
     <string name="recognition_disconnected">Recognition service disconnected\n</string>
-    <string name="speaker_connected">the speaker service is connected\n</string>
-    <string name="speaker_disconnected">speaker service disconnected\n</string>
+    <string name="speaker_connected">The speaker service is connected\n</string>
+    <string name="speaker_disconnected">Speaker service disconnected\n</string>
     <string name="sound_enabled">sound enabled</string>
     <string name="sound_disabled">sound disabled</string>
     <string name="wakeup_standby">Wake up started.</string>

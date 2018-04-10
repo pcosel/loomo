@@ -1,5 +1,8 @@
 package de.tud.loomospeech;
 
+import android.content.Context;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.WindowManager;
@@ -81,5 +84,46 @@ class IntentsLibrary {
         layoutpars.screenBrightness = brightness / (float)255;
         //Apply attribute changes to this window
         activity.window.setAttributes(layoutpars);
+    }
+
+    private void OnDeviceSetVolume (JSONArray entities) {
+        AudioManager audioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
+
+        int volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+
+        try {
+            JSONObject entity = entities.getJSONObject(0);
+            if(entity.get("type").toString().equals("OnDevice.Volume")) {
+                String value = entity.get("entity").toString();
+                switch(value) {
+                    case "muted":
+                        volume = 0;
+                        break;
+                    case "low":
+                        volume = 1;
+                        break;
+                    case "medium":
+                        volume = Math.round(maxVolume / 2);
+                        break;
+                    case "high":
+                        volume = maxVolume;
+                        break;
+                    default:
+                        volume = Math.max(Math.min(Integer.parseInt(value), 100), 0);
+                }
+                //volume = entity.getInt("entity");
+            }
+        }
+        catch (NumberFormatException e) {
+            Log.d(TAG, "NaN", e);
+        }
+        catch (Exception e) {
+            Log.d(TAG, "Exception: ", e);
+        }
+        Log.d(TAG, "OnDeviceSetVolume" + entities.toString());
+
+        //int _volume = (int) (1 - (Math.log(maxVolume - volume) / Math.log(maxVolume)));
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_PLAY_SOUND);
     }
 }

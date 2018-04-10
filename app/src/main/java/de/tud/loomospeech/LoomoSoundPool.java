@@ -38,7 +38,7 @@ class LoomoSoundPool implements SoundPool.OnLoadCompleteListener {
 
         if (audioManager != null) {
             // In Android 6 there would be an AudioManager.STREAM_NOTIFICATION, but it's not adjustable in Android 5.
-            volume = audioManager.getStreamVolume(AudioManager.STREAM_RING);
+            volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
         } else {
             Log.d("LoomoSoundPool", "Could not read system notification volume. Using 50%.");
         }

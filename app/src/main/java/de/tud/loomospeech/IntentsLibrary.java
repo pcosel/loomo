@@ -46,7 +46,7 @@ class IntentsLibrary {
         int brightness = activity.brightness;
         try {
             JSONObject entity = entities.getJSONObject(0);
-            if(entity.get("type").toString() == "OnDevice.Brightnesslevel") {
+            if(entity.get("type").toString().equals("OnDevice.BrightnessLevel")) {
                 String value = entity.get("entity").toString();
                 switch(value) {
                     case "low":

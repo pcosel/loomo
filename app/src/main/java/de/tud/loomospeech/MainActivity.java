@@ -29,6 +29,7 @@ import com.segway.robot.sdk.voice.VoiceException;
 import com.segway.robot.sdk.voice.audiodata.RawDataListener;
 import com.segway.robot.sdk.voice.recognition.WakeupListener;
 import com.segway.robot.sdk.voice.recognition.WakeupResult;
+import com.segway.robot.sdk.voice.tts.TtsListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Recognizer mRecognizer;
     private Speaker mSpeaker;
+    private TtsListener mTtsListener;
     private WakeupListener mWakeupListener;
     private RawDataListener mRawDataListener;
     private AzureSpeechRecognition azureSpeechRecognition;
@@ -85,7 +87,14 @@ public class MainActivity extends AppCompatActivity {
 
         initWakeUp();
         initRecognizer();
-//      initSpeaker();
+
+        initSpeaker();
+        intTTS();
+        try {
+            mSpeaker.speak("hello world, I am a Segway robot.", mTtsListener);
+        } catch (VoiceException e) {
+            Log.e(TAG, "Error: ", e);
+        }
 
         initBtnAction();
 
@@ -141,41 +150,30 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-//    protected void initSpeaker() {
-//        mSpeaker = Speaker.getInstance();
-//        mSpeaker.bindService(MainActivity.this, new ServiceBinder.BindStateListener() {
-//            @Override
-//            public void onBind() {
-//                Log.d(TAG, "Speaker service onBind");
-//                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speaker_connected)));
-////                try {
-////                    //get speaker service language.
-////                    mSpeakerLanguage = mSpeaker.getLanguage();
-////                } catch (VoiceException e) {
-////                    Log.e(TAG, "Exception: ", e);
-////                }
-////                bindSpeakerService = true;
-////
-////                // set the volume of TTS
-////                try {
-////                    mSpeaker.setVolume(50);
-////                } catch (VoiceException e) {
-////                    e.printStackTrace();
-////                }
-////
-////                if (bindRecognitionService) {
-////                    //both speaker service and recognition service bind, enable function buttons.
-////                }
-//            }
-//
-//            @Override
-//            public void onUnbind(String s) {
-//                Log.d(TAG, "Speaker service onUnbind");
-//                //speaker service or recognition service unbind, disable function buttons.
-//                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speaker_disconnected)));
-//            }
-//        });
-//    }
+    protected void initSpeaker() {
+        mSpeaker = Speaker.getInstance();
+        mSpeaker.bindService(MainActivity.this, new ServiceBinder.BindStateListener() {
+            @Override
+            public void onBind() {
+                Log.d(TAG, "Speaker service onBind");
+                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speaker_connected)));
+
+                // set the volume of TTS
+                try {
+                    mSpeaker.setVolume(50);
+                } catch (VoiceException e) {
+                    Log.e(TAG, "Exception: ", e);
+                }
+            }
+
+            @Override
+            public void onUnbind(String s) {
+                Log.d(TAG, "Speaker service onUnbind");
+                //speaker service or recognition service unbind, disable function buttons.
+                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speaker_disconnected)));
+            }
+        });
+    }
 
     protected void initWakeUp() {
         mWakeupListener = new WakeupListener() {
@@ -228,30 +226,30 @@ public class MainActivity extends AppCompatActivity {
 //        };
 //    }
 
-//    protected void intTTS() {
-//        mTtsListener = new TtsListener() {
-//            @Override
-//            public void onSpeechStarted(String s) {
-//                //s is speech content, callback this method when speech is starting.
-//                Log.d(TAG, "TTS onSpeechStarted() called with: s = [" + s + "]");
-//                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speech_start)));
-//            }
-//
-//            @Override
-//            public void onSpeechFinished(String s) {
-//                //s is speech content, callback this method when speech is finish.
-//                Log.d(TAG, "TTS onSpeechFinished() called with: s = [" + s + "]");
-//                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speech_end)));
-//            }
-//
-//            @Override
-//            public void onSpeechError(String s, String s1) {
-//                //s is speech content, callback this method when speech occurs error.
-//                Log.d(TAG, "TTS onSpeechError() called with: s = [" + s + "], s1 = [" + s1 + "]");
-//                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speech_error) + s1));
-//            }
-//        };
-//    }
+    protected void intTTS() {
+        mTtsListener = new TtsListener() {
+            @Override
+            public void onSpeechStarted(String s) {
+                //s is speech content, callback this method when speech is starting.
+                Log.d(TAG, "TTS onSpeechStarted() called with: s = [" + s + "]");
+                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speech_start)));
+            }
+
+            @Override
+            public void onSpeechFinished(String s) {
+                //s is speech content, callback this method when speech is finish.
+                Log.d(TAG, "TTS onSpeechFinished() called with: s = [" + s + "]");
+                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speech_end)));
+            }
+
+            @Override
+            public void onSpeechError(String s, String s1) {
+                //s is speech content, callback this method when speech occurs error.
+                Log.d(TAG, "TTS onSpeechError() called with: s = [" + s + "], s1 = [" + s1 + "]");
+                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speech_error) + s1));
+            }
+        };
+    }
 
 
     /* ----------------------------- Helper functions -------------------------------------- */

@@ -11,6 +11,7 @@ import android.media.ToneGenerator;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
+import android.speech.tts.TextToSpeech;
 import android.support.v7.app.AppCompatActivity;
 import android.text.method.ScrollingMovementMethod;
 import android.util.DisplayMetrics;
@@ -38,6 +39,7 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
+    private static final String UTTERANCE_ID = "de.tud.loomospeech.UTTERANCE_ID";
 
     private Recognizer mRecognizer;
     private Speaker mSpeaker;
@@ -52,6 +54,8 @@ public class MainActivity extends AppCompatActivity {
     int brightness;
     ContentResolver cResolver;
     Window window;
+    TextToSpeech tts;
+    boolean ttsIsReady = false;
 
 
     @Override
@@ -88,13 +92,24 @@ public class MainActivity extends AppCompatActivity {
         initWakeUp();
         initRecognizer();
 
-        initSpeaker();
-        intTTS();
-        try {
-            mSpeaker.speak("hello world, I am a Segway robot.", mTtsListener);
-        } catch (VoiceException e) {
-            Log.e(TAG, "Error: ", e);
-        }
+//        initSpeaker();
+//        intTTS();
+//        try {
+//            mSpeaker.speak("hello world, I am a Segway robot.", mTtsListener);
+//        } catch (VoiceException e) {
+//            Log.e(TAG, "Error: ", e);
+//        }
+
+        tts = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if(status != TextToSpeech.ERROR) {
+                    tts.setLanguage(getResources().getConfiguration().locale);
+                    ttsIsReady = true;
+                }
+            }
+        });
+        if (ttsIsReady) tts.speak("This is Sparta.", TextToSpeech.QUEUE_FLUSH, null, UTTERANCE_ID);
 
         initBtnAction();
 
@@ -106,6 +121,7 @@ public class MainActivity extends AppCompatActivity {
         if (mSpeaker != null) mSpeaker = null;
         if (azureSpeechRecognition != null) azureSpeechRecognition = null;
         if (mHandler != null) mHandler = null;
+        if (tts != null) tts.shutdown();
         super.onDestroy();
     }
 
@@ -150,30 +166,30 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    protected void initSpeaker() {
-        mSpeaker = Speaker.getInstance();
-        mSpeaker.bindService(MainActivity.this, new ServiceBinder.BindStateListener() {
-            @Override
-            public void onBind() {
-                Log.d(TAG, "Speaker service onBind");
-                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speaker_connected)));
-
-                // set the volume of TTS
-                try {
-                    mSpeaker.setVolume(50);
-                } catch (VoiceException e) {
-                    Log.e(TAG, "Exception: ", e);
-                }
-            }
-
-            @Override
-            public void onUnbind(String s) {
-                Log.d(TAG, "Speaker service onUnbind");
-                //speaker service or recognition service unbind, disable function buttons.
-                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speaker_disconnected)));
-            }
-        });
-    }
+//    protected void initSpeaker() {
+//        mSpeaker = Speaker.getInstance();
+//        mSpeaker.bindService(MainActivity.this, new ServiceBinder.BindStateListener() {
+//            @Override
+//            public void onBind() {
+//                Log.d(TAG, "Speaker service onBind");
+//                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speaker_connected)));
+//
+//                // set the volume of TTS
+//                try {
+//                    mSpeaker.setVolume(50);
+//                } catch (VoiceException e) {
+//                    Log.e(TAG, "Exception: ", e);
+//                }
+//            }
+//
+//            @Override
+//            public void onUnbind(String s) {
+//                Log.d(TAG, "Speaker service onUnbind");
+//                //speaker service or recognition service unbind, disable function buttons.
+//                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speaker_disconnected)));
+//            }
+//        });
+//    }
 
     protected void initWakeUp() {
         mWakeupListener = new WakeupListener() {
@@ -217,64 +233,33 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-//    protected void initRawData() {
-//        mRawDataListener = new RawDataListener() {
+//    protected void intTTS() {
+//        mTtsListener = new TtsListener() {
 //            @Override
-//            public void onRawData(byte[] bytes, int i) {
-//                createFile(bytes, "raw.pcm");
+//            public void onSpeechStarted(String s) {
+//                //s is speech content, callback this method when speech is starting.
+//                Log.d(TAG, "TTS onSpeechStarted() called with: s = [" + s + "]");
+//                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speech_start)));
+//            }
+//
+//            @Override
+//            public void onSpeechFinished(String s) {
+//                //s is speech content, callback this method when speech is finish.
+//                Log.d(TAG, "TTS onSpeechFinished() called with: s = [" + s + "]");
+//                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speech_end)));
+//            }
+//
+//            @Override
+//            public void onSpeechError(String s, String s1) {
+//                //s is speech content, callback this method when speech occurs error.
+//                Log.d(TAG, "TTS onSpeechError() called with: s = [" + s + "], s1 = [" + s1 + "]");
+//                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speech_error) + s1));
 //            }
 //        };
 //    }
 
-    protected void intTTS() {
-        mTtsListener = new TtsListener() {
-            @Override
-            public void onSpeechStarted(String s) {
-                //s is speech content, callback this method when speech is starting.
-                Log.d(TAG, "TTS onSpeechStarted() called with: s = [" + s + "]");
-                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speech_start)));
-            }
-
-            @Override
-            public void onSpeechFinished(String s) {
-                //s is speech content, callback this method when speech is finish.
-                Log.d(TAG, "TTS onSpeechFinished() called with: s = [" + s + "]");
-                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speech_end)));
-            }
-
-            @Override
-            public void onSpeechError(String s, String s1) {
-                //s is speech content, callback this method when speech occurs error.
-                Log.d(TAG, "TTS onSpeechError() called with: s = [" + s + "], s1 = [" + s1 + "]");
-                mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, getString(R.string.speech_error) + s1));
-            }
-        };
-    }
-
 
     /* ----------------------------- Helper functions -------------------------------------- */
-
-    private void createFile(byte[] buffer, String fileName) {
-        final String FILE_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator;
-
-        RandomAccessFile randomFile = null;
-        try {
-            randomFile = new RandomAccessFile(FILE_PATH + fileName, "rw");
-            long fileLength = randomFile.length();
-            randomFile.seek(fileLength);
-            randomFile.write(buffer);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (randomFile != null) {
-                try {
-                    randomFile.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
 
     void switchLanguage(Locale locale) {
         Configuration config = getResources().getConfiguration();

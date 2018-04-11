@@ -81,7 +81,7 @@ public class MapView extends View implements View.OnTouchListener {
     /**
      * A reference to the activity that contains this view.
      */
-    private NavigationActivity mNavigationActivity;
+    private MapActivity mNavigationActivity;
 
     /**
      * Indicates whether a touch event has occured.
@@ -106,7 +106,7 @@ public class MapView extends View implements View.OnTouchListener {
         setFocusableInTouchMode(true);
         setOnTouchListener(this);
 
-        mNavigationActivity = (NavigationActivity)context;
+        mNavigationActivity = (MapActivity)context;
 
         mScreenPositions = positions;
         mWidth = width;

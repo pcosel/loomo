@@ -13,18 +13,18 @@ public enum State {
     START,
 
     /**
-     * The robot walks forward in order to reach the next wall.
+     * The robot walks forward to the next checkpoint.
      */
-    WALK,
+    WALKING,
 
     /**
      * The robot performs a right turn in order to check if the wall next to it has ended.
      */
-    CHECK,
+    CHECKING_WALL,
 
     /**
      * The robot detected an obstacle and performs a left turn.
      */
-    OBSTACLE
+    OBSTACLE_DETECTED;
 
 }

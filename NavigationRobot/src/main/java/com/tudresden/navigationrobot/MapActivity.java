@@ -1,25 +1,13 @@
 package com.tudresden.navigationrobot;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.segway.robot.algo.Pose2D;
-import com.segway.robot.algo.PoseVLS;
-import com.segway.robot.algo.minicontroller.CheckPoint;
-import com.segway.robot.algo.minicontroller.CheckPointStateListener;
-import com.segway.robot.algo.minicontroller.ObstacleStateChangedListener;
-import com.segway.robot.sdk.base.bind.ServiceBinder;
-import com.segway.robot.sdk.locomotion.sbv.Base;
-import com.segway.robot.sdk.locomotion.sbv.StartVLSListener;
-import com.segway.robot.sdk.perception.sensor.Sensor;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -32,51 +20,16 @@ import java.text.DecimalFormatSymbols;
 import java.util.LinkedList;
 
 /**
- * This Activity handles the navigation process.
+ * This Activity shows the map of the previously explored room.
  *
  * @author Nadja Konrad
  */
-public class NavigationActivity extends Activity {
-
-    /**
-     * The tag that is used for log messages.
-     */
-    private static final String TAG = "NavigationActivity";
+public class MapActivity extends Activity {
 
     /**
      * The filename of the file that the positions are stored in.
      */
     private static final String FILENAME = "positions.json";
-
-    /**
-     * Indicates that the list of positions should be traversed in sequential order.
-     */
-    private static final String FORWARD = "forward";
-
-    /**
-     * Indicates that the list of positions should be traversed in reverse sequential order.
-     */
-    private static final String BACKWARD = "backward";
-
-    /**
-     * The listener for the bind status of the base instance.
-     */
-    private ServiceBinder.BindStateListener mBaseBindStateListener;
-
-    /**
-     * The listener for the bind status of the sensor instance.
-     */
-    private ServiceBinder.BindStateListener mSensorBindStateListener;
-
-    /**
-     * The Base instance that is used for controlling the robots movements.
-     */
-    private Base mBase = null;
-
-    /**
-     * The Sensor instance that is used for actions related to the ultrasonic sensor.
-     */
-    private Sensor mSensor = null;
 
     /**
      * The padding for the map.
@@ -93,28 +46,6 @@ public class NavigationActivity extends Activity {
      * starting point!
      */
     private Position mStartPosition;
-
-    /**
-     * The position that the user selected on the screen (real coordinates).
-     */
-    private Position mTargetPosition;
-
-    /**
-     * The position from the list of known positions that is closest to the target position (real
-     * coordinates).
-     */
-    private Position mClosestKnownPosition;
-
-    /**
-     * The current position of the robot (real coordinates).
-     */
-    private Position mCurrentPosition;
-
-    /**
-     * Indicates whether the list of positions should be traversed in sequential order or in reverse
-     * sequential order.
-     */
-    private String mDirection;
 
     /**
      * The distance between the points on the screen (if assumed that the points are evenly
@@ -271,7 +202,7 @@ public class NavigationActivity extends Activity {
 
     /**
      * Converts a position on the screen to a real position in the room. Inverts the calculations of
-     * {@see #calculateScreenPositions(int width, int height)}
+     * {@see #calculateScreenPositions(int width, int height)}.
      * @param x the x-coordinate of the selected position on the screen
      * @param y the y-coordinate of the selected position on the screen
      * @return the real position in the room
@@ -307,132 +238,7 @@ public class NavigationActivity extends Activity {
         targetX = Double.parseDouble(df.format(targetX));
         targetY = Double.parseDouble(df.format(targetY));
 
-        mTargetPosition = new Position(targetX, targetY);
-        return mTargetPosition;
-    }
-
-    /**
-     * Finds the position in the list of known positions that is closest to the target position.
-     */
-    public void findClosestKnownPosition() {
-        double distance = Double.MAX_VALUE;
-        double targetX = mTargetPosition.getX();
-        double targetY = mTargetPosition.getY();
-        for(Position p : mInputPositions) {
-            // Calculate euclidian distance for every position
-            double x = p.getX() - targetX;
-            double y = p.getY() - targetY;
-            double result = Math.sqrt(x * x + y * y);
-            if(result < distance) {
-                distance = result;
-                mClosestKnownPosition = p;
-            }
-        }
-    }
-
-    /**
-     * Calculates whether the list of positions should be traversed in sequential order or in reverse
-     * sequential order for shortest navigation.
-     */
-    public void findShortestPath() {
-        int indexCurrentPosition = mInputPositions.indexOf(mCurrentPosition);
-        int indexClosestKnownPosition = mInputPositions.indexOf(mClosestKnownPosition);
-        int distanceForward;
-        int distanceBackward;
-        if(indexCurrentPosition < indexClosestKnownPosition) {
-            distanceForward = indexClosestKnownPosition - indexCurrentPosition;
-            distanceBackward = (mInputPositions.size() - indexClosestKnownPosition) + indexCurrentPosition;
-        } else {
-            distanceBackward = indexCurrentPosition - indexClosestKnownPosition;
-            distanceForward = (mInputPositions.size() - indexCurrentPosition) + indexClosestKnownPosition;
-        }
-        if(distanceForward < distanceBackward) {
-            mDirection = FORWARD;
-        } else {
-            mDirection = BACKWARD;
-        }
-    }
-
-    /**
-     * Finds the next position and tells the robot to go there.
-     */
-    public void goToNextPosition() {
-        // TODO: Implement Navigation
-    }
-
-    /**
-     * Starts the navigation process by finding the closest known position to the target position
-     * and the shortest path. Also initializes the obstacle avoidance functionality and tells the
-     * robot to go to the first position.
-     */
-    public void startNavigation(View view) {
-        if(mTargetPosition == null) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("No destination selected!");
-            builder.setMessage("Please tap a point on the map to select your destination.");
-            builder.setPositiveButton("OK", null);
-            AlertDialog dialog = builder.create();
-            dialog.show();
-        } else {
-            findClosestKnownPosition();
-            findShortestPath();
-            mBase.setUltrasonicObstacleAvoidanceEnabled(true);
-            mBase.setUltrasonicObstacleAvoidanceDistance(1.3f);
-            goToNextPosition();
-        }
-    }
-
-    /**
-     * Initializes the listeners for the base instance and the sensor instance. For the base
-     * instance the Visual Localization System is started, the CheckPointStateListener is registered
-     * and the ObstacleStateChangeListener is registered.
-     */
-    private void initListeners() {
-        mBaseBindStateListener = new ServiceBinder.BindStateListener() {
-            @Override
-            public void onBind() {
-                mBase.setControlMode(Base.CONTROL_MODE_NAVIGATION);
-                mBase.startVLS(true, true, new StartVLSListener() {
-                    @Override
-                    public void onOpened() {
-                        mBase.setNavigationDataSource(Base.NAVIGATION_SOURCE_TYPE_VLS);
-                    }
-
-                    @Override
-                    public void onError(String errorMessage) {
-                        Log.d(TAG, "onError() called with: errorMessage = [" + errorMessage + "]");
-                    }
-                });
-                mBase.setOnCheckPointArrivedListener(new CheckPointStateListener() {
-                    @Override
-                    public void onCheckPointArrived(final CheckPoint checkPoint, Pose2D realPose, boolean isLast) {
-                        goToNextPosition();
-                    }
-
-                    @Override
-                    public void onCheckPointMiss(CheckPoint checkPoint, Pose2D realPose, boolean isLast, int reason) {}
-                });
-                mBase.setObstacleStateChangeListener(new ObstacleStateChangedListener() {
-                    @Override
-                    public void onObstacleStateChanged(int ObstacleAppearance) {
-                        if(ObstacleAppearance == ObstacleStateChangedListener.OBSTACLE_APPEARED) {
-                            // TODO: Handle obstacle detection
-                        }
-                    }
-                });
-            }
-
-            @Override
-            public void onUnbind(String reason) {}
-        };
-
-        mSensorBindStateListener = new ServiceBinder.BindStateListener() {
-            @Override
-            public void onBind() {}
-
-            @Override
-            public void onUnbind(String reason) {}
-        };
+        return new Position(targetX, targetY);
     }
 
     /**
@@ -453,57 +259,23 @@ public class NavigationActivity extends Activity {
 
                 calculateScreenPositions(width, height);
 
-                mFrameLayout.addView(new MapView(NavigationActivity.this, mScreenPositions, width, height));
+                mFrameLayout.addView(new MapView(MapActivity.this, mScreenPositions, width, height));
             }
         });
-    }
-
-    /**
-     * Binds the base instance and the sensor instance to the respective services.
-     */
-    private void bindServices() {
-        mSensor = Sensor.getInstance();
-        mSensor.bindService(this, mSensorBindStateListener);
-        mBase = Base.getInstance();
-        mBase.bindService(this, mBaseBindStateListener);
-    }
-
-    /**
-     * Unbinds the base instance and the sensor instance from the respective services.
-     */
-    private void unbindServices() {
-        mBase.unbindService();
-        mSensor.unbindService();
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_navigation);
+        setContentView(R.layout.activity_map);
         getActionBar().setDisplayHomeAsUpEnabled(true);
 
         mFrameLayout = (FrameLayout)findViewById(R.id.frameLayout);
 
         if(fileExists()) {
             mInputPositions = mGson.fromJson(read(), mListType);
-            // When the exploration is finished, the robot stands on the position that it last
-            // reached
-            mCurrentPosition = mInputPositions.getLast();
         }
 
         initFrameLayoutListener();
-        initListeners();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        unbindServices();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        bindServices();
     }
 }

@@ -3,9 +3,11 @@ package de.tud.loomospeech;
 import android.util.Log;
 
 import com.microsoft.cognitiveservices.speechrecognition.ISpeechRecognitionServerEvents;
+import com.microsoft.cognitiveservices.speechrecognition.MicrophoneRecognitionClient;
 import com.microsoft.cognitiveservices.speechrecognition.MicrophoneRecognitionClientWithIntent;
 import com.microsoft.cognitiveservices.speechrecognition.RecognitionResult;
 import com.microsoft.cognitiveservices.speechrecognition.RecognitionStatus;
+import com.microsoft.cognitiveservices.speechrecognition.SpeechRecognitionMode;
 import com.microsoft.cognitiveservices.speechrecognition.SpeechRecognitionServiceFactory;
 
 import org.json.JSONArray;
@@ -18,6 +20,7 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
     private MainActivity activity;
     private MessageHandler mHandler;
     private MicrophoneRecognitionClientWithIntent recognitionClientWithIntent;
+    private MicrophoneRecognitionClient recognitionClient;
     private IntentsLibrary intentsLibrary;
 
     AzureSpeechRecognition(MainActivity myActivity) {
@@ -115,6 +118,20 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         recognitionClientWithIntent.setAuthenticationUri(activity.getString(R.string.authenticationUri));
 
         return recognitionClientWithIntent;
+    }
+
+    MicrophoneRecognitionClient getRecognitionClient() {
+        if (recognitionClient != null) {
+            return recognitionClient;
+        }
+
+        String language = activity.getResources().getConfiguration().locale.toString();
+        String subscriptionKey = activity.getString(R.string.subscriptionKey);
+
+        recognitionClient = SpeechRecognitionServiceFactory.createMicrophoneClient(activity, SpeechRecognitionMode.ShortPhrase, language, this, subscriptionKey);
+        recognitionClient.setAuthenticationUri(activity.getString(R.string.authenticationUri));
+
+        return recognitionClient;
     }
 
    private String prettyPrintResponse(JSONObject json) throws Exception {

@@ -42,16 +42,19 @@ class IntentsLibrary {
         }
     }
 
+    private void Speak (String msg, String utteranceId) {
+        if (activity.ttsIsReady) activity.tts.speak(msg, TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+        activity.mHandler.sendMessage(activity.mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
+    }
+
     private void None() {
         // No suitable action for command found.
         Log.d(TAG, "No suitable action for command found.");
-        if (activity.ttsIsReady) activity.tts.speak("Pardon? I didn't understand that.", TextToSpeech.QUEUE_FLUSH, null, "None");
-
+        Speak("Pardon? I didn't understand that.", "None");
     }
 
     private void OnDeviceAreYouListening() {
-        if (activity.ttsIsReady) activity.tts.speak("Yes!", TextToSpeech.QUEUE_FLUSH, null, "OnDeviceAreYouListening");
-        activity.mHandler.sendMessage(activity.mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, "Yes!"));
+        Speak("Yes!", "OnDeviceAreYouListening");
     }
 
     private void OnDeviceSetBrightness (JSONArray entities) {
@@ -96,7 +99,7 @@ class IntentsLibrary {
         activity.window.setAttributes(layoutpars);
 
         String msg = "Okay, the brightness is set to " + value;
-        if (activity.ttsIsReady) activity.tts.speak(msg, TextToSpeech.QUEUE_FLUSH, null, "OnDeviceSetBrightness");
+        Speak(msg, "OnDeviceSetBrightness");
     }
 
     private void OnDeviceSetVolume (JSONArray entities) {
@@ -126,6 +129,7 @@ class IntentsLibrary {
                             break;
                         default:
                             volume = Math.max(Math.min(Integer.parseInt(value), 100), 0);
+                            volume = Math.round(volume * maxVolume / 100);
                     }
                 }
             } catch (NumberFormatException e) {
@@ -138,14 +142,13 @@ class IntentsLibrary {
             audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_SHOW_UI);
 
             String msg = "Okay, the volume is set to " + value;
-            if (activity.ttsIsReady) activity.tts.speak(msg, TextToSpeech.QUEUE_FLUSH, null, "OnDeviceSetVolume");
+            Speak(msg, "OnDeviceSetVolume");
         } else {
             //dialog
-            String msg = "What to?";
-            if (activity.ttsIsReady) activity.tts.speak(msg, TextToSpeech.QUEUE_FLUSH, null, "OnDeviceSetVolume");
+            Speak("What to?", "DialogOnDeviceSetVolume");
 
             //start recognition without intent detection
-            activity.azureSpeechRecognition.getRecognitionClientWithIntent().startMicAndRecognition();
+            activity.azureSpeechRecognition.getRecognitionClient().startMicAndRecognition();
         }
     }
 }

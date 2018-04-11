@@ -46,9 +46,9 @@ public class MainActivity extends AppCompatActivity {
     private TtsListener mTtsListener;
     private WakeupListener mWakeupListener;
     private RawDataListener mRawDataListener;
-    private AzureSpeechRecognition azureSpeechRecognition;
     private Button btnAction;
 
+    AzureSpeechRecognition azureSpeechRecognition;
     MessageHandler mHandler;
     LoomoSoundPool loomoSoundPool;
     int brightness;

@@ -192,7 +192,6 @@ public class MainActivity extends AppCompatActivity {
                 mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.SET, MessageHandler.STATUS, getString(R.string.statusListening)));
                 //start azure recognition
                 azureSpeechRecognition.getRecognitionClientWithIntent().startMicAndRecognition();
-
                 // disable action button
 //                btnAction.setEnabled(false);
             }

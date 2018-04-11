@@ -21,12 +21,23 @@ class IntentsLibrary {
     public void callByName(String functionName, JSONArray entities) {
         //Ignoring any possible result
         functionName = functionName.replace(".", "");
+        /* try {
+            this.getClass().getDeclaredMethod(functionName, JSONArray.class).invoke(this, entities);
+        } catch (Exception e) {
+//          Log.d(TAG, e.getMessage());
+            Log.d(TAG, "Exception: ", e);
+            this.None();
+        } */
+
         try {
             this.getClass().getDeclaredMethod(functionName, JSONArray.class).invoke(this, entities);
         } catch (Exception e) {
-//            Log.d(TAG, e.getMessage());
-            Log.d(TAG, "Exception: ", e);
-            this.None();
+            try {
+                this.getClass().getDeclaredMethod(functionName).invoke(this);
+            } catch (Exception e2) {
+                Log.d(TAG, "Exception: ", e2);
+                this.None();
+            }
         }
     }
 
@@ -35,15 +46,9 @@ class IntentsLibrary {
         Log.d(TAG, "No suitable action for command found.");
     }
 
-    private void HomeAutomationTurnOn() {}
-
-    private void HomeAutomationTurnOff() {}
-
-    private void OnDeviceOpenApplication() {}
-
-    private void OnDeviceCloseApplication() {}
-
-    private void UtilitiesStop() {}
+    private void OnDeviceAreYouListening() {
+        activity.mHandler.sendMessage(activity.mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, "Yes!"));
+    }
 
     private void OnDeviceSetBrightness (JSONArray entities) {
         int brightness = activity.brightness;
@@ -87,43 +92,44 @@ class IntentsLibrary {
     }
 
     private void OnDeviceSetVolume (JSONArray entities) {
-        AudioManager audioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
+        if (entities.length() > 0) {
+            AudioManager audioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
 
-        int volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-        int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+            int volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+            int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
 
-        try {
-            JSONObject entity = entities.getJSONObject(0);
-            if(entity.get("type").toString().equals("OnDevice.Volume")) {
-                String value = entity.get("entity").toString();
-                switch(value) {
-                    case "muted":
-                        volume = 0;
-                        break;
-                    case "low":
-                        volume = 1;
-                        break;
-                    case "medium":
-                        volume = Math.round(maxVolume / 2);
-                        break;
-                    case "high":
-                        volume = maxVolume;
-                        break;
-                    default:
-                        volume = Math.max(Math.min(Integer.parseInt(value), 100), 0);
+            try {
+                JSONObject entity = entities.getJSONObject(0);
+                if (entity.get("type").toString().equals("OnDevice.Volume")) {
+                    String value = entity.get("entity").toString();
+                    switch (value) {
+                        case "muted":
+                            volume = 0;
+                            break;
+                        case "low":
+                            volume = 1;
+                            break;
+                        case "medium":
+                            volume = Math.round(maxVolume / 2);
+                            break;
+                        case "high":
+                            volume = maxVolume;
+                            break;
+                        default:
+                            volume = Math.max(Math.min(Integer.parseInt(value), 100), 0);
+                    }
+                    //volume = entity.getInt("entity");
                 }
-                //volume = entity.getInt("entity");
+            } catch (NumberFormatException e) {
+                Log.d(TAG, "NaN", e);
+            } catch (Exception e) {
+                Log.d(TAG, "Exception: ", e);
             }
-        }
-        catch (NumberFormatException e) {
-            Log.d(TAG, "NaN", e);
-        }
-        catch (Exception e) {
-            Log.d(TAG, "Exception: ", e);
-        }
-        Log.d(TAG, "OnDeviceSetVolume" + entities.toString());
+            Log.d(TAG, "OnDeviceSetVolume" + entities.toString());
 
-        //int _volume = (int) (1 - (Math.log(maxVolume - volume) / Math.log(maxVolume)));
-        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_PLAY_SOUND);
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_SHOW_UI);
+        } else {
+            //start recognition without intent detection
+        }
     }
 }

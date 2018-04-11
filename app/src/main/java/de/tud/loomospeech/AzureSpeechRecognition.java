@@ -127,8 +127,6 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
 
         String language = activity.getResources().getConfiguration().locale.toString();
         String subscriptionKey = activity.getString(R.string.subscriptionKey);
-        String luisAppID = activity.getString(R.string.luisAppID);
-        String luisSubscriptionID = activity.getString(R.string.luisSubscriptionID);
 
         recognitionClient = SpeechRecognitionServiceFactory.createMicrophoneClient(activity, SpeechRecognitionMode.ShortPhrase, language, this, subscriptionKey);
         recognitionClient.setAuthenticationUri(activity.getString(R.string.authenticationUri));

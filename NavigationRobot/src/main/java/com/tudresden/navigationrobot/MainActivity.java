@@ -58,6 +58,26 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private static final String FILENAME = "positions.json";
 
     /**
+     * The distance that the robot keeps to obstacles.
+     */
+    private static final float OBSTACLE_AVOIDANCE_DISTANCE = 1.3f;
+
+    /**
+     * The distance that the robot walks from one checkpoint to the next.
+     */
+    private static final float WALKING_DISTANCE = 1f;
+
+    /**
+     * The theta value for adding a checkpoint that makes the robot rotate 90° to the left.
+     */
+    private static final float LEFT_90 = (float) (Math.PI / 2);
+
+    /**
+     * The theta value for adding a checkpoint that makes the robot rotate 90° to the right.
+     */
+    private static final float RIGHT_90 = (float) -(Math.PI / 2);
+
+    /**
      * A counter for handling exiting the app by pressing the back button.
      */
     private int mPress = 0;
@@ -175,8 +195,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
         PoseVLS pos = mBase.getVLSPose(-1);
         mBase.setOriginalPoint(pos);
         mBase.setUltrasonicObstacleAvoidanceEnabled(true);
-        // Keep 1.3 meter mDistance from obstacles
-        mBase.setUltrasonicObstacleAvoidanceDistance(1.3f);
+        // Keep 1.3 meter distance from obstacles
+        mBase.setUltrasonicObstacleAvoidanceDistance(OBSTACLE_AVOIDANCE_DISTANCE);
         // It is necessary to set 2 checkpoints in the beginning
         // With just one checkpoint, the OnCheckPointArrivedListener is not called correctly
         mBase.addCheckPoint(0, 0);
@@ -192,9 +212,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
      * In case an obstacle was detected and the left turn was performed ({@see #obstacleDetected()}),
      * the new checkpoint needs to be set to make the robot walk forward (1 meter) in order to reach
      * the next wall.
-     * After every meter that the robot walks in search of the next wall, it needs to perform a right
-     * turn (90 degrees) in order to check if the wall on its right has ended.
-     * If the wall has not ended, the robot performs a left turn (90 degrees) and continues to walk
+     * After every meter that the robot walks in search of the next wall, it needs to rotate 90° to
+     * the right in order to check if the wall on its right has ended.
+     * If the wall has not ended, the robot rotates back 90° to the left and continues to walk
      * forward along the wall.
      * If the wall has ended, the robot does not turn back but instead follows the new wall.
      */
@@ -206,7 +226,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         switch(mState) {
             case START:
                 // As long as no wall has been found yet, keep walking forward (1 meter)
-                mBase.addCheckPoint(1f, 0);
+                mBase.addCheckPoint(WALKING_DISTANCE, 0);
                 break;
             case WALKING:
                 if(mCheckingWall) {
@@ -215,8 +235,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 updateCoordinates();
                 mState = State.CHECKING_WALL;
                 mDistance = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
-                // After every meter, turn right (90 degrees)
-                mBase.addCheckPoint(0, 0, (float) (-Math.PI / 2));
+                // After every meter, rotate 90° to the right to check the wall
+                mBase.addCheckPoint(0, 0, RIGHT_90);
                 break;
             case CHECKING_WALL:
                 // In case after the right turn no obstacle is detected, that means that the wall
@@ -229,7 +249,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 // updated. mCheckingWall allows to distinguish between the following cases:
                 // 1. The robot is walking towards a new wall and an obstacle appears in front of him
                 // 2. An obstacle appears while checking the wall next to the robot
-                // In both cases the state of the robot is WALK, but in the ObstacleStateChangeListener
+                // In both cases the state of the robot is WALKING, but in the ObstacleStateChangeListener
                 // different things need to happen.
                 // Without setting the state to WALK in this switch case, the robot would not continue
                 // walking if after the right turn no obstacle is found.
@@ -237,13 +257,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 mState = State.WALKING;
                 updateOrientation(RIGHT_TURN);
                 // Walk forward (1 meter)
-                mBase.addCheckPoint(1f, 0);
+                mBase.addCheckPoint(WALKING_DISTANCE, 0);
                 break;
             case OBSTACLE_DETECTED:
                 mState = State.WALKING;
                 mDistance = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
                 // After an obstacle was detected and the left turn was performed, walk forward (1 meter)
-                mBase.addCheckPoint(1f, 0);
+                mBase.addCheckPoint(WALKING_DISTANCE, 0);
                 break;
             default:
                 // All possible cases are handled above
@@ -251,14 +271,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     /**
-     * Sets a new checkpoint to make the robot perform a left turn (90 degrees) in case an obstacle
-     * was detected.
+     * Sets a new checkpoint to make the robot rotate 90° to the left in case an obstacle was detected.
      */
     public void obstacleDetected() {
         // Delay the execution of the code for 1 second, then check if there really is an obstacle
         mHandler.postDelayed(new Runnable() {
             public void run() {
-                if(mSensor.getUltrasonicDistance().getDistance() <= 1300) {
+                if(mSensor.getUltrasonicDistance().getDistance() / 1000 <= OBSTACLE_AVOIDANCE_DISTANCE) {
                     if(mState == State.START) {
                         // This is the first obstacle that the robot has detected (the coordinates are 0.0)
                         Log.d(TAG, "State: " + mState +
@@ -268,7 +287,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         mState = State.OBSTACLE_DETECTED;
                     } else if(mState == State.WALKING) {
                         mState = State.OBSTACLE_DETECTED;
-                        // Concerning mCheckingWall see explanation in arrivedAtCheckpoint() (case CHECK)
+                        // Concerning mCheckingWall see explanation in arrivedAtCheckpoint() (case CHECKING_WALL)
                         if(!mCheckingWall) {
                             updateCoordinates();
                         } else {
@@ -285,8 +304,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     PoseVLS pos = mBase.getVLSPose(-1);
                     mBase.setOriginalPoint(pos);
                     updateOrientation(LEFT_TURN);
-                    // Turn left (90 degrees)
-                    mBase.addCheckPoint(0, 0, (float) (Math.PI / 2));
+                    // Rotate 90° to the left
+                    mBase.addCheckPoint(0, 0, LEFT_90);
                     // When the turn is finished, {@see #arrivedAtCheckpoint()} is called and the robot walks
                     // forward to the next wall
                 }
@@ -393,6 +412,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         stopButton.setOnClickListener(this);
 
         initListeners();
+        bindServices();
     }
 
     /**
@@ -458,14 +478,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
         mBase.bindService(this, mBaseBindStateListener);
     }
 
-    /**
-     * Unbinds the base instance and the sensor instance from the respective services.
-     */
-    private void unbindServices() {
-        mBase.unbindService();
-        mSensor.unbindService();
-    }
-
     @Override
     public void onClick(View v) {
         switch(v.getId()) {
@@ -497,18 +509,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     startActivity(intent);
                 }
         }
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        unbindServices();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        bindServices();
     }
 
     @Override

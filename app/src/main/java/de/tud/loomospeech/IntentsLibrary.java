@@ -18,9 +18,11 @@ class IntentsLibrary {
 
     private static final String TAG = "IntentsLibrary";
     private MainActivity activity;
+    private WordToNumber wordToNumber;
 
     IntentsLibrary(MainActivity myActivity) {
         activity = myActivity;
+        wordToNumber = new WordToNumber();
     }
 
     public void callByName(String functionName, JSONArray entities) {
@@ -213,6 +215,7 @@ class IntentsLibrary {
             int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
 
             try {
+                Integer number = wordToNumber.wordToNumber(entity);
                 if(!isNumeric(entity)) {
                     switch (entity) {
                         case "muted":

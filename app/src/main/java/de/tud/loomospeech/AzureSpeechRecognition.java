@@ -53,10 +53,11 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
         mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.SET, MessageHandler.STATUS, activity.getString(R.string.statusProcessing)));
 
-        if(intentsLibrary.dialogStarted) {
+        if(intentsLibrary.dialogStarted && recognitionResult.RecognitionStatus == RecognitionStatus.RecognitionSuccess) {
             intentsLibrary.callByName(intentsLibrary.dialogContext, recognitionResult.Results[0].LexicalForm);
         } else {
             if (recognitionResult.RecognitionStatus != RecognitionStatus.RecognitionSuccess) {
+                intentsLibrary.dialogStarted = false;
                 activity.startWakeUpListener();
             }
         }

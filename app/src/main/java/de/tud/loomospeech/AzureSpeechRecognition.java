@@ -40,6 +40,9 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
     @Override
     public void onFinalResponseReceived(final RecognitionResult recognitionResult) {
         recognitionClientWithIntent.endMicAndRecognition();
+        if(recognitionClient != null) {
+            recognitionClient.endMicAndRecognition();
+        }
 
         String msg = "Final response: " + recognitionResult.RecognitionStatus;
 //        for (RecognizedPhrase el: recognitionResult.Results) {
@@ -49,8 +52,13 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         Log.d(TAG, msg);
         mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
         mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.SET, MessageHandler.STATUS, activity.getString(R.string.statusProcessing)));
-        if (recognitionResult.RecognitionStatus != RecognitionStatus.RecognitionSuccess) {
-            activity.startWakeUpListener();
+
+        if(intentsLibrary.dialogStarted) {
+            intentsLibrary.callByName(intentsLibrary.dialogContext, recognitionResult.Results[0].LexicalForm);
+        } else {
+            if (recognitionResult.RecognitionStatus != RecognitionStatus.RecognitionSuccess) {
+                activity.startWakeUpListener();
+            }
         }
     }
 
@@ -75,7 +83,7 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         activity.loomoSoundPool.play("success");
 
 //        recognitionClientWithIntent.endMicAndRecognition();
-        activity.startWakeUpListener();
+        //activity.startWakeUpListener();
     }
 
     @Override

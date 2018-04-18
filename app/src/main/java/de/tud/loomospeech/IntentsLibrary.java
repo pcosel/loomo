@@ -11,7 +11,11 @@ import android.view.WindowManager;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+
 class IntentsLibrary {
+    public boolean dialogStarted;
+    public String dialogContext;
+
     private static final String TAG = "IntentsLibrary";
     private MainActivity activity;
 
@@ -42,9 +46,33 @@ class IntentsLibrary {
         }
     }
 
+    public void callByName(String functionName, String entity) {
+        //Ignoring any possible result
+        functionName = functionName.replace(".", "");
+        try {
+            this.getClass().getDeclaredMethod(functionName, String.class).invoke(this, entity);
+        } catch (Exception e) {
+            Log.d(TAG, "Exception: ", e);
+            this.None();
+        }
+    }
+
     private void Speak (String msg, String utteranceId) {
         if (activity.ttsIsReady) activity.tts.speak(msg, TextToSpeech.QUEUE_FLUSH, null, utteranceId);
         activity.mHandler.sendMessage(activity.mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
+    }
+
+    private static boolean isNumeric(String str)
+    {
+        try
+        {
+            double d = Double.parseDouble(str);
+        }
+        catch(NumberFormatException nfe)
+        {
+            return false;
+        }
+        return true;
     }
 
     private void None() {
@@ -114,7 +142,79 @@ class IntentsLibrary {
                 JSONObject entity = entities.getJSONObject(0);
                 if (entity.get("type").toString().equals("OnDevice.Volume")) {
                     value = entity.get("entity").toString();
-                    switch (value) {
+                    if(!isNumeric(value)) {
+                        switch (value) {
+                            case "muted":
+                                volume = 0;
+                                break;
+                            case "low":
+                                volume = 1;
+                                break;
+                            case "medium":
+                                volume = Math.round(maxVolume / 2);
+                                break;
+                            case "high":
+                                volume = maxVolume;
+                                break;
+                            default:
+                                String msg = "I can't set the volume to " + value;
+                                Speak(msg, "OnDeviceSetVolume");
+
+                                activity.startWakeUpListener();
+                                return;
+                        }
+
+                        Log.d(TAG, "OnDeviceSetVolume" + entities.toString());
+
+                        //set volume
+                        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_SHOW_UI);
+
+                        String msg = "Okay, the volume is set to " + value;
+                        Speak(msg, "OnDeviceSetVolume");
+
+                        activity.startWakeUpListener();
+                    } else {
+                        volume = Math.max(Math.min(Integer.parseInt(value), 100), 0);
+                        volume = Math.round(volume * maxVolume / 100);
+
+                        Log.d(TAG, "OnDeviceSetVolume" + entities.toString());
+
+                        //set volume
+                        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_SHOW_UI);
+
+                        String msg = "Okay, the volume is set to " + value + " percent";
+                        Speak(msg, "OnDeviceSetVolume");
+
+                        activity.startWakeUpListener();
+                    }
+                }
+            } catch (Exception e) {
+                Log.d(TAG, "Exception: ", e);
+            }
+
+        } else {
+            //start dialog
+            dialogContext = "DialogOnDeviceSetVolume";
+            dialogStarted = true;
+            Speak("What to?", dialogContext);
+
+            //start recognition without intent detection
+            activity.azureSpeechRecognition.getRecognitionClient().startMicAndRecognition();
+        }
+    }
+
+    private void DialogOnDeviceSetVolume (String entity) {
+
+        if(entity != null) {
+
+            AudioManager audioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
+
+            int volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+            int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+
+            try {
+                if(!isNumeric(entity)) {
+                    switch (entity) {
                         case "muted":
                             volume = 0;
                             break;
@@ -128,27 +228,94 @@ class IntentsLibrary {
                             volume = maxVolume;
                             break;
                         default:
-                            volume = Math.max(Math.min(Integer.parseInt(value), 100), 0);
-                            volume = Math.round(volume * maxVolume / 100);
+                            String msg = "I can't set the volume to " + entity;
+                            Speak(msg, "OnDeviceSetVolume");
+
+                            activity.startWakeUpListener();
+                            return;
                     }
+
+                    Log.d(TAG, "DialogOnDeviceSetVolume" + entity);
+
+                    //set volume
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_SHOW_UI);
+
+                    String msg = "Okay, the volume is set to " + entity;
+                    Speak(msg, "DialogOnDeviceSetVolume");
+
+                    activity.startWakeUpListener();
+                } else {
+                    volume = Math.max(Math.min(Integer.parseInt(entity), 100), 0);
+                    volume = Math.round(volume * maxVolume / 100);
+
+                    Log.d(TAG, "DialogOnDeviceSetVolume" + entity);
+
+                    //set volume
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_SHOW_UI);
+
+                    String msg = "Okay, the volume is set to " + entity + " percent";
+                    Speak(msg, "DialogOnDeviceSetVolume");
+
+                    activity.startWakeUpListener();
                 }
-            } catch (NumberFormatException e) {
-                Log.d(TAG, "NaN", e);
             } catch (Exception e) {
                 Log.d(TAG, "Exception: ", e);
             }
-            Log.d(TAG, "OnDeviceSetVolume" + entities.toString());
-
-            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_SHOW_UI);
-
-            String msg = "Okay, the volume is set to " + value;
-            Speak(msg, "OnDeviceSetVolume");
-        } else {
-            //dialog
-            Speak("What to?", "DialogOnDeviceSetVolume");
-
-            //start recognition without intent detection
-            activity.azureSpeechRecognition.getRecognitionClient().startMicAndRecognition();
         }
+
     }
+         /* if (entity != null) {
+            AudioManager audioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
+
+            int volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+            int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+
+            try {
+                if (!isNumeric(entity)) {
+                    switch (entity) {
+                        case "muted":
+                            volume = 0;
+                            break;
+                        case "low":
+                            volume = 1;
+                            break;
+                        case "medium":
+                            volume = Math.round(maxVolume / 2);
+                            break;
+                        case "high":
+                            volume = maxVolume;
+                            break;
+                        default:
+                            String msg = "I can't set the volume to " + entity;
+                            Speak(msg, "OnDeviceSetVolume");
+
+                            activity.startWakeUpListener();
+                            return;
+                    }
+
+                    Log.d(TAG, "OnDeviceSetVolume" + entities.toString());
+
+                    //set volume
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_SHOW_UI);
+
+                    String msg = "Okay, the volume is set to " + entity;
+                    Speak(msg, "OnDeviceSetVolume");
+
+                    activity.startWakeUpListener();
+                    //start recognition without intent detection
+                    activity.azureSpeechRecognition.getRecognitionClient().startMicAndRecognition();
+
+                Log.d(TAG, "DialogOnDeviceSetVolume" + entity);
+
+                dialogStarted = false;
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_SHOW_UI);
+
+                String msg = "Okay, the volume is set to " + entity;
+                Speak(msg, "OnDeviceSetVolume");
+
+            } else {}
+            } catch(Exception e){
+            Log.d(TAG, "Exception: ", e);
+        }
+    } */
 }

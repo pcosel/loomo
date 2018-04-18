@@ -27,6 +27,9 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         activity = myActivity;
         mHandler = myActivity.mHandler;
         intentsLibrary  = new IntentsLibrary(activity);
+
+        getRecognitionClient();
+        getRecognitionClientWithIntent();
     }
 
     @Override
@@ -58,7 +61,7 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         } else {
             if (recognitionResult.RecognitionStatus != RecognitionStatus.RecognitionSuccess) {
                 intentsLibrary.dialogStarted = false;
-                activity.startWakeUpListener();
+                activity.loomoRecognizer.startWakeUpListener();
             }
         }
     }
@@ -84,7 +87,7 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         activity.loomoSoundPool.play("success");
 
 //        recognitionClientWithIntent.endMicAndRecognition();
-        //activity.startWakeUpListener();
+        activity.loomoRecognizer.startWakeUpListener();
     }
 
     @Override
@@ -94,7 +97,7 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
         activity.loomoSoundPool.play("error");
 
-        activity.startWakeUpListener();
+        activity.loomoRecognizer.startWakeUpListener();
     }
 
     @Override

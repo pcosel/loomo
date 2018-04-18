@@ -6,7 +6,6 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.speech.tts.TextToSpeech;
 import android.support.v7.app.AppCompatActivity;
 import android.text.method.ScrollingMovementMethod;
 import android.util.DisplayMetrics;
@@ -22,7 +21,6 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
-    private static final String UTTERANCE_ID = "de.tud.loomospeech.UTTERANCE_ID";
 
     private Button btnAction;
 
@@ -33,8 +31,7 @@ public class MainActivity extends AppCompatActivity {
     int brightness;
     ContentResolver cResolver;
     Window window;
-    TextToSpeech tts;
-    boolean ttsIsReady = false;
+    LoomoTextToSpeech loomoTextToSpeech;
 
 
     @Override
@@ -53,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
         loomoSoundPool = new LoomoSoundPool(this);
         azureSpeechRecognition = new AzureSpeechRecognition(this);
         loomoRecognizer = new LoomoWakeUpRecognizer(this);
+        loomoTextToSpeech = new LoomoTextToSpeech(this);
         //Get the content resolver
         cResolver = getContentResolver();
         //Get the current window
@@ -69,17 +67,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-        tts = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int status) {
-                if(status != TextToSpeech.ERROR) {
-                    tts.setLanguage(getResources().getConfiguration().locale);
-                    ttsIsReady = true;
-                }
-            }
-        });
-        if (ttsIsReady) tts.speak("This is Sparta.", TextToSpeech.QUEUE_FLUSH, null, UTTERANCE_ID);
-
         initBtnAction();
 
     }
@@ -90,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
         if (mHandler != null) mHandler = null;
         if (loomoSoundPool != null) loomoSoundPool = null;
         if (loomoRecognizer != null) loomoRecognizer = null;
-        if (tts != null) tts.shutdown();
+        if (loomoTextToSpeech != null) loomoTextToSpeech.shutdown();
         super.onDestroy();
     }
 

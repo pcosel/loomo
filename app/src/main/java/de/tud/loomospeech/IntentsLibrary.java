@@ -60,7 +60,7 @@ class IntentsLibrary {
     }
 
     private void Speak (String msg, String utteranceId) {
-        if (activity.ttsIsReady) activity.tts.speak(msg, TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+        activity.loomoTextToSpeech.speak(msg, utteranceId);
         activity.mHandler.sendMessage(activity.mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
     }
 

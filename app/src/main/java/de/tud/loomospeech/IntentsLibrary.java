@@ -59,8 +59,8 @@ class IntentsLibrary {
         }
     }
 
-    private void Speak (String msg, String utteranceId) {
-        activity.loomoTextToSpeech.speak(msg, utteranceId, null);
+    private void Speak (String msg, String utteranceId, Runnable callback) {
+        activity.loomoTextToSpeech.speak(msg, utteranceId, callback);
         activity.mHandler.sendMessage(activity.mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
     }
 
@@ -80,16 +80,16 @@ class IntentsLibrary {
     private void None() {
         // No suitable action for command found.
         Log.d(TAG, "No suitable action for command found.");
-        Speak("Pardon? I didn't understand that.", "None");
+        Speak("Pardon? I didn't understand that.", "None", null);
         activity.loomoRecognizer.startWakeUpListener();
     }
 
     private void UtilitiesStop() {
-        Speak("Why? Dont you love me anymore?", "UtilitiesStop");
+        Speak("Why? Dont you love me anymore?", "UtilitiesStop", null);
         activity.loomoRecognizer.startWakeUpListener();
     }
     private void OnDeviceAreYouListening() {
-        Speak("Yes!", "OnDeviceAreYouListening");
+        Speak("Yes!", "OnDeviceAreYouListening", null);
     }
 
     private void OnDeviceSetBrightness (JSONArray entities) {
@@ -134,7 +134,7 @@ class IntentsLibrary {
         activity.window.setAttributes(layoutpars);
 
         String msg = "Okay, the brightness is set to " + value;
-        Speak(msg, "OnDeviceSetBrightness");
+        Speak(msg, "OnDeviceSetBrightness", null);
     }
 
     private void OnDeviceSetVolume (JSONArray entities) {
@@ -165,7 +165,7 @@ class IntentsLibrary {
                                 break;
                             default:
                                 String msg = "I can't set the volume to " + value;
-                                Speak(msg, "OnDeviceSetVolume");
+                                Speak(msg, "OnDeviceSetVolume", null);
 
                                 activity.loomoRecognizer.startWakeUpListener();
                                 return;
@@ -177,7 +177,7 @@ class IntentsLibrary {
                         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_SHOW_UI);
 
                         String msg = "Okay, the volume is set to " + value;
-                        Speak(msg, "OnDeviceSetVolume");
+                        Speak(msg, "OnDeviceSetVolume", null);
 
                         activity.loomoRecognizer.startWakeUpListener();
                     } else {
@@ -190,7 +190,7 @@ class IntentsLibrary {
                         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_SHOW_UI);
 
                         String msg = "Okay, the volume is set to " + value + " percent";
-                        Speak(msg, "OnDeviceSetVolume");
+                        Speak(msg, "OnDeviceSetVolume", null);
 
                         activity.loomoRecognizer.startWakeUpListener();
                     }
@@ -203,10 +203,13 @@ class IntentsLibrary {
             //start dialog
             dialogContext = "DialogOnDeviceSetVolume";
             dialogStarted = true;
-            Speak("What to?", dialogContext);
-
-            //start recognition without intent detection
-            activity.azureSpeechRecognition.getRecognitionClient().startMicAndRecognition();
+            Speak("What to?", dialogContext, new Runnable() {
+                @Override
+                public void run() {
+                    //start recognition without intent detection
+                    activity.azureSpeechRecognition.getRecognitionClient().startMicAndRecognition();
+                }
+            });
         }
     }
 
@@ -240,7 +243,7 @@ class IntentsLibrary {
                             break;
                         default:
                             String msg = "I can't set the volume to " + entity;
-                            Speak(msg, "OnDeviceSetVolume");
+                            Speak(msg, "OnDeviceSetVolume", null);
 
                             dialogStarted = false;
                             activity.loomoRecognizer.startWakeUpListener();
@@ -253,7 +256,7 @@ class IntentsLibrary {
                     audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_SHOW_UI);
 
                     String msg = "Okay, the volume is set to " + entity;
-                    Speak(msg, "DialogOnDeviceSetVolume");
+                    Speak(msg, "DialogOnDeviceSetVolume", null);
 
                     dialogStarted = false;
                     activity.loomoRecognizer.startWakeUpListener();
@@ -267,7 +270,7 @@ class IntentsLibrary {
                     audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_SHOW_UI);
 
                     String msg = "Okay, the volume is set to " + entity + " percent";
-                    Speak(msg, "DialogOnDeviceSetVolume");
+                    Speak(msg, "DialogOnDeviceSetVolume", null);
 
                     dialogStarted = false;
                     activity.loomoRecognizer.startWakeUpListener();

@@ -1,5 +1,6 @@
 package de.tud.loomospeech;
 
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 
 import com.microsoft.cognitiveservices.speechrecognition.ISpeechRecognitionServerEvents;
@@ -61,6 +62,12 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         } else {
             if (recognitionResult.RecognitionStatus != RecognitionStatus.RecognitionSuccess) {
                 intentsLibrary.dialogStarted = false;
+
+                msg = "Pardon? I didnt understand that.";
+
+                if (activity.ttsIsReady) activity.tts.speak(msg, TextToSpeech.QUEUE_FLUSH, null, "NoRecognitionSuccess");
+                activity.mHandler.sendMessage(activity.mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
+
                 activity.loomoRecognizer.startWakeUpListener();
             }
         }
@@ -87,7 +94,7 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         activity.loomoSoundPool.play("success");
 
 //        recognitionClientWithIntent.endMicAndRecognition();
-        activity.loomoRecognizer.startWakeUpListener();
+        //activity.loomoRecognizer.startWakeUpListener();
     }
 
     @Override

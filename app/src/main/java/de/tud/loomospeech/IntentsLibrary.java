@@ -81,8 +81,13 @@ class IntentsLibrary {
         // No suitable action for command found.
         Log.d(TAG, "No suitable action for command found.");
         Speak("Pardon? I didn't understand that.", "None");
+        activity.loomoRecognizer.startWakeUpListener();
     }
 
+    private void UtilitiesStop() {
+        Speak("Why? Dont you love me anymore?", "UtilitiesStop");
+        activity.loomoRecognizer.startWakeUpListener();
+    }
     private void OnDeviceAreYouListening() {
         Speak("Yes!", "OnDeviceAreYouListening");
     }
@@ -162,7 +167,7 @@ class IntentsLibrary {
                                 String msg = "I can't set the volume to " + value;
                                 Speak(msg, "OnDeviceSetVolume");
 
-                                activity.startWakeUpListener();
+                                activity.loomoRecognizer.startWakeUpListener();
                                 return;
                         }
 
@@ -174,7 +179,7 @@ class IntentsLibrary {
                         String msg = "Okay, the volume is set to " + value;
                         Speak(msg, "OnDeviceSetVolume");
 
-                        activity.startWakeUpListener();
+                        activity.loomoRecognizer.startWakeUpListener();
                     } else {
                         volume = Math.max(Math.min(Integer.parseInt(value), 100), 0);
                         volume = Math.round(volume * maxVolume / 100);
@@ -187,7 +192,7 @@ class IntentsLibrary {
                         String msg = "Okay, the volume is set to " + value + " percent";
                         Speak(msg, "OnDeviceSetVolume");
 
-                        activity.startWakeUpListener();
+                        activity.loomoRecognizer.startWakeUpListener();
                     }
                 }
             } catch (Exception e) {
@@ -208,15 +213,18 @@ class IntentsLibrary {
     private void DialogOnDeviceSetVolume (String entity) {
 
         if(entity != null) {
-
             AudioManager audioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
 
             int volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
             int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
 
+            if(entity.contains("percent")) {
+                entity = entity.replace("precent", "");
+            }
+
             try {
                 Integer number = wordToNumber.wordToNumber(entity);
-                if(!isNumeric(entity)) {
+                if(number == null) {
                     switch (entity) {
                         case "muted":
                             volume = 0;
@@ -234,7 +242,8 @@ class IntentsLibrary {
                             String msg = "I can't set the volume to " + entity;
                             Speak(msg, "OnDeviceSetVolume");
 
-                            activity.startWakeUpListener();
+                            dialogStarted = false;
+                            activity.loomoRecognizer.startWakeUpListener();
                             return;
                     }
 
@@ -246,9 +255,10 @@ class IntentsLibrary {
                     String msg = "Okay, the volume is set to " + entity;
                     Speak(msg, "DialogOnDeviceSetVolume");
 
-                    activity.startWakeUpListener();
+                    dialogStarted = false;
+                    activity.loomoRecognizer.startWakeUpListener();
                 } else {
-                    volume = Math.max(Math.min(Integer.parseInt(entity), 100), 0);
+                    volume = Math.max(Math.min(number, 100), 0);
                     volume = Math.round(volume * maxVolume / 100);
 
                     Log.d(TAG, "DialogOnDeviceSetVolume" + entity);
@@ -259,66 +269,12 @@ class IntentsLibrary {
                     String msg = "Okay, the volume is set to " + entity + " percent";
                     Speak(msg, "DialogOnDeviceSetVolume");
 
-                    activity.startWakeUpListener();
+                    dialogStarted = false;
+                    activity.loomoRecognizer.startWakeUpListener();
                 }
             } catch (Exception e) {
                 Log.d(TAG, "Exception: ", e);
             }
         }
-
     }
-         /* if (entity != null) {
-            AudioManager audioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
-
-            int volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-            int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-
-            try {
-                if (!isNumeric(entity)) {
-                    switch (entity) {
-                        case "muted":
-                            volume = 0;
-                            break;
-                        case "low":
-                            volume = 1;
-                            break;
-                        case "medium":
-                            volume = Math.round(maxVolume / 2);
-                            break;
-                        case "high":
-                            volume = maxVolume;
-                            break;
-                        default:
-                            String msg = "I can't set the volume to " + entity;
-                            Speak(msg, "OnDeviceSetVolume");
-
-                            activity.startWakeUpListener();
-                            return;
-                    }
-
-                    Log.d(TAG, "OnDeviceSetVolume" + entities.toString());
-
-                    //set volume
-                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_SHOW_UI);
-
-                    String msg = "Okay, the volume is set to " + entity;
-                    Speak(msg, "OnDeviceSetVolume");
-
-                    activity.startWakeUpListener();
-                    //start recognition without intent detection
-                    activity.azureSpeechRecognition.getRecognitionClient().startMicAndRecognition();
-
-                Log.d(TAG, "DialogOnDeviceSetVolume" + entity);
-
-                dialogStarted = false;
-                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_SHOW_UI);
-
-                String msg = "Okay, the volume is set to " + entity;
-                Speak(msg, "OnDeviceSetVolume");
-
-            } else {}
-            } catch(Exception e){
-            Log.d(TAG, "Exception: ", e);
-        }
-    } */
 }

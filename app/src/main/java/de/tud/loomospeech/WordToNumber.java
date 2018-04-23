@@ -43,7 +43,7 @@ public class WordToNumber {
         onumbers.put("hundred", 100);
     }
 
-    public int wordToNumber(String input) {
+    public Integer wordToNumber(String input) {
         Integer sum = null;
         Integer temp = null;
         Integer previous=0;
@@ -54,22 +54,23 @@ public class WordToNumber {
             if(numbers.get(split)!= null){
                 temp= numbers.get(split);
 
-                appendSum(sum, temp);
+               sum = appendSum(sum, temp);
 
                 previous += temp;
             }
             else if(onumbers.get(split)!= null){
                 if(sum != 0){
-                    appendSum(sum, -previous);
+                    sum = appendSum(sum, -previous);
                 }
-                appendSum(sum, previous * onumbers.get(split));
+
+                sum = appendSum(sum, previous * onumbers.get(split));
                 temp = null;
                 previous = 0;
             }
             else if(tnumbers.get(split)!= null){
                 temp = tnumbers.get(split);
 
-                appendSum(sum, temp);
+                sum = appendSum(sum, temp);
 
                 previous = temp;
             }
@@ -79,7 +80,7 @@ public class WordToNumber {
 
     private Integer appendSum (Integer sum, int value) {
         if(sum == null) {
-            sum = value;
+            sum = Integer.valueOf(value);
         } else {
             sum += value;
         }

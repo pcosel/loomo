@@ -125,7 +125,7 @@ class LoomoWakeUpRecognizer {
     }
 
     void startWakeUpListener() {
-        if (mRecognizer != null) {
+        if (mRecognizer == null) {
             initRecognizer();
         }
         if (isRecognizerBound) {

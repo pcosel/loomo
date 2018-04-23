@@ -60,7 +60,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     /**
      * The distance that the robot keeps to obstacles.
      */
-    private static final float OBSTACLE_AVOIDANCE_DISTANCE = 1.3f;
+    private static final float OBSTACLE_AVOIDANCE_DISTANCE = 1f;
 
     /**
      * The distance that the robot walks from one checkpoint to the next.
@@ -111,7 +111,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     /**
      * Indicates whether the robot is currently in the process of checking the wall on its right.
      */
-    private boolean mCheckingWall = false;
+    private boolean mCheckingWall;
 
     /**
      * The current state of the robot.
@@ -127,17 +127,22 @@ public class MainActivity extends Activity implements View.OnClickListener {
     /**
      * The current ultrasonic distance from the next obstacle in front of the robot.
      */
-    private double mDistance;
+    private double mDistanceFront;
+
+    /**
+     * The distance from the wall to the right.
+     */
+    private double mDistanceWall;
 
     /**
      * The current x-coordinate of the robot.
      */
-    private double mXCoordinate = 0.0;
+    private double mXCoordinate;
 
     /**
      * The current y-coordinate of the robot.
      */
-    private double mYCoordinate = 0.0;
+    private double mYCoordinate;
 
     /**
      * All the positions that the robot has reached so far.
@@ -188,8 +193,21 @@ public class MainActivity extends Activity implements View.OnClickListener {
      * is triggered and the exploration goes on.
      */
     public void startExploration() {
+        //Log.d(TAG, "List length:" + mPositions.size());
+        //Log.d(TAG, "State:" + mState);
         mState = State.START;
+        //Log.d(TAG, "State:" + mState);
+        //Log.d(TAG, "Orientation:" + mOrientation);
         mOrientation = Orientation.FORWARD;
+        //Log.d(TAG, "Orientation:" + mOrientation);
+        //Log.d(TAG, "X:" + mXCoordinate);
+        mXCoordinate = 0.0;
+        //Log.d(TAG, "Y:" + mYCoordinate);
+        mYCoordinate = 0.0;
+        //Log.d(TAG, "Distance:" + mDistanceFront);
+        mDistanceFront = 0.0;
+        //Log.d(TAG, "Checking wall:" + mCheckingWall);
+        mCheckingWall = false;
         mBase.clearCheckPointsAndStop();
         mBase.cleanOriginalPoint();
         PoseVLS pos = mBase.getVLSPose(-1);
@@ -234,7 +252,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 }
                 updateCoordinates();
                 mState = State.CHECKING_WALL;
-                mDistance = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
+                mDistanceFront = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
                 // After every meter, rotate 90° to the right to check the wall
                 mBase.addCheckPoint(0, 0, RIGHT_90);
                 break;
@@ -254,16 +272,35 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 // Without setting the state to WALK in this switch case, the robot would not continue
                 // walking if after the right turn no obstacle is found.
                 mCheckingWall = true;
+                mDistanceWall = mSensor.getUltrasonicDistance().getDistance() / 1000;
+                Log.d(TAG, "Distance: " + mDistanceWall);
                 mState = State.WALKING;
                 updateOrientation(RIGHT_TURN);
                 // Walk forward (1 meter)
                 mBase.addCheckPoint(WALKING_DISTANCE, 0);
+                // In case the robot is further away from the wall than OBSTACLE_AVOIDANCE_DISTANCE
+                // this code makes it walk towards the wall again. Because the checkpoint is not
+                // reached (because normally the robot hasn't walked further away from the wall than
+                // a metre), this doesn't affect the setting of the coordinates. This is because
+                // the coordinates are only updated in arrivedAtCheckpoint() which of course isn't
+                // called if the checkpoint isn't reached.
                 break;
             case OBSTACLE_DETECTED:
                 mState = State.WALKING;
-                mDistance = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
-                // After an obstacle was detected and the left turn was performed, walk forward (1 meter)
-                mBase.addCheckPoint(WALKING_DISTANCE, 0);
+                mDistanceFront = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
+                Log.d(TAG, "Distance: " + mDistanceWall);
+                // 0.8 metres was the threshold that worked best during testing, although
+                // OBSTACLE_AVOIDANCE_DISTANCE ist set to 1.0 metres
+                // The check for 0.0 is relevant only for the beginning, when the robot reaches the
+                // first wall (in this case it isn't necessary yet to correct the distance)
+                if(mDistanceWall != 0.0 && mDistanceWall < 0.8) {
+                    Log.d(TAG, "Increasing distance!");
+                    // Increase the distance from the wall to the right
+                    mBase.addCheckPoint(WALKING_DISTANCE, 0.2f);
+                } else {
+                    // The distance from the wall to the right is big enough, so just walk forward
+                    mBase.addCheckPoint(WALKING_DISTANCE, 0);
+                }
                 break;
             default:
                 // All possible cases are handled above
@@ -310,7 +347,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     // forward to the next wall
                 }
             }
-        }, 1000);
+        }, 500);
     }
 
     /**
@@ -337,16 +374,16 @@ public class MainActivity extends Activity implements View.OnClickListener {
         } else if(mState == State.OBSTACLE_DETECTED) {
             switch(mOrientation) {
                 case FORWARD:
-                    mXCoordinate += (mDistance - mSensor.getUltrasonicDistance().getDistance() / 1000); // convert mm to m
+                    mXCoordinate += (mDistanceFront - mSensor.getUltrasonicDistance().getDistance() / 1000); // convert mm to m
                     break;
                 case BACKWARD:
-                    mXCoordinate -= (mDistance - mSensor.getUltrasonicDistance().getDistance() / 1000); // convert mm to m
+                    mXCoordinate -= (mDistanceFront - mSensor.getUltrasonicDistance().getDistance() / 1000); // convert mm to m
                     break;
                 case LEFT:
-                    mYCoordinate += (mDistance - mSensor.getUltrasonicDistance().getDistance() / 1000); // convert mm to m
+                    mYCoordinate += (mDistanceFront - mSensor.getUltrasonicDistance().getDistance() / 1000); // convert mm to m
                     break;
                 case RIGHT:
-                    mYCoordinate -= (mDistance - mSensor.getUltrasonicDistance().getDistance() / 1000); // convert mm to m
+                    mYCoordinate -= (mDistanceFront - mSensor.getUltrasonicDistance().getDistance() / 1000); // convert mm to m
                     break;
                 default:
                     // All possible cases are handled above
@@ -405,6 +442,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        getActionBar().setDisplayHomeAsUpEnabled(true);
 
         Button startButton = (Button)findViewById(R.id.buttonStart);
         startButton.setOnClickListener(this);

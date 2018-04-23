@@ -65,7 +65,7 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
 
                 msg = "Pardon? I didnt understand that.";
 
-                if (activity.ttsIsReady) activity.tts.speak(msg, TextToSpeech.QUEUE_FLUSH, null, "NoRecognitionSuccess");
+                activity.loomoTextToSpeech.speak(msg, "NoRecognitionSuccess");
                 activity.mHandler.sendMessage(activity.mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
 
                 activity.loomoRecognizer.startWakeUpListener();

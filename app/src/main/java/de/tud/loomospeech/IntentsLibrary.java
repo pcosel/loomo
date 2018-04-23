@@ -60,7 +60,7 @@ class IntentsLibrary {
     }
 
     private void Speak (String msg, String utteranceId) {
-        activity.loomoTextToSpeech.speak(msg, utteranceId);
+        activity.loomoTextToSpeech.speak(msg, utteranceId, null);
         activity.mHandler.sendMessage(activity.mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
     }
 

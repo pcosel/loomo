@@ -5,28 +5,13 @@ import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
 
-public class LoomoTextToSpeech implements TextToSpeech.OnInitListener {
+public class LoomoTextToSpeech extends UtteranceProgressListener implements TextToSpeech.OnInitListener {
     private static final String TAG = "LoomoTextToSpeech";
 
     private TextToSpeech Tts;
     private boolean isTtsReady = false;
     private Context ctx;
-    private UtteranceProgressListener LoomoUtteranceProgressListener = new UtteranceProgressListener() {
-        @Override
-        public void onStart(String utteranceId) {
-            Log.e(TAG, "Speaking started.");
-        }
-
-        @Override
-        public void onDone(String utteranceId) {
-            Log.e(TAG, "Speaking stopped.");
-        }
-
-        @Override
-        public void onError(String utteranceId) {
-            Log.e(TAG, "There was an error.");
-        }
-    };
+    private Runnable cb = null;
 
 
     LoomoTextToSpeech(Context context) {
@@ -42,16 +27,41 @@ public class LoomoTextToSpeech implements TextToSpeech.OnInitListener {
             isTtsReady = true;
             Tts.speak("This is Sparta.", TextToSpeech.QUEUE_FLUSH, null, null);
 
-            Tts.setOnUtteranceProgressListener(LoomoUtteranceProgressListener);
+            Tts.setOnUtteranceProgressListener(this);
         }
     }
 
-    public int speak(CharSequence text, String utteranceId) {
+    public int speak(CharSequence text, String utteranceId, Runnable callback) {
+        cb = callback;
+
         if (!isTtsReady) return -1;
-        return Tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+        return Tts.speak(text, TextToSpeech.QUEUE_ADD, null, utteranceId);
     }
 
     public void shutdown() {
         Tts.shutdown();
+    }
+
+    @Override
+    public void onStart(String utteranceId) {
+        Log.e(TAG, "Speaking started.");
+    }
+
+    @Override
+    public void onDone(String utteranceId) {
+        Log.e(TAG, "Speaking stopped.");
+
+        if (cb != null) {
+            cb.run();
+        }
+    }
+
+    /**
+     * @param utteranceId
+     * @deprecated
+     */
+    @Override
+    public void onError(String utteranceId) {
+        Log.e(TAG, "There was an error.");
     }
 }

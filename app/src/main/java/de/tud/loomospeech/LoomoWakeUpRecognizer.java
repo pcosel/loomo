@@ -105,7 +105,7 @@ class LoomoWakeUpRecognizer {
                         )
                 );
                 //start azure recognition
-                activity.azureSpeechRecognition.getRecognitionClientWithIntent().startMicAndRecognition();
+                activity.azureSpeechRecognition.startMicAndRecognitionWithIntent();
             }
 
             @Override

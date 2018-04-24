@@ -120,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 //                btnAction.setEnabled(false);
-                azureSpeechRecognition.getRecognitionClientWithIntent().startMicAndRecognition();
+                azureSpeechRecognition.startMicAndRecognitionWithIntent();
             }
         });
     }

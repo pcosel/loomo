@@ -167,7 +167,7 @@ class IntentsLibrary {
                 @Override
                 public void run() {
                     //start recognition without intent detection
-                    activity.azureSpeechRecognition.getRecognitionClient().startMicAndRecognition();
+                    activity.azureSpeechRecognition.startMicAndRecognition();
                 }
             });
         }
@@ -317,7 +317,7 @@ class IntentsLibrary {
                 @Override
                 public void run() {
                     //start recognition without intent detection
-                    activity.azureSpeechRecognition.getRecognitionClient().startMicAndRecognition();
+                    activity.azureSpeechRecognition.startMicAndRecognition();
                 }
             });
         }

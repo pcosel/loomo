@@ -5,11 +5,15 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.provider.Settings;
 import android.speech.tts.TextToSpeech;
+import android.text.format.DateFormat;
+import android.text.format.Time;
 import android.util.Log;
 import android.view.WindowManager;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.Date;
 
 
 class IntentsLibrary {
@@ -77,6 +81,35 @@ class IntentsLibrary {
         return true;
     }
 
+    private String weekDayToString (int day) {
+        switch(day) {
+            case Time.MONDAY:
+                return "Monday";
+            case Time.TUESDAY:
+                return "Tuesday";
+            case Time.THURSDAY:
+                return "Thursday";
+            case Time.FRIDAY:
+                return "Friday";
+            case Time.SATURDAY:
+                return "Saturday";
+            case Time.SUNDAY:
+                return "Sunday";
+        }
+        return "";
+    }
+
+    private String daySuffix(int day) {
+        if (day >= 11 && day <= 13) {
+            return day + "th";
+        }
+        switch (day % 10) {
+            case 1:  return day + "st";
+            case 2:  return day + "nd";
+            case 3:  return day + "rd";
+            default: return day + "th";
+        }
+    }
 
     /*---------- Intents ----------*/
 
@@ -88,14 +121,57 @@ class IntentsLibrary {
     }
 
     private void OnDeviceCloseApplication() {
-        Speak("Why? Dont you love me anymore?", "UtilitiesStop", null);
-        activity.finish();
-        System.exit(0);
+        Speak("Why? Dont you love me anymore?", "UtilitiesStop", new Runnable() {
+            @Override
+            public void run() {
+                activity.finish();
+                System.exit(0);
+            }
+        });
     }
 
     private void OnDeviceAreYouListening() {
-        Speak("Yes!", "OnDeviceAreYouListening", null);
+        Speak("Yes! I can hear you!", "OnDeviceAreYouListening", null);
         activity.loomoRecognizer.startWakeUpListener();
+    }
+
+    private void OnDeviceTime () {
+        Time now = new Time();
+        now.setToNow();
+        int random = (int) (Math.random() * 2);
+        String msg = "";
+        switch (random) {
+            case 0:
+                msg = "It's " + now.hour + ":" + now.minute;
+                break;
+            case 1:
+                msg = "It's " + now.minute + " past " + now.hour;
+                break;
+        }
+        Speak(msg, "OnDeviceTime", new Runnable() {
+            @Override
+            public void run() {
+                activity.loomoRecognizer.startWakeUpListener();
+            }
+        });
+    }
+
+    private void OnDeviceDate () {
+        Date now = new Date();
+        now.getTime();
+
+        String weekDay = (String) DateFormat.format("EEEE", now);
+        String day = daySuffix(now.getDate());
+        String month = (String) DateFormat.format("MMMM", now);
+        String year = (String) DateFormat.format("yyyy", now);
+
+        String msg = "Today is " + weekDay + " the " + day + " of " + month + " " + year;
+        Speak(msg, "OnDeviceTime", new Runnable() {
+            @Override
+            public void run() {
+                activity.loomoRecognizer.startWakeUpListener();
+            }
+        });
     }
 
     private void OnDeviceSetBrightness(JSONArray entities) {

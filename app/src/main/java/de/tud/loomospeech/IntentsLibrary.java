@@ -93,53 +93,6 @@ class IntentsLibrary {
         activity.loomoRecognizer.startWakeUpListener();
     }
 
-    /* private void OnDeviceSetBrightness (JSONArray entities) {
-        int brightness = activity.brightness;
-        String value = "";
-        try {
-            JSONObject entity = entities.getJSONObject(0);
-            if(entity.get("type").toString().equals("OnDevice.BrightnessLevel")) {
-                value = entity.get("entity").toString();
-                if (!isNumeric(value)) {
-                    switch (value) {
-                        case "low":
-                            brightness = 0;
-                            break;
-                        case "medium":
-                            brightness = 127;
-                            break;
-                        case "high":
-                            brightness = 255;
-                            break;
-                        default:
-                            int result = Math.max(Math.min(Integer.parseInt(value), 100), 0);
-                            brightness = (int) (result * 2.55);
-                            break;
-                        }
-                    }
-            }
-        }
-        catch (NumberFormatException e) {
-            Log.d(TAG, "NaN", e);
-        }
-        catch (Exception e) {
-            Log.d(TAG, "Exception: ", e);
-        }
-        Log.d(TAG, "OnDeviceSetBrightness" + entities.toString());
-
-        //Set the system brightness using the brightness variable value
-        Settings.System.putInt(activity.cResolver, Settings.System.SCREEN_BRIGHTNESS, brightness);
-        //Get the current window attributes
-        WindowManager.LayoutParams layoutpars = activity.window.getAttributes();
-        //Set the brightness of this window
-        layoutpars.screenBrightness = brightness / (float)255;
-        //Apply attribute changes to this window
-        activity.window.setAttributes(layoutpars);
-
-        String msg = "Okay, the brightness is set to " + value;
-        Speak(msg, "OnDeviceSetBrightness", null);
-    } */
-
     private void OnDeviceSetBrightness(JSONArray entities) {
         if (entities.length() > 0) {
             int brightness = activity.brightness;
@@ -436,5 +389,13 @@ class IntentsLibrary {
                 Log.d(TAG, "Exception: ", e);
             }
         }
+    }
+
+    private void ExplorationStart() {
+
+    }
+
+    private void ExplorationStop() {
+
     }
 }

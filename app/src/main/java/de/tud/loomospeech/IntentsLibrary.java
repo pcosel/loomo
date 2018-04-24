@@ -59,8 +59,8 @@ class IntentsLibrary {
         }
     }
 
-    private void Speak (String msg, String utteranceId) {
-        activity.loomoTextToSpeech.speak(msg, utteranceId, null);
+    private void Speak (String msg, String utteranceId, Runnable callback) {
+        activity.loomoTextToSpeech.speak(msg, utteranceId, callback);
         activity.mHandler.sendMessage(activity.mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
     }
 
@@ -80,61 +80,171 @@ class IntentsLibrary {
     private void None() {
         // No suitable action for command found.
         Log.d(TAG, "No suitable action for command found.");
-        Speak("Pardon? I didn't understand that.", "None");
+        Speak("Pardon? I didn't understand that.", "None", null);
         activity.loomoRecognizer.startWakeUpListener();
     }
 
     private void UtilitiesStop() {
-        Speak("Why? Dont you love me anymore?", "UtilitiesStop");
+        Speak("Why? Dont you love me anymore?", "UtilitiesStop", null);
         activity.loomoRecognizer.startWakeUpListener();
     }
     private void OnDeviceAreYouListening() {
-        Speak("Yes!", "OnDeviceAreYouListening");
+        Speak("Yes!", "OnDeviceAreYouListening", null);
+        activity.loomoRecognizer.startWakeUpListener();
     }
 
-    private void OnDeviceSetBrightness (JSONArray entities) {
-        int brightness = activity.brightness;
-        String value = "";
-        try {
-            JSONObject entity = entities.getJSONObject(0);
-            if(entity.get("type").toString().equals("OnDevice.BrightnessLevel")) {
-                value = entity.get("entity").toString();
-                switch(value) {
-                    case "low":
-                        brightness = 0;
-                        break;
-                    case "medium":
-                        brightness = 127;
-                        break;
-                    case "high":
-                        brightness = 255;
-                        break;
-                    default:
-                        int result = Math.max(Math.min(Integer.parseInt(value), 100), 0);
-                        brightness = (int) (result * 2.55);
+    private void OnDeviceSetBrightness(JSONArray entities) {
+        if (entities.length() > 0) {
+            int brightness = activity.brightness;
+            String value = "";
+            try {
+                JSONObject entity = entities.getJSONObject(0);
+                if (entity.get("type").toString().equals("OnDevice.BrightnessLevel")) {
+                    value = entity.get("entity").toString();
+                    if(!isNumeric(value)) {
+                        switch (value) {
+                            case "low":
+                                brightness = 0;
+                                break;
+                            case "medium":
+                                brightness = 127;
+                                break;
+                            case "high":
+                                brightness = 255;
+                                break;
+                            default:
+                                String msg = "I can't set the brightness to " + value;
+                                Speak(msg, "OnDeviceSetBrightness", null);
+
+                                activity.loomoRecognizer.startWakeUpListener();
+                                return;
+                        }
+
+                        Log.d(TAG, "OnDeviceSetBrightness" + entities.toString());
+
+                        //Set the system brightness using the brightness variable value
+                        Settings.System.putInt(activity.cResolver, Settings.System.SCREEN_BRIGHTNESS, brightness);
+                        //Get the current window attributes
+                        WindowManager.LayoutParams layoutpars = activity.window.getAttributes();
+                        //Set the brightness of this window
+                        layoutpars.screenBrightness = brightness / (float)255;
+                        //Apply attribute changes to this window
+                        activity.window.setAttributes(layoutpars);
+
+                        String msg = "Okay, the brightness is set to " + value;
+                        Speak(msg, "OnDeviceSetBrightness", null);
+
+                        activity.loomoRecognizer.startWakeUpListener();
+                    } else {
+                        brightness = Math.max(Math.min(Integer.parseInt(value), 100), 0);
+
+                        Log.d(TAG, "OnDeviceSetBrightness" + entities.toString());
+
+                        //Set the system brightness using the brightness variable value
+                        Settings.System.putInt(activity.cResolver, Settings.System.SCREEN_BRIGHTNESS, brightness);
+                        //Get the current window attributes
+                        WindowManager.LayoutParams layoutpars = activity.window.getAttributes();
+                        //Set the brightness of this window
+                        layoutpars.screenBrightness = brightness / (float)255;
+                        //Apply attribute changes to this window
+                        activity.window.setAttributes(layoutpars);
+
+                        String msg = "Okay, the brightness is set to " + value;
+                        Speak(msg, "OnDeviceSetBrightness", null);
+
+                        activity.loomoRecognizer.startWakeUpListener();
+                    }
                 }
-                //brightness = entity.getInt("entity");
+            } catch (Exception e) {
+                Log.d(TAG, "Exception: ", e);
+            }
+
+        } else {
+            //start dialog
+            dialogContext = "DialogOnDeviceSetBrightness";
+            dialogStarted = true;
+            Speak("What to?", dialogContext, new Runnable() {
+                @Override
+                public void run() {
+                    //start recognition without intent detection
+                    activity.azureSpeechRecognition.getRecognitionClient().startMicAndRecognition();
+                }
+            });
+        }
+    }
+
+    private void DialogOnDeviceSetBrightness (String entity) {
+
+        int brightness = activity.brightness;
+
+        if(entity != null) {
+            if(entity.contains("percent")) {
+                entity = entity.replace("precent", "");
+            }
+
+            try {
+                Integer number = wordToNumber.wordToNumber(entity);
+                if(number == null) {
+                    switch (entity) {
+                        case "low":
+                            brightness = 0;
+                            break;
+                        case "medium":
+                            brightness = 127;
+                            break;
+                        case "high":
+                            brightness = 255;
+                            break;
+                        default:
+                            String msg = "I can't set the brightness to " + entity;
+                            Speak(msg, "OnDeviceSetBrightness", null);
+
+                            dialogStarted = false;
+                            activity.loomoRecognizer.startWakeUpListener();
+                            return;
+                    }
+
+                    Log.d(TAG, "DialogOnDeviceSetBrighntess" + entity);
+
+                    //Set the system brightness using the brightness variable value
+                    Settings.System.putInt(activity.cResolver, Settings.System.SCREEN_BRIGHTNESS, brightness);
+                    //Get the current window attributes
+                    WindowManager.LayoutParams layoutpars = activity.window.getAttributes();
+                    //Set the brightness of this window
+                    layoutpars.screenBrightness = brightness / (float)255;
+                    //Apply attribute changes to this window
+                    activity.window.setAttributes(layoutpars);
+
+
+                    String msg = "Okay, the brightness is set to " + entity;
+                    Speak(msg, "DialogOnDeviceSetBrightness", null);
+
+                    dialogStarted = false;
+                    activity.loomoRecognizer.startWakeUpListener();
+                } else {
+                    brightness = Math.max(Math.min(number, 100), 0);
+
+                    Log.d(TAG, "DialogOnDeviceSetBrightness" + entity);
+
+                    //Set the system brightness using the brightness variable value
+                    Settings.System.putInt(activity.cResolver, Settings.System.SCREEN_BRIGHTNESS, brightness);
+                    //Get the current window attributes
+                    WindowManager.LayoutParams layoutpars = activity.window.getAttributes();
+                    //Set the brightness of this window
+                    layoutpars.screenBrightness = brightness / (float)255;
+                    //Apply attribute changes to this window
+                    activity.window.setAttributes(layoutpars);
+
+                    String msg = "Okay, the brightness is set to " + entity + " percent";
+                    Speak(msg, "DialogOnDeviceSetBrightness", null);
+
+                    dialogStarted = false;
+                    activity.loomoRecognizer.startWakeUpListener();
+                }
+            } catch (Exception e) {
+                Log.d(TAG, "Exception: ", e);
             }
         }
-        catch (NumberFormatException e) {
-            Log.d(TAG, "NaN", e);
-        }
-        catch (Exception e) {
-            Log.d(TAG, "Exception: ", e);
-        }
-        Log.d(TAG, "OnDeviceSetBrightness" + entities.toString());
-
-        //Set the system brightness using the brightness variable value
-        Settings.System.putInt(activity.cResolver, Settings.System.SCREEN_BRIGHTNESS, brightness);
-        //Get the current window attributes
-        WindowManager.LayoutParams layoutpars = activity.window.getAttributes();
-        //Set the brightness of this window
-        layoutpars.screenBrightness = brightness / (float)255;
-        //Apply attribute changes to this window
-        activity.window.setAttributes(layoutpars);
-
-        String msg = "Okay, the brightness is set to " + value;
-        Speak(msg, "OnDeviceSetBrightness");
     }
 
     private void OnDeviceSetVolume (JSONArray entities) {
@@ -165,7 +275,7 @@ class IntentsLibrary {
                                 break;
                             default:
                                 String msg = "I can't set the volume to " + value;
-                                Speak(msg, "OnDeviceSetVolume");
+                                Speak(msg, "OnDeviceSetVolume", null);
 
                                 activity.loomoRecognizer.startWakeUpListener();
                                 return;
@@ -177,7 +287,7 @@ class IntentsLibrary {
                         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_SHOW_UI);
 
                         String msg = "Okay, the volume is set to " + value;
-                        Speak(msg, "OnDeviceSetVolume");
+                        Speak(msg, "OnDeviceSetVolume", null);
 
                         activity.loomoRecognizer.startWakeUpListener();
                     } else {
@@ -190,7 +300,7 @@ class IntentsLibrary {
                         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_SHOW_UI);
 
                         String msg = "Okay, the volume is set to " + value + " percent";
-                        Speak(msg, "OnDeviceSetVolume");
+                        Speak(msg, "OnDeviceSetVolume", null);
 
                         activity.loomoRecognizer.startWakeUpListener();
                     }
@@ -203,10 +313,13 @@ class IntentsLibrary {
             //start dialog
             dialogContext = "DialogOnDeviceSetVolume";
             dialogStarted = true;
-            Speak("What to?", dialogContext);
-
-            //start recognition without intent detection
-            activity.azureSpeechRecognition.getRecognitionClient().startMicAndRecognition();
+            Speak("What to?", dialogContext, new Runnable() {
+                @Override
+                public void run() {
+                    //start recognition without intent detection
+                    activity.azureSpeechRecognition.getRecognitionClient().startMicAndRecognition();
+                }
+            });
         }
     }
 
@@ -240,7 +353,7 @@ class IntentsLibrary {
                             break;
                         default:
                             String msg = "I can't set the volume to " + entity;
-                            Speak(msg, "OnDeviceSetVolume");
+                            Speak(msg, "OnDeviceSetVolume", null);
 
                             dialogStarted = false;
                             activity.loomoRecognizer.startWakeUpListener();
@@ -253,7 +366,7 @@ class IntentsLibrary {
                     audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_SHOW_UI);
 
                     String msg = "Okay, the volume is set to " + entity;
-                    Speak(msg, "DialogOnDeviceSetVolume");
+                    Speak(msg, "DialogOnDeviceSetVolume", null);
 
                     dialogStarted = false;
                     activity.loomoRecognizer.startWakeUpListener();
@@ -267,7 +380,7 @@ class IntentsLibrary {
                     audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_SHOW_UI);
 
                     String msg = "Okay, the volume is set to " + entity + " percent";
-                    Speak(msg, "DialogOnDeviceSetVolume");
+                    Speak(msg, "DialogOnDeviceSetVolume", null);
 
                     dialogStarted = false;
                     activity.loomoRecognizer.startWakeUpListener();
@@ -276,5 +389,13 @@ class IntentsLibrary {
                 Log.d(TAG, "Exception: ", e);
             }
         }
+    }
+
+    private void ExplorationStart() {
+
+    }
+
+    private void ExplorationStop() {
+
     }
 }

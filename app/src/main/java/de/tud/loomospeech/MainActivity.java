@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
         loomoSoundPool = new LoomoSoundPool(this);
         azureSpeechRecognition = new AzureSpeechRecognition(this);
         loomoRecognizer = new LoomoWakeUpRecognizer(this);
-        loomoTextToSpeech = new LoomoTextToSpeech(this);
+
         //Get the content resolver
         cResolver = getContentResolver();
         //Get the current window
@@ -72,12 +72,26 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+
+        if (loomoTextToSpeech == null) loomoTextToSpeech = new LoomoTextToSpeech(this);
+    }
+
+    @Override
+    protected void onStop() {
+        if (loomoTextToSpeech != null) loomoTextToSpeech.shutdown();
+
+        super.onStop();
+    }
+
+    @Override
     protected void onDestroy() {
         if (azureSpeechRecognition != null) azureSpeechRecognition = null;
         if (mHandler != null) mHandler = null;
         if (loomoSoundPool != null) loomoSoundPool = null;
         if (loomoRecognizer != null) loomoRecognizer = null;
-        if (loomoTextToSpeech != null) loomoTextToSpeech.shutdown();
+
         super.onDestroy();
     }
 
@@ -106,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 //                btnAction.setEnabled(false);
-                azureSpeechRecognition.getRecognitionClientWithIntent().startMicAndRecognition();
+                azureSpeechRecognition.startMicAndRecognitionWithIntent();
             }
         });
     }

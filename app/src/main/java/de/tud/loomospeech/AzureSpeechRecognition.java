@@ -123,7 +123,7 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         }
     }
 
-    MicrophoneRecognitionClientWithIntent getRecognitionClientWithIntent() {
+    private MicrophoneRecognitionClientWithIntent getRecognitionClientWithIntent() {
         if (recognitionClientWithIntent != null) {
             return recognitionClientWithIntent;
         }
@@ -139,7 +139,7 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         return recognitionClientWithIntent;
     }
 
-    MicrophoneRecognitionClient getRecognitionClient() {
+    private MicrophoneRecognitionClient getRecognitionClient() {
         if (recognitionClient != null) {
             return recognitionClient;
         }
@@ -151,6 +151,22 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         recognitionClient.setAuthenticationUri(activity.getString(R.string.authenticationUri));
 
         return recognitionClient;
+    }
+
+    public void startMicAndRecognition() {
+        try {
+            getRecognitionClient().startMicAndRecognition();
+        } catch (Exception e) {
+            Log.e(TAG, "Error: ", e);
+        }
+    }
+
+    public void startMicAndRecognitionWithIntent() {
+        try {
+            getRecognitionClientWithIntent().startMicAndRecognition();
+        } catch (Exception e) {
+            Log.e(TAG, "Error: ", e);
+        }
     }
 
    private String prettyPrintResponse(JSONObject json) throws Exception {

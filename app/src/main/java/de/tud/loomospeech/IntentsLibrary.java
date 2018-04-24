@@ -77,6 +77,9 @@ class IntentsLibrary {
         return true;
     }
 
+
+    /*---------- Intents ----------*/
+
     private void None() {
         // No suitable action for command found.
         Log.d(TAG, "No suitable action for command found.");
@@ -84,10 +87,12 @@ class IntentsLibrary {
         activity.loomoRecognizer.startWakeUpListener();
     }
 
-    private void UtilitiesStop() {
+    private void OnDeviceCloseApplication() {
         Speak("Why? Dont you love me anymore?", "UtilitiesStop", null);
-        activity.loomoRecognizer.startWakeUpListener();
+        activity.finish();
+        System.exit(0);
     }
+
     private void OnDeviceAreYouListening() {
         Speak("Yes!", "OnDeviceAreYouListening", null);
         activity.loomoRecognizer.startWakeUpListener();

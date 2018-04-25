@@ -28,9 +28,6 @@ public class MainActivity extends AppCompatActivity {
     AzureSpeechRecognition azureSpeechRecognition;
     MessageHandler mHandler;
     LoomoSoundPool loomoSoundPool;
-    int brightness;
-    ContentResolver cResolver;
-    Window window;
     LoomoTextToSpeech loomoTextToSpeech;
 
 
@@ -50,21 +47,6 @@ public class MainActivity extends AppCompatActivity {
         loomoSoundPool = new LoomoSoundPool(this);
         azureSpeechRecognition = new AzureSpeechRecognition(this);
         loomoRecognizer = new LoomoWakeUpRecognizer(this);
-
-        //Get the content resolver
-        cResolver = getContentResolver();
-        //Get the current window
-        window = getWindow();
-
-        try {
-            // To handle the auto
-            Settings.System.putInt(cResolver, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
-            brightness = Settings.System.getInt(cResolver, Settings.System.SCREEN_BRIGHTNESS);
-        } catch (Settings.SettingNotFoundException e) {
-            //Throw an error case it couldn't be retrieved
-            Log.e(TAG, "Error: Cannot access system brightness");
-            e.printStackTrace();
-        }
 
 
         initBtnAction();

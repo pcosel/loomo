@@ -23,7 +23,7 @@ public class MessageHandler extends Handler {
 
     private final WeakReference<Activity> activityWeakReference;
 
-    MessageHandler(Activity instance) {
+    public MessageHandler(Activity instance) {
         activityWeakReference = new WeakReference<>(instance);
     }
 

@@ -17,7 +17,7 @@ import org.json.JSONObject;
 import java.util.HashMap;
 
 
-class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
+public class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
     private static final String TAG = "AzureSpeechRecognition";
 
     private MainActivity activity;
@@ -28,7 +28,7 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
 
     private HashMap<String, String> phrases = new HashMap<>();
 
-    AzureSpeechRecognition(MainActivity myActivity) {
+   public AzureSpeechRecognition(MainActivity myActivity) {
         activity = myActivity;
         mHandler = myActivity.mHandler;
         intentsLibrary  = new IntentsLibrary(activity);

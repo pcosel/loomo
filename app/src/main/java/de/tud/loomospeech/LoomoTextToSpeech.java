@@ -14,7 +14,7 @@ public class LoomoTextToSpeech extends UtteranceProgressListener implements Text
     private Runnable cb = null;
 
 
-    LoomoTextToSpeech(Context context) {
+    public LoomoTextToSpeech(Context context) {
         ctx = context;
         Tts = new TextToSpeech(ctx, this);
     }

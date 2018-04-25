@@ -1,5 +1,6 @@
 package de.tud.loomospeech;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -8,6 +9,7 @@ import android.speech.tts.TextToSpeech;
 import android.text.format.DateFormat;
 import android.text.format.Time;
 import android.util.Log;
+import android.view.Window;
 import android.view.WindowManager;
 
 import org.json.JSONArray;
@@ -178,8 +180,21 @@ class IntentsLibrary {
     }
 
     private void OnDeviceSetBrightness(JSONArray entities) {
+        int brightness;
+        ContentResolver cResolver = activity.getContentResolver();
+        Window window = activity.getWindow();
+
         if (entities.length() > 0) {
-            int brightness = activity.brightness;
+            try {
+                // To handle the auto
+                Settings.System.putInt(cResolver, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
+                brightness = Settings.System.getInt(cResolver, Settings.System.SCREEN_BRIGHTNESS);
+            } catch (Settings.SettingNotFoundException e) {
+                //Throw an error case it couldn't be retrieved
+                Log.e(TAG, "Error: Cannot access system brightness");
+                e.printStackTrace();
+            }
+
             String value = "";
             try {
                 JSONObject entity = entities.getJSONObject(0);
@@ -207,13 +222,13 @@ class IntentsLibrary {
                         Log.d(TAG, "OnDeviceSetBrightness" + entities.toString());
 
                         //Set the system brightness using the brightness variable value
-                        Settings.System.putInt(activity.cResolver, Settings.System.SCREEN_BRIGHTNESS, brightness);
+                        Settings.System.putInt(cResolver, Settings.System.SCREEN_BRIGHTNESS, brightness);
                         //Get the current window attributes
-                        WindowManager.LayoutParams layoutpars = activity.window.getAttributes();
+                        WindowManager.LayoutParams layoutpars = window.getAttributes();
                         //Set the brightness of this window
                         layoutpars.screenBrightness = brightness / (float)255;
                         //Apply attribute changes to this window
-                        activity.window.setAttributes(layoutpars);
+                        window.setAttributes(layoutpars);
 
                         String msg = "Okay, the brightness is set to " + value + ".";
                         Speak(msg, "OnDeviceSetBrightness", null);
@@ -225,13 +240,13 @@ class IntentsLibrary {
                         Log.d(TAG, "OnDeviceSetBrightness" + entities.toString());
 
                         //Set the system brightness using the brightness variable value
-                        Settings.System.putInt(activity.cResolver, Settings.System.SCREEN_BRIGHTNESS, brightness);
+                        Settings.System.putInt(cResolver, Settings.System.SCREEN_BRIGHTNESS, brightness);
                         //Get the current window attributes
-                        WindowManager.LayoutParams layoutpars = activity.window.getAttributes();
+                        WindowManager.LayoutParams layoutpars = window.getAttributes();
                         //Set the brightness of this window
                         layoutpars.screenBrightness = brightness / (float)255;
                         //Apply attribute changes to this window
-                        activity.window.setAttributes(layoutpars);
+                        window.setAttributes(layoutpars);
 
                         String msg = "Okay, the brightness is set to " + value + " percent.";
                         Speak(msg, "OnDeviceSetBrightness", null);
@@ -258,8 +273,19 @@ class IntentsLibrary {
     }
 
     private void DialogOnDeviceSetBrightness (String entity) {
+        int brightness;
+        ContentResolver cResolver = activity.getContentResolver();
+        Window window = activity.getWindow();
 
-        int brightness = activity.brightness;
+        try {
+            // To handle the auto
+            Settings.System.putInt(cResolver, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
+            brightness = Settings.System.getInt(cResolver, Settings.System.SCREEN_BRIGHTNESS);
+        } catch (Settings.SettingNotFoundException e) {
+            //Throw an error case it couldn't be retrieved
+            Log.e(TAG, "Error: Cannot access system brightness");
+            e.printStackTrace();
+        }
 
         if(entity != null) {
             if(entity.contains("percent")) {
@@ -291,13 +317,13 @@ class IntentsLibrary {
                     Log.d(TAG, "DialogOnDeviceSetBrighntess" + entity);
 
                     //Set the system brightness using the brightness variable value
-                    Settings.System.putInt(activity.cResolver, Settings.System.SCREEN_BRIGHTNESS, brightness);
+                    Settings.System.putInt(cResolver, Settings.System.SCREEN_BRIGHTNESS, brightness);
                     //Get the current window attributes
-                    WindowManager.LayoutParams layoutpars = activity.window.getAttributes();
+                    WindowManager.LayoutParams layoutpars = window.getAttributes();
                     //Set the brightness of this window
                     layoutpars.screenBrightness = brightness / (float)255;
                     //Apply attribute changes to this window
-                    activity.window.setAttributes(layoutpars);
+                    window.setAttributes(layoutpars);
 
                     String msg = "Okay, the brightness is set to " + entity + ".";
                     Speak(msg, "DialogOnDeviceSetBrightness", null);
@@ -310,13 +336,13 @@ class IntentsLibrary {
                     Log.d(TAG, "DialogOnDeviceSetBrightness" + entity);
 
                     //Set the system brightness using the brightness variable value
-                    Settings.System.putInt(activity.cResolver, Settings.System.SCREEN_BRIGHTNESS, brightness);
+                    Settings.System.putInt(cResolver, Settings.System.SCREEN_BRIGHTNESS, brightness);
                     //Get the current window attributes
-                    WindowManager.LayoutParams layoutpars = activity.window.getAttributes();
+                    WindowManager.LayoutParams layoutpars = window.getAttributes();
                     //Set the brightness of this window
                     layoutpars.screenBrightness = brightness / (float)255;
                     //Apply attribute changes to this window
-                    activity.window.setAttributes(layoutpars);
+                    window.setAttributes(layoutpars);
 
                     String msg = "Okay, the brightness is set to " + entity + " percent.";
                     Speak(msg, "DialogOnDeviceSetBrightness", null);

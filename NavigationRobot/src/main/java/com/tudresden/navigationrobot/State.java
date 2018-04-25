@@ -25,6 +25,14 @@ public enum State {
     /**
      * The robot detected an obstacle and performs a left turn.
      */
-    OBSTACLE_DETECTED;
+    OBSTACLE_DETECTED,
+
+    CORNER_LEFT,
+
+    CORNER_FORWARD,
+
+    CORNER_RIGHT,
+
+    CORNER_DONE;
 
 }

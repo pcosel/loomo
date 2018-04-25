@@ -60,12 +60,21 @@ public class MainActivity extends Activity implements View.OnClickListener {
     /**
      * The distance that the robot keeps to obstacles.
      */
+
+    private static final int DELAY = 500;
+
+    private static final float ULTRASONIC_MAX = 1.5f;
+
     private static final float OBSTACLE_AVOIDANCE_DISTANCE = 1f;
+
+    private static final float WALL_DISTANCE = 0.8f;
+
+    private static final float WALL_DISTANCE_CORRECTION = 0.1f;
 
     /**
      * The distance that the robot walks from one checkpoint to the next.
      */
-    private static final float WALKING_DISTANCE = 1f;
+    private static final float WALKING_DISTANCE = 0.5f;
 
     /**
      * The theta value for adding a checkpoint that makes the robot rotate 90° to the left.
@@ -253,6 +262,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 updateCoordinates();
                 mState = State.CHECKING_WALL;
                 mDistanceFront = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
+                updateOrientation(RIGHT_TURN);
                 // After every meter, rotate 90° to the right to check the wall
                 mBase.addCheckPoint(0, 0, RIGHT_90);
                 break;
@@ -272,12 +282,20 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 // Without setting the state to WALK in this switch case, the robot would not continue
                 // walking if after the right turn no obstacle is found.
                 mCheckingWall = true;
-                mDistanceWall = mSensor.getUltrasonicDistance().getDistance() / 1000;
-                Log.d(TAG, "Distance: " + mDistanceWall);
-                mState = State.WALKING;
-                updateOrientation(RIGHT_TURN);
-                // Walk forward (1 meter)
-                mBase.addCheckPoint(WALKING_DISTANCE, 0);
+                mHandler.postDelayed(new Runnable() {
+                    public void run() {
+                        mDistanceWall = mSensor.getUltrasonicDistance().getDistance() / 1000;
+                        if(mDistanceWall == ULTRASONIC_MAX) {
+                            mState = State.CORNER_LEFT;
+                            updateOrientation(LEFT_TURN);
+                            mBase.addCheckPoint(0, 0, LEFT_90);
+                        } else {
+                            mState = State.WALKING;
+                            // Walk forward (1 meter)
+                            mBase.addCheckPoint(WALKING_DISTANCE, 0);
+                        }
+                    }
+                }, DELAY);
                 // In case the robot is further away from the wall than OBSTACLE_AVOIDANCE_DISTANCE
                 // this code makes it walk towards the wall again. Because the checkpoint is not
                 // reached (because normally the robot hasn't walked further away from the wall than
@@ -288,20 +306,41 @@ public class MainActivity extends Activity implements View.OnClickListener {
             case OBSTACLE_DETECTED:
                 mState = State.WALKING;
                 mDistanceFront = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
-                Log.d(TAG, "Distance: " + mDistanceWall);
                 // 0.8 metres was the threshold that worked best during testing, although
                 // OBSTACLE_AVOIDANCE_DISTANCE ist set to 1.0 metres
-                // The check for 0.0 is relevant only for the beginning, when the robot reaches the
-                // first wall (in this case it isn't necessary yet to correct the distance)
-                if(mDistanceWall != 0.0 && mDistanceWall < 0.8) {
-                    Log.d(TAG, "Increasing distance!");
+                if(mDistanceWall <= WALL_DISTANCE) {
+                    Log.d(TAG, "Distance: " + mDistanceWall + " --> Increasing distance!");
                     // Increase the distance from the wall to the right
-                    mBase.addCheckPoint(WALKING_DISTANCE, 0.2f);
+                    mBase.addCheckPoint(WALKING_DISTANCE, WALL_DISTANCE_CORRECTION);
                 } else {
-                    // The distance from the wall to the right is big enough, so just walk forward
-                    mBase.addCheckPoint(WALKING_DISTANCE, 0);
+                    Log.d(TAG, "Distance: " + mDistanceWall + " --> Decreasing distance!");
+                    // Decrease the distance from the wall to the right
+                    mBase.addCheckPoint(WALKING_DISTANCE, -WALL_DISTANCE_CORRECTION);
                 }
                 break;
+            case CORNER_LEFT:
+                mState = State.CORNER_FORWARD;
+                mDistanceFront = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
+                mBase.addCheckPoint(WALKING_DISTANCE, 0);
+                break;
+            case CORNER_FORWARD:
+                mDistanceFront = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
+                updateCoordinates();
+                mState = State.CORNER_RIGHT;
+                updateOrientation(RIGHT_TURN);
+                mBase.addCheckPoint(0, 0, RIGHT_90);
+                break;
+            case CORNER_RIGHT:
+                mDistanceFront = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
+                mState = State.CORNER_DONE;
+                mBase.addCheckPoint(WALKING_DISTANCE, 0);
+                break;
+            case CORNER_DONE:
+                mDistanceFront = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
+                updateCoordinates();
+                mState = State.CHECKING_WALL;
+                updateOrientation(RIGHT_TURN);
+                mBase.addCheckPoint(0, 0, RIGHT_90);
             default:
                 // All possible cases are handled above
         }
@@ -311,6 +350,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
      * Sets a new checkpoint to make the robot rotate 90° to the left in case an obstacle was detected.
      */
     public void obstacleDetected() {
+        Log.d(TAG, "Obstacle detected!");
         // Delay the execution of the code for 1 second, then check if there really is an obstacle
         mHandler.postDelayed(new Runnable() {
             public void run() {
@@ -322,7 +362,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                                 " | Position: (" + mXCoordinate + " , " + mYCoordinate + ")");
                         mPositions.add(new Position(mXCoordinate, mYCoordinate, mOrientation));
                         mState = State.OBSTACLE_DETECTED;
-                    } else if(mState == State.WALKING) {
+                        mDistanceWall = mSensor.getUltrasonicDistance().getDistance() / 1000;
+                    } else if(mState == State.WALKING || mState == State.CORNER_FORWARD || mState == State.CORNER_DONE) {
                         mState = State.OBSTACLE_DETECTED;
                         // Concerning mCheckingWall see explanation in arrivedAtCheckpoint() (case CHECKING_WALL)
                         if(!mCheckingWall) {
@@ -331,6 +372,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                             mCheckingWall = false;
                         }
                     }
+                    mState = State.OBSTACLE_DETECTED;
                     // The robot detects an obstacle before it reaches the current checkpoint. When an obstacle
                     // is detected, a new checkpoint is set for the left turn but the robot still tries to reach
                     // the last checkpoint first. That checkpoint obviously can't be reached, because there is an
@@ -347,26 +389,26 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     // forward to the next wall
                 }
             }
-        }, 500);
+        }, DELAY);
     }
 
     /**
      * Sets the x- or y-coordinate according to the current orientation of the robot.
      */
     public void updateCoordinates() {
-        if(mState == State.WALKING) {
+        if(mState == State.WALKING || mState == State.CORNER_FORWARD || mState == State.CORNER_DONE ) {
             switch(mOrientation) {
                 case FORWARD:
-                    mXCoordinate += 1;
+                    mXCoordinate += WALKING_DISTANCE;
                     break;
                 case BACKWARD:
-                    mXCoordinate += -1;
+                    mXCoordinate -= WALKING_DISTANCE;
                     break;
                 case LEFT:
-                    mYCoordinate += 1;
+                    mYCoordinate += WALKING_DISTANCE;
                     break;
                 case RIGHT:
-                    mYCoordinate += -1;
+                    mYCoordinate -= WALKING_DISTANCE;
                     break;
                 default:
                     // All possible cases are handled above

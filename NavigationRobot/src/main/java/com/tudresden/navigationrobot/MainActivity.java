@@ -1,6 +1,6 @@
 package com.tudresden.navigationrobot;
 
-import android.app.Activity;
+import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -19,8 +19,8 @@ import com.google.gson.reflect.TypeToken;
 import com.segway.robot.algo.Pose2D;
 import com.segway.robot.algo.PoseVLS;
 import com.segway.robot.algo.minicontroller.CheckPoint;
-import com.segway.robot.algo.minicontroller.ObstacleStateChangedListener;
 import com.segway.robot.algo.minicontroller.CheckPointStateListener;
+import com.segway.robot.algo.minicontroller.ObstacleStateChangedListener;
 import com.segway.robot.sdk.base.bind.ServiceBinder;
 import com.segway.robot.sdk.locomotion.sbv.Base;
 import com.segway.robot.sdk.locomotion.sbv.StartVLSListener;
@@ -35,7 +35,7 @@ import java.util.LinkedList;
 /**
  * This Activity handles the exploration process.
  */
-public class MainActivity extends Activity implements View.OnClickListener {
+public class MainActivity extends de.tud.loomospeech.MainActivity implements View.OnClickListener {
 
     /**
      * The tag that is used for log messages.
@@ -167,6 +167,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
      * The Type LinkedList<Position> that is needed for serialization and deserialization with Gson.
      */
     private Type mListType = new TypeToken<LinkedList<Position>>(){}.getType();
+
+
+
+
+
 
     /**
      * Checks whether the file with the filename positions.json already exists.
@@ -485,12 +490,16 @@ public class MainActivity extends Activity implements View.OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        getActionBar().setDisplayHomeAsUpEnabled(true);
+        ActionBar actionBar = getActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
 
         Button startButton = (Button)findViewById(R.id.buttonStart);
         startButton.setOnClickListener(this);
         Button stopButton = (Button)findViewById(R.id.buttonStop);
         stopButton.setOnClickListener(this);
+
 
         initListeners();
         bindServices();

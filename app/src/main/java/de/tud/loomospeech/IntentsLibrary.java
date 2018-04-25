@@ -121,9 +121,10 @@ class IntentsLibrary {
     }
 
     private void OnDeviceCloseApplication() {
-        Speak("Why? Dont you love me anymore?", "UtilitiesStop", new Runnable() {
+        Speak("Dont you love me anymore?", "UtilitiesStop", new Runnable() {
             @Override
             public void run() {
+                activity.loomoTextToSpeech.shutdown();
                 activity.finish();
                 System.exit(0);
             }
@@ -136,18 +137,26 @@ class IntentsLibrary {
     }
 
     private void OnDeviceTime () {
-        Time now = new Time();
-        now.setToNow();
-        int random = (int) (Math.random() * 2);
+        Date now = new Date();
+        now.getTime();
+
         String msg = "";
-        switch (random) {
-            case 0:
-                msg = "It's " + now.hour + ":" + now.minute;
-                break;
-            case 1:
-                msg = "It's " + now.minute + " past " + now.hour;
-                break;
+
+        if(now.getMinutes() == 0) {
+            msg = "It's " + now.getHours() + " o'clock.";
+        } else {
+            int random = (int) (Math.random() * 2);
+
+            switch (random) {
+                case 0:
+                    msg = "It's " + now.getHours() + ":" + now.getMinutes() + ".";
+                    break;
+                case 1:
+                    msg = "It's " + now.getMinutes() + " past " + now.getHours() + ".";
+                    break;
+            }
         }
+
         Speak(msg, "OnDeviceTime", new Runnable() {
             @Override
             public void run() {
@@ -165,7 +174,7 @@ class IntentsLibrary {
         String month = (String) DateFormat.format("MMMM", now);
         String year = (String) DateFormat.format("yyyy", now);
 
-        String msg = "Today is " + weekDay + " the " + day + " of " + month + " " + year;
+        String msg = "Today is " + weekDay + " the " + day + " of " + month + " " + year + ".";
         Speak(msg, "OnDeviceTime", new Runnable() {
             @Override
             public void run() {
@@ -194,7 +203,7 @@ class IntentsLibrary {
                                 brightness = 255;
                                 break;
                             default:
-                                String msg = "I can't set the brightness to " + value;
+                                String msg = "I can't set the brightness to " + value + ".";
                                 Speak(msg, "OnDeviceSetBrightness", null);
 
                                 activity.loomoRecognizer.startWakeUpListener();
@@ -212,7 +221,7 @@ class IntentsLibrary {
                         //Apply attribute changes to this window
                         activity.window.setAttributes(layoutpars);
 
-                        String msg = "Okay, the brightness is set to " + value;
+                        String msg = "Okay, the brightness is set to " + value + ".";
                         Speak(msg, "OnDeviceSetBrightness", null);
 
                         activity.loomoRecognizer.startWakeUpListener();
@@ -230,7 +239,7 @@ class IntentsLibrary {
                         //Apply attribute changes to this window
                         activity.window.setAttributes(layoutpars);
 
-                        String msg = "Okay, the brightness is set to " + value;
+                        String msg = "Okay, the brightness is set to " + value + " percent.";
                         Speak(msg, "OnDeviceSetBrightness", null);
 
                         activity.loomoRecognizer.startWakeUpListener();
@@ -316,7 +325,7 @@ class IntentsLibrary {
                     //Apply attribute changes to this window
                     activity.window.setAttributes(layoutpars);
 
-                    String msg = "Okay, the brightness is set to " + entity + " percent";
+                    String msg = "Okay, the brightness is set to " + entity + " percent.";
                     Speak(msg, "DialogOnDeviceSetBrightness", null);
 
                     dialogStarted = false;

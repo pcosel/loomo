@@ -26,7 +26,7 @@ public class IntentsLibrary {
     private MainActivity activity;
     private WordToNumber wordToNumber;
 
-    IntentsLibrary(MainActivity myActivity) {
+    public IntentsLibrary(MainActivity myActivity) {
         activity = myActivity;
         wordToNumber = new WordToNumber();
     }

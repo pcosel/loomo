@@ -17,7 +17,7 @@ public class LoomoWakeUpRecognizer {
     private boolean isRecognizerBound = false;
 
 
-    LoomoWakeUpRecognizer(MainActivity myActivity) {
+    public LoomoWakeUpRecognizer(MainActivity myActivity) {
         activity = myActivity;
 
         initRecognizer();

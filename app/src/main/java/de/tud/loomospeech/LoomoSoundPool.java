@@ -15,7 +15,7 @@ public class LoomoSoundPool implements SoundPool.OnLoadCompleteListener {
     private HashMap<String, Integer> NamedSounds = new HashMap<>(10);
     private ArrayList<Integer> SoundIds = new ArrayList<>();
 
-    LoomoSoundPool(Context context) {
+    public LoomoSoundPool(Context context) {
         ctx = context;
         soundPool = new SoundPool.Builder().setMaxStreams(10).build();
         soundPool.setOnLoadCompleteListener(this);

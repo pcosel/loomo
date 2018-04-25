@@ -8,7 +8,7 @@ import com.segway.robot.sdk.voice.Recognizer;
 import com.segway.robot.sdk.voice.recognition.WakeupListener;
 import com.segway.robot.sdk.voice.recognition.WakeupResult;
 
-class LoomoWakeUpRecognizer {
+public class LoomoWakeUpRecognizer {
     private static final String TAG = "LoomoWakeUpRecognizer";
 
     private MainActivity activity;

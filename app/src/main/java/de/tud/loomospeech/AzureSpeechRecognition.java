@@ -15,7 +15,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 
-class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
+public class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
     private static final String TAG = "AzureSpeechRecognition";
 
     private MainActivity activity;

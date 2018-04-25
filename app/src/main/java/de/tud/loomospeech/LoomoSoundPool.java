@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 
-class LoomoSoundPool implements SoundPool.OnLoadCompleteListener {
+public class LoomoSoundPool implements SoundPool.OnLoadCompleteListener {
     private SoundPool soundPool;
     private Context ctx;
     private HashMap<String, Integer> NamedSounds = new HashMap<>(10);

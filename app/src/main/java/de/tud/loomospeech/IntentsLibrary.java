@@ -18,7 +18,7 @@ import org.json.JSONObject;
 import java.util.Date;
 
 
-class IntentsLibrary {
+public class IntentsLibrary {
     public boolean dialogStarted;
     public String dialogContext;
 

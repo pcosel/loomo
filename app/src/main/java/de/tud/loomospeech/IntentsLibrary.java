@@ -32,13 +32,6 @@ class IntentsLibrary {
     public void callByName(String functionName, JSONArray entities) {
         //Ignoring any possible result
         functionName = functionName.replace(".", "");
-        /* try {
-            this.getClass().getDeclaredMethod(functionName, JSONArray.class).invoke(this, entities);
-        } catch (Exception e) {
-//          Log.d(TAG, e.getMessage());
-            Log.d(TAG, "Exception: ", e);
-            this.None();
-        } */
 
         try {
             this.getClass().getDeclaredMethod(functionName, JSONArray.class).invoke(this, entities);
@@ -133,6 +126,7 @@ class IntentsLibrary {
 
     private void OnDeviceAreYouListening() {
         Speak("Yes! I can hear you!", "OnDeviceAreYouListening", null);
+
         activity.loomoRecognizer.startWakeUpListener();
     }
 
@@ -253,7 +247,7 @@ class IntentsLibrary {
             //start dialog
             dialogContext = "DialogOnDeviceSetBrightness";
             dialogStarted = true;
-            Speak("What to?", dialogContext, new Runnable() {
+            Speak("What do you want to set the brightness to?", dialogContext, new Runnable() {
                 @Override
                 public void run() {
                     //start recognition without intent detection
@@ -286,7 +280,7 @@ class IntentsLibrary {
                             brightness = 255;
                             break;
                         default:
-                            String msg = "I can't set the brightness to " + entity;
+                            String msg = "I can't set the brightness to " + entity + ".";
                             Speak(msg, "OnDeviceSetBrightness", null);
 
                             dialogStarted = false;
@@ -305,8 +299,7 @@ class IntentsLibrary {
                     //Apply attribute changes to this window
                     activity.window.setAttributes(layoutpars);
 
-
-                    String msg = "Okay, the brightness is set to " + entity;
+                    String msg = "Okay, the brightness is set to " + entity + ".";
                     Speak(msg, "DialogOnDeviceSetBrightness", null);
 
                     dialogStarted = false;

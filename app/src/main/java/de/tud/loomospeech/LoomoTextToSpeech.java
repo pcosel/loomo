@@ -44,12 +44,12 @@ public class LoomoTextToSpeech extends UtteranceProgressListener implements Text
 
     @Override
     public void onStart(String utteranceId) {
-        Log.e(TAG, "Speaking started.");
+        Log.d(TAG, "Speaking started.");
     }
 
     @Override
     public void onDone(String utteranceId) {
-        Log.e(TAG, "Speaking stopped.");
+        Log.d(TAG, "Speaking stopped.");
 
         if (cb != null) {
             cb.run();

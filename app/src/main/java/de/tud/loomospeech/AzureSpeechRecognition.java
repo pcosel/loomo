@@ -91,7 +91,7 @@ class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         }
 
         mHandler.sendMessage(mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
-        activity.loomoSoundPool.play("success");
+//        activity.loomoSoundPool.play("success");
 
 //        recognitionClientWithIntent.endMicAndRecognition();
         //activity.loomoRecognizer.startWakeUpListener();

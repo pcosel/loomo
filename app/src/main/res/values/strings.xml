@@ -47,4 +47,6 @@
     <string name="statusReady">Ready</string>
     <string name="statusListening">Listening…</string>
     <string name="statusProcessing">Processing…</string>
+
+    <string name="qOnDeviceSetVolume"></string>
 </resources>

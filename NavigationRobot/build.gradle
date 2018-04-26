@@ -49,8 +49,8 @@ dependencies {
 
     compile 'com.google.code.gson:gson:2.8.2'
 
-    compile 'com.segway.robot:basesdk:0.6.293'
+    compile 'com.segway.robot:basesdk:0.6.364'
     compile 'com.segway.robot:sensorsdk:0.6.293'
     compile 'com.segway.robot:support-lib:1.1.2'
-    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.0'
 }

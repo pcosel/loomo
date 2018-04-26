@@ -307,7 +307,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 mState = State.WALKING;
                 mDistanceFront = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
                 // 0.8 metres was the threshold that worked best during testing, although
-                // OBSTACLE_AVOIDANCE_DISTANCE ist set to 1.0 metres
+                // OBSTACLE_AVOIDANCE_DISTANCE is set to 1.0 metre
                 if(mDistanceWall <= WALL_DISTANCE) {
                     Log.d(TAG, "Distance: " + mDistanceWall + " --> Increasing distance!");
                     // Increase the distance from the wall to the right

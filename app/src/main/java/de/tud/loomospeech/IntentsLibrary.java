@@ -323,7 +323,7 @@ public class IntentsLibrary {
 
         if(entity != null) {
             if(entity.contains("percent")) {
-                entity = entity.replace("precent", "");
+                entity = entity.replace("percent", "");
             }
 
             try {
@@ -475,7 +475,7 @@ public class IntentsLibrary {
             int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
 
             if(entity.contains("percent")) {
-                entity = entity.replace("precent", "");
+                entity = entity.replace("percent", "");
             }
 
             try {

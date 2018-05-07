@@ -75,8 +75,7 @@ public class IntentsLibrary {
         activity.mHandler.sendMessage(activity.mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
     }
 
-    protected static boolean isNumeric(String str)
-    {
+    protected static boolean isNumeric(String str) {
         try
         {
             double d = Double.parseDouble(str);
@@ -223,7 +222,7 @@ public class IntentsLibrary {
         });
     }
 
-    public void OnDeviceSetBrightness(JSONArray entities) {
+    protected void OnDeviceSetBrightness(JSONArray entities) {
         int brightness;
         ContentResolver cResolver = activity.getContentResolver();
         Window window = activity.getWindow();
@@ -316,7 +315,7 @@ public class IntentsLibrary {
         }
     }
 
-    public void DialogOnDeviceSetBrightness (String entity) {
+    protected void DialogOnDeviceSetBrightness (String entity) {
         int brightness;
         ContentResolver cResolver = activity.getContentResolver();
         Window window = activity.getWindow();
@@ -333,7 +332,7 @@ public class IntentsLibrary {
 
         if(entity != null) {
             if(entity.contains("percent")) {
-                entity = entity.replace("precent", "");
+                entity = entity.replace("percent", "");
             }
 
             try {
@@ -485,7 +484,7 @@ public class IntentsLibrary {
             int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
 
             if(entity.contains("percent")) {
-                entity = entity.replace("precent", "");
+                entity = entity.replace("percent", "");
             }
 
             try {

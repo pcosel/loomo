@@ -24,6 +24,8 @@ public class IntentsLibrary {
     protected MainActivity activity;
     protected WordToNumber wordToNumber;
 
+    public String preparedAction;
+
     public IntentsLibrary(MainActivity myActivity) {
         activity = myActivity;
         wordToNumber = new WordToNumber();
@@ -123,6 +125,38 @@ public class IntentsLibrary {
         Log.d(TAG, "No suitable action for command found.");
         Speak("Pardon? I didn't understand that.", "None", null);
         activity.loomoRecognizer.startWakeUpListener();
+    }
+
+    protected void UtilitiesConfirm() {
+        if(preparedAction != null) {
+            callByName(preparedAction, new JSONArray());
+            preparedAction = null;
+        } else {
+            Speak("No!", "UtilitiesConfirm", new Runnable() {
+                @Override
+                public void run() {
+                    activity.loomoRecognizer.startWakeUpListener();
+                }
+            });
+        }
+    }
+
+    protected void UtilitiesDecline() {
+        String msg;
+
+        if(preparedAction != null) {
+            preparedAction = null;
+            msg = "Okay.";
+        } else {
+            msg = "Yes!";
+        }
+
+        Speak(msg, "UtilitiesConfirm", new Runnable() {
+            @Override
+            public void run() {
+                activity.loomoRecognizer.startWakeUpListener();
+            }
+        });
     }
 
     protected void OnDeviceCloseApplication() {

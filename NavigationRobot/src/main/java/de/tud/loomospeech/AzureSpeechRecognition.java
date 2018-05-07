@@ -14,6 +14,8 @@ import com.tudresden.navigationrobot.R;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.HashMap;
+
 
 public class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
     private static final String TAG = "AzureSpeechRecognition";
@@ -24,10 +26,20 @@ public class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
     private MicrophoneRecognitionClient recognitionClient;
     private IntentsLibrary intentsLibrary;
 
+    private HashMap<String, String> phrases = new HashMap<>();
+
     public AzureSpeechRecognition(MainActivity myActivity) {
         activity = myActivity;
         mHandler = myActivity.mHandler;
         intentsLibrary  = new IntentsLibrary(activity);
+
+        phrases.put("OnDevice.CloseApplication", "Do you want to close the application?");
+        phrases.put("OnDevice.Time", "Are you asking for the time?");
+        phrases.put("OnDevice.Date", "Are you asking for the date?");
+        phrases.put("OnDevice.SetBrightness", "Do you want to set the brightness?");
+        phrases.put("OnDevice.SetVolume", "Do you want to set the volume?");
+        phrases.put("Exploration.Start", "Do you want me to start exploring?");
+        phrases.put("Exploration.Stop", "Do you want me to stop exploring?");
 
         getRecognitionClient();
         getRecognitionClientWithIntent();
@@ -83,9 +95,31 @@ public class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         try {
             json = new JSONObject(s);
             msg = prettyPrintResponse(json);
-            String intent = json.getJSONArray("intents").getJSONObject(0).get("intent").toString();
+            final String intent = json.getJSONArray("intents").getJSONObject(0).get("intent").toString();
             JSONArray entities = json.getJSONArray("entities");
-            intentsLibrary.callByName(intent, entities);
+            Double score = (double) json.getJSONArray("intents").getJSONObject(0).get("score");
+
+            if(score > 0.4 || intent.equals("Utilities.Confirm") || intent.equals("Utilities.Decline")) {
+                intentsLibrary.callByName(intent, entities);
+            } else {
+                if(phrases.get(intent) != null) {
+                    String phrase = phrases.get(intent);
+                    activity.loomoTextToSpeech.speak(phrase, "LowConfidence", new Runnable() {
+                        @Override
+                        public void run() {
+                            intentsLibrary.preparedAction = intent;
+                            startMicAndRecognitionWithIntent();
+                        }
+                    });
+                } else {
+                    activity.loomoTextToSpeech.speak("Pardon? I didn't understand that.", "LowConfidence", new Runnable() {
+                        @Override
+                        public void run() {
+                            startMicAndRecognitionWithIntent();
+                        }
+                    });
+                }
+            }
         } catch (Exception e) {
             Log.d(TAG, "Exception onIntentReceived: ", e);
         }

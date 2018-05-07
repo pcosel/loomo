@@ -16,7 +16,7 @@ public class IntentsLibraryNavigation extends de.tud.loomospeech.IntentsLibrary 
         Speak("I'm going to look around.", "ExplorationStart", new Runnable() {
             @Override
             public void run() {
-//                activity.startExploration();
+                activity.startExploration();
                 activity.loomoRecognizer.startWakeUpListener();
             }
         });
@@ -26,7 +26,7 @@ public class IntentsLibraryNavigation extends de.tud.loomospeech.IntentsLibrary 
         Speak("I stop to look around.", "ExplorationStart", new Runnable() {
             @Override
             public void run() {
-                activity.startExploration();
+                activity.stopExploration();
                 activity.loomoRecognizer.startWakeUpListener();
             }
         });

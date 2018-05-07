@@ -236,6 +236,32 @@ public class MainActivity extends de.tud.loomospeech.MainActivity implements Vie
         mBase.addCheckPoint(0, 0);
     }
 
+    public void stopExploration() {
+        mBase.clearCheckPointsAndStop();
+        if(mPositions.size() == 0) {
+            // If no new exploration was performed and no positions from a previous
+            // exploration can be found, tell the user to perform an exploration in order
+            // to be able to create the map
+            if(!fileExists()) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("No map could be created!");
+                builder.setMessage("Please run the exploration process first.");
+                builder.setPositiveButton("OK", null);
+                AlertDialog dialog = builder.create();
+                dialog.show();
+            } else {
+                // Use old positions from a previous exploration to create the map
+                Intent intent = new Intent(this, MapActivity.class);
+                startActivity(intent);
+            }
+        } else {
+            // Store the new positions and use those to create the map
+            storePositions();
+            Intent intent = new Intent(this, MapActivity.class);
+            startActivity(intent);
+        }
+    }
+
     /**
      * Sets a new checkpoint depending on the current state of the robot.
      * The strategy for setting a new checkpoint is as follows:
@@ -579,29 +605,9 @@ public class MainActivity extends de.tud.loomospeech.MainActivity implements Vie
                 startExploration();
                 break;
             case R.id.buttonStop:
-                mBase.clearCheckPointsAndStop();
-                if(mPositions.size() == 0) {
-                    // If no new exploration was performed and no positions from a previous
-                    // exploration can be found, tell the user to perform an exploration in order
-                    // to be able to create the map
-                    if(!fileExists()) {
-                        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                        builder.setTitle("No map could be created!");
-                        builder.setMessage("Please run the exploration process first.");
-                        builder.setPositiveButton("OK", null);
-                        AlertDialog dialog = builder.create();
-                        dialog.show();
-                    } else {
-                        // Use old positions from a previous exploration to create the map
-                        Intent intent = new Intent(this, MapActivity.class);
-                        startActivity(intent);
-                    }
-                } else {
-                    // Store the new positions and use those to create the map
-                    storePositions();
-                    Intent intent = new Intent(this, MapActivity.class);
-                    startActivity(intent);
-                }
+                stopExploration();
+                break;
+
         }
     }
 

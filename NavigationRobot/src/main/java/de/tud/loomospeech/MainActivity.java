@@ -13,11 +13,12 @@ import java.util.Locale;
 public class MainActivity extends Activity {
     private static final String TAG = "MainActivity";
 
-    LoomoWakeUpRecognizer loomoRecognizer;
+    public LoomoWakeUpRecognizer loomoRecognizer;
     AzureSpeechRecognition azureSpeechRecognition;
     MessageHandler mHandler;
     LoomoSoundPool loomoSoundPool;
     LoomoTextToSpeech loomoTextToSpeech;
+    public IntentsLibrary intentsLibrary;
 
 
     @Override
@@ -30,11 +31,11 @@ public class MainActivity extends Activity {
         }
 
         switchLanguage(Locale.getDefault());
-        mHandler = new MessageHandler(this);
-        loomoSoundPool = new LoomoSoundPool(this);
-        azureSpeechRecognition = new AzureSpeechRecognition(this);
-        loomoRecognizer = new LoomoWakeUpRecognizer(this);
-
+        if (mHandler == null) mHandler = new MessageHandler(this);
+        if (loomoSoundPool == null) loomoSoundPool = new LoomoSoundPool(this);
+        if (intentsLibrary == null) intentsLibrary  = new IntentsLibrary(this);
+        if (azureSpeechRecognition == null) azureSpeechRecognition = new AzureSpeechRecognition(this);
+        if (loomoRecognizer == null) loomoRecognizer = new LoomoWakeUpRecognizer(this);
     }
 
     @Override

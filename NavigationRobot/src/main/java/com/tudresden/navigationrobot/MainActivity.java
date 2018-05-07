@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.LinkedList;
 
+
 /**
  * This Activity handles the exploration process.
  */
@@ -487,7 +488,9 @@ public class MainActivity extends de.tud.loomospeech.MainActivity implements Vie
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        super.intentsLibrary = new IntentsLibraryNavigation(this);
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
 
         ActionBar actionBar = getActionBar();
@@ -499,6 +502,7 @@ public class MainActivity extends de.tud.loomospeech.MainActivity implements Vie
         startButton.setOnClickListener(this);
         Button stopButton = (Button)findViewById(R.id.buttonStop);
         stopButton.setOnClickListener(this);
+
 
 
         initListeners();

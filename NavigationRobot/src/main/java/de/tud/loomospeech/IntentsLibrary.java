@@ -3,9 +3,7 @@ package de.tud.loomospeech;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.media.AudioManager;
-import android.media.MediaPlayer;
 import android.provider.Settings;
-import android.speech.tts.TextToSpeech;
 import android.text.format.DateFormat;
 import android.text.format.Time;
 import android.util.Log;
@@ -22,9 +20,9 @@ public class IntentsLibrary {
     public boolean dialogStarted;
     public String dialogContext;
 
-    private static final String TAG = "IntentsLibrary";
-    private MainActivity activity;
-    private WordToNumber wordToNumber;
+    protected static final String TAG = "IntentsLibrary";
+    protected MainActivity activity;
+    protected WordToNumber wordToNumber;
 
     public IntentsLibrary(MainActivity myActivity) {
         activity = myActivity;
@@ -41,8 +39,16 @@ public class IntentsLibrary {
             try {
                 this.getClass().getDeclaredMethod(functionName).invoke(this);
             } catch (Exception e2) {
-                Log.d(TAG, "Exception: ", e2);
-                this.None();
+                try {
+                    this.getClass().getSuperclass().getDeclaredMethod(functionName, JSONArray.class).invoke(this, entities);
+                } catch (Exception e3) {
+                    try {
+                        this.getClass().getSuperclass().getDeclaredMethod(functionName).invoke(this);
+                    } catch (Exception e4) {
+                        Log.d(TAG, "Exception: ", e4);
+                        this.None();
+                    }
+                }
             }
         }
     }
@@ -53,17 +59,21 @@ public class IntentsLibrary {
         try {
             this.getClass().getDeclaredMethod(functionName, String.class).invoke(this, entity);
         } catch (Exception e) {
-            Log.d(TAG, "Exception: ", e);
-            this.None();
+            try {
+                this.getClass().getSuperclass().getDeclaredMethod(functionName, String.class).invoke(this, entity);
+            } catch (Exception e2) {
+                Log.d(TAG, "Exception: ", e2);
+                this.None();
+            }
         }
     }
 
-    private void Speak (String msg, String utteranceId, Runnable callback) {
+    protected void Speak (String msg, String utteranceId, Runnable callback) {
         activity.loomoTextToSpeech.speak(msg, utteranceId, callback);
         activity.mHandler.sendMessage(activity.mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
     }
 
-    private static boolean isNumeric(String str)
+    protected static boolean isNumeric(String str)
     {
         try
         {
@@ -76,7 +86,7 @@ public class IntentsLibrary {
         return true;
     }
 
-    private String weekDayToString (int day) {
+    protected String weekDayToString (int day) {
         switch(day) {
             case Time.MONDAY:
                 return "Monday";
@@ -94,7 +104,7 @@ public class IntentsLibrary {
         return "";
     }
 
-    private String daySuffix(int day) {
+    protected String daySuffix(int day) {
         if (day >= 11 && day <= 13) {
             return day + "th";
         }
@@ -108,14 +118,14 @@ public class IntentsLibrary {
 
     /*---------- Intents ----------*/
 
-    private void None() {
+    protected void None() {
         // No suitable action for command found.
         Log.d(TAG, "No suitable action for command found.");
         Speak("Pardon? I didn't understand that.", "None", null);
         activity.loomoRecognizer.startWakeUpListener();
     }
 
-    private void OnDeviceCloseApplication() {
+    protected void OnDeviceCloseApplication() {
         Speak("Dont you love me anymore?", "UtilitiesStop", new Runnable() {
             @Override
             public void run() {
@@ -126,13 +136,13 @@ public class IntentsLibrary {
         });
     }
 
-    private void OnDeviceAreYouListening() {
+    protected void OnDeviceAreYouListening() {
         Speak("Yes! I can hear you!", "OnDeviceAreYouListening", null);
 
         activity.loomoRecognizer.startWakeUpListener();
     }
 
-    private void OnDeviceTime () {
+    protected void OnDeviceTime () {
         Date now = new Date();
         now.getTime();
 
@@ -161,7 +171,7 @@ public class IntentsLibrary {
         });
     }
 
-    private void OnDeviceDate () {
+    protected void OnDeviceDate () {
         Date now = new Date();
         now.getTime();
 
@@ -179,7 +189,7 @@ public class IntentsLibrary {
         });
     }
 
-    private void OnDeviceSetBrightness(JSONArray entities) {
+    public void OnDeviceSetBrightness(JSONArray entities) {
         int brightness;
         ContentResolver cResolver = activity.getContentResolver();
         Window window = activity.getWindow();
@@ -272,7 +282,7 @@ public class IntentsLibrary {
         }
     }
 
-    private void DialogOnDeviceSetBrightness (String entity) {
+    public void DialogOnDeviceSetBrightness (String entity) {
         int brightness;
         ContentResolver cResolver = activity.getContentResolver();
         Window window = activity.getWindow();
@@ -356,7 +366,7 @@ public class IntentsLibrary {
         }
     }
 
-    private void OnDeviceSetVolume (JSONArray entities) {
+    protected void OnDeviceSetVolume (JSONArray entities) {
         if (entities.length() > 0) {
             AudioManager audioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
 
@@ -432,7 +442,7 @@ public class IntentsLibrary {
         }
     }
 
-    private void DialogOnDeviceSetVolume (String entity) {
+    protected void DialogOnDeviceSetVolume (String entity) {
 
         if(entity != null) {
             AudioManager audioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
@@ -500,11 +510,11 @@ public class IntentsLibrary {
         }
     }
 
-    private void ExplorationStart() {
+    protected void ExplorationStart() {
 
     }
 
-    private void ExplorationStop() {
+    protected void ExplorationStop() {
 
     }
 }

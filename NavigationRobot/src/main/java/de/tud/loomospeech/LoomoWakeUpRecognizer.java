@@ -126,7 +126,7 @@ public class LoomoWakeUpRecognizer {
         };
     }
 
-    void startWakeUpListener() {
+    public void startWakeUpListener() {
         if (mRecognizer == null) {
             initRecognizer();
         }

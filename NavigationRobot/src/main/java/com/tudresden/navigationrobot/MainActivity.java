@@ -5,7 +5,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -56,19 +55,18 @@ public class MainActivity extends Activity implements View.OnClickListener {
      */
     private static final String FILENAME = "positions.json";
 
+    private static final float ULTRASONIC_MAX = 1.5f;
+
     /**
      * The distance that the robot keeps to obstacles.
      */
-
-    private static final int DELAY = 500;
-
-    private static final float ULTRASONIC_MAX = 1.5f;
-
     private static final float OBSTACLE_AVOIDANCE_DISTANCE = 1f;
 
-    private static final float WALL_DISTANCE = 0.8f;
+    private static final float WALL_DISTANCE = 0.6f;
 
-    private static final float WALL_DISTANCE_CORRECTION = 0.1f;
+    private static final float WALL_DISTANCE_INCREASE = 0.05f;
+
+    private static final float WALL_DISTANCE_DECREASE = -0.05f;
 
     /**
      * The distance that the robot walks from one checkpoint to the next.
@@ -89,12 +87,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
      * A counter for handling exiting the app by pressing the back button.
      */
     private int mPress = 0;
-
-    /**
-     * A handler for delaying the execution of the code in #obstacleDetected() in order to reduce
-     * the number of false positives in obstacle detection.
-     */
-    private Handler mHandler = new Handler();
 
     /**
      * The listener for the bind status of the base instance.
@@ -219,7 +211,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
      * If the wall has ended, the robot does not turn back but instead follows the new wall.
      */
     public void arrivedAtCheckpoint() {
-        Log.d(TAG, "Arrived at checkpoint!");
         mBase.clearCheckPointsAndStop();
         mBase.cleanOriginalPoint();
         PoseVLS pos = mBase.getVLSPose(-1);
@@ -250,35 +241,30 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 mBase.addCheckPoint(0, 0, RIGHT_90);
                 break;
             case CHECKING_WALL:
-                mHandler.postDelayed(new Runnable() {
-                    public void run() {
-                        mDistanceWall = mSensor.getUltrasonicDistance().getDistance() / 1000;
-                        if(mDistanceWall == ULTRASONIC_MAX) {
-                            mState = State.CORNER_LEFT;
-                        } else {
-                            mState = State.OBSTACLE_DETECTED;
-                        }
-                        updateOrientation(LEFT_TURN);
-                        mBase.addCheckPoint(0, 0, LEFT_90);
-                    }
-                }, DELAY);
+                mDistanceWall = mSensor.getUltrasonicDistance().getDistance() / 1000;
+                if(mDistanceWall == ULTRASONIC_MAX) {
+                    mState = State.CORNER_LEFT;
+                } else {
+                    mState = State.OBSTACLE_DETECTED;
+                }
+                updateOrientation(LEFT_TURN);
+                mBase.addCheckPoint(0, 0, LEFT_90);
                 break;
             case OBSTACLE_DETECTED:
-                Log.d(TAG, "Distance to front: " + mSensor.getUltrasonicDistance().getDistance() / 1000);
                 if(mSensor.getUltrasonicDistance().getDistance() / 1000 <= OBSTACLE_AVOIDANCE_DISTANCE) {
-                    Log.d(TAG, "OBSTACLE - TURNING LEFT!");
+                    Log.d(TAG, "Obstacle: " + mSensor.getUltrasonicDistance().getDistance() / 1000);
                     updateOrientation(LEFT_TURN);
                     mBase.addCheckPoint(0, 0, LEFT_90);
                 } else {
                     mState = State.WALKING;
                     if(mDistanceWall <= WALL_DISTANCE) {
                         Log.d(TAG, "Distance to wall: " + mDistanceWall + " --> Increasing distance!");
-                        // Increase the distance from the wall to the right
-                        mBase.addCheckPoint(WALKING_DISTANCE, WALL_DISTANCE_CORRECTION);
+                        // Increase the distance to the wall to the right
+                        mBase.addCheckPoint(WALKING_DISTANCE, WALL_DISTANCE_INCREASE);
                     } else {
-                        Log.d(TAG, "Distance to wall: " + mDistanceWall + " --> Keeping distance!");
-                        // Decrease the distance from the wall to the right
-                        mBase.addCheckPoint(WALKING_DISTANCE, -WALL_DISTANCE_CORRECTION);
+                        Log.d(TAG, "Distance to wall: " + mDistanceWall + " --> Decreasing distance!");
+                        // Decrease the distance to the wall to the right
+                        mBase.addCheckPoint(WALKING_DISTANCE, WALL_DISTANCE_DECREASE);
                     }
                 }
                 break;

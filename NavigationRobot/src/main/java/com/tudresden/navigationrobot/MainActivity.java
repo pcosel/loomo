@@ -61,7 +61,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
      * The distance that the robot keeps to obstacles.
      */
 
-    private static final int DELAY = 500;
+    private static final int DELAY = 400;
 
     private static final float ULTRASONIC_MAX = 1.5f;
 
@@ -69,14 +69,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     private static final float WALL_DISTANCE = 0.8f;
 
-    private static final float WALL_DISTANCE_CORRECTION = 0.2f;
+    private static final float WALL_DISTANCE_CORRECTION = 0.1f;
 
     /**
      * The distance that the robot walks from one checkpoint to the next.
      */
-    private static final float WALKING_DISTANCE = 1f;
-
-    private static final float CORNER_AVOIDANCE_DISTANCE = 0.5f;
+    private static final float WALKING_DISTANCE = 0.5f;
 
     /**
      * The theta value for adding a checkpoint that makes the robot rotate 90° to the left.
@@ -297,24 +295,21 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     // Obstacle right after obstacle --> Turn left
                     updateOrientation(LEFT_TURN);
                     mBase.addCheckPoint(0, 0, LEFT_90);
-                    Log.d(TAG, "Obstacle after obstacle --> Turning left!");
                 } else {
                     mState = State.WALKING;
                     if(mDistanceWall <= WALL_DISTANCE) {
-                        Log.d(TAG, "Distance: " + mDistanceWall + " --> Increasing distance!");
                         // Increase the distance from the wall to the right
                         mBase.addCheckPoint(WALKING_DISTANCE, WALL_DISTANCE_CORRECTION);
                     } else {
-                        Log.d(TAG, "Distance: " + mDistanceWall + " --> Keeping distance!");
                         // Decrease the distance from the wall to the right
                         mBase.addCheckPoint(WALKING_DISTANCE, 0);
                     }
                 }
                 break;
             case CORNER_LEFT:
-                mState = State.CORNER_FORWARD;
                 mDistanceFront = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
-                mBase.addCheckPoint(CORNER_AVOIDANCE_DISTANCE, 0);
+                mState = State.CORNER_FORWARD;
+                mBase.addCheckPoint(WALKING_DISTANCE, 0);
                 break;
             case CORNER_FORWARD:
                 mDistanceFront = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
@@ -325,8 +320,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 break;
             case CORNER_RIGHT:
                 mDistanceFront = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
+                // In case an obstacle appears
+                mDistanceWall = mDistanceFront;
                 mState = State.CORNER_DONE;
-                mBase.addCheckPoint(WALKING_DISTANCE, 0);
+                mBase.addCheckPoint(WALKING_DISTANCE * 2.5f, 0);
                 break;
             case CORNER_DONE:
                 mDistanceFront = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
@@ -385,13 +382,16 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         mState = State.CORNER_RIGHT;
                         updateOrientation(RIGHT_TURN);
                         mBase.addCheckPoint(0, 0, RIGHT_90);
+                    } else if(mState == State.CORNER_RIGHT) {
+                        mState = State.OBSTACLE_DETECTED;
+                        updateOrientation(LEFT_TURN);
+                        mBase.addCheckPoint(0, 0, LEFT_90);
                     } else if(mState == State.CORNER_DONE) {
                         mState = State.OBSTACLE_DETECTED;
                         updateCoordinates();
                         updateOrientation(LEFT_TURN);
                         mBase.addCheckPoint(0, 0, LEFT_90);
                     } else if(mState == State.OBSTACLE_DETECTED) {
-                        Log.d(TAG, "Obstacle after obstacle in listener!");
                         mState = State.OBSTACLE_DETECTED;
                         updateOrientation(LEFT_TURN);
                         mBase.addCheckPoint(0, 0, LEFT_90);
@@ -405,7 +405,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
      * Sets the x- or y-coordinate according to the current orientation of the robot.
      */
     public void updateCoordinates() {
-        if(mState == State.WALKING || mState == State.CORNER_DONE) {
+        if(mState == State.WALKING || mState == State.CORNER_FORWARD) {
             switch(mOrientation) {
                 case FORWARD:
                     mXCoordinate += WALKING_DISTANCE;
@@ -439,19 +439,19 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 default:
                     // All possible cases are handled above
             }
-        } else if(mState == State.CORNER_FORWARD) {
-            switch(mOrientation) {
+        } else if(mState == State.CORNER_DONE) {
+            switch (mOrientation) {
                 case FORWARD:
-                    mXCoordinate += CORNER_AVOIDANCE_DISTANCE;
+                    mXCoordinate += WALKING_DISTANCE * 2.5;
                     break;
                 case BACKWARD:
-                    mXCoordinate -= CORNER_AVOIDANCE_DISTANCE;
+                    mXCoordinate -= WALKING_DISTANCE * 2.5;
                     break;
                 case LEFT:
-                    mYCoordinate += CORNER_AVOIDANCE_DISTANCE;
+                    mYCoordinate += WALKING_DISTANCE * 2.5;
                     break;
                 case RIGHT:
-                    mYCoordinate -= CORNER_AVOIDANCE_DISTANCE;
+                    mYCoordinate -= WALKING_DISTANCE * 2.5;
                     break;
                 default:
                     // All possible cases are handled above

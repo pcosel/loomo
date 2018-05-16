@@ -328,7 +328,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             case CORNER_DONE:
                 mDistanceFront = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
                 updateCoordinates();
-                mState = State.CHECKING_WALL;
+                mState = State.START;
                 updateOrientation(RIGHT_TURN);
                 mBase.addCheckPoint(0, 0, RIGHT_90);
             default:

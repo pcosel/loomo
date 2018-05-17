@@ -61,7 +61,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
      * The distance that the robot keeps to obstacles.
      */
 
-    private static final int DELAY = 400;
+    private static final int DELAY = 300;
 
     private static final float ULTRASONIC_MAX = 1.5f;
 
@@ -168,6 +168,18 @@ public class MainActivity extends Activity implements View.OnClickListener {
      */
     private Type mListType = new TypeToken<LinkedList<Position>>(){}.getType();
 
+    private StartVLSListener startVLSListener = new StartVLSListener() {
+        @Override
+        public void onOpened() {
+            mBase.setNavigationDataSource(Base.NAVIGATION_SOURCE_TYPE_VLS);
+        }
+
+        @Override
+        public void onError(String errorMessage) {
+            Log.d(TAG, "onError() called with: errorMessage = [" + errorMessage + "]");
+        }
+    };
+
     /**
      * Checks whether the file with the filename positions.json already exists.
      * @return true if the file already exists; false otherwise
@@ -201,19 +213,28 @@ public class MainActivity extends Activity implements View.OnClickListener {
      * setting the first checkpoints. After reaching those checkpoints, the CheckPointStateListener
      * is triggered and the exploration goes on.
      */
-    public void startExploration() {
-        mState = State.START;
-        mOrientation = Orientation.FORWARD;
-        mBase.clearCheckPointsAndStop();
-        mBase.cleanOriginalPoint();
-        PoseVLS pos = mBase.getVLSPose(-1);
-        mBase.setOriginalPoint(pos);
-        mBase.setUltrasonicObstacleAvoidanceEnabled(true);
-        mBase.setUltrasonicObstacleAvoidanceDistance(OBSTACLE_AVOIDANCE_DISTANCE);
-        // It is necessary to set 2 checkpoints in the beginning
-        // With just one checkpoint, the OnCheckPointArrivedListener is not called correctly
-        mBase.addCheckPoint(0, 0);
-        mBase.addCheckPoint(0, 0);
+    public void prepareExploration() {
+        if(!mBase.isVLSStarted()) {
+            mBase.startVLS(true, true, startVLSListener);
+        }
+        startExploration();
+    }
+
+    public void startExploration(){
+        if(mBase.isVLSStarted()) {
+            mState = State.START;
+            mOrientation = Orientation.FORWARD;
+            mBase.clearCheckPointsAndStop();
+            mBase.cleanOriginalPoint();
+            PoseVLS pos = mBase.getVLSPose(-1);
+            mBase.setOriginalPoint(pos);
+            mBase.setUltrasonicObstacleAvoidanceEnabled(true);
+            mBase.setUltrasonicObstacleAvoidanceDistance(OBSTACLE_AVOIDANCE_DISTANCE);
+            // It is necessary to set 2 checkpoints in the beginning
+            // With just one checkpoint, the OnCheckPointArrivedListener is not called correctly
+            mBase.addCheckPoint(0, 0);
+            mBase.addCheckPoint(0, 0);
+        }
     }
 
     /**
@@ -507,7 +528,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -522,27 +543,30 @@ public class MainActivity extends Activity implements View.OnClickListener {
         bindServices();
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        initListeners();
+        bindServices();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        mBase.unbindService();
+        mSensor.unbindService();
+    }
+
     /**
      * Initializes the listeners for the base instance and the sensor instance. For the base
      * instance the Visual Localization System is started, the CheckPointStateListener is registered
      * and the ObstacleStateChangeListener is registered.
      */
-    private void initListeners() {
+    public void initListeners() {
         mBaseBindStateListener = new ServiceBinder.BindStateListener() {
             @Override
             public void onBind() {
                 mBase.setControlMode(Base.CONTROL_MODE_NAVIGATION);
-                mBase.startVLS(true, true, new StartVLSListener() {
-                    @Override
-                    public void onOpened() {
-                        mBase.setNavigationDataSource(Base.NAVIGATION_SOURCE_TYPE_VLS);
-                    }
-
-                    @Override
-                    public void onError(String errorMessage) {
-                        Log.d(TAG, "onError() called with: errorMessage = [" + errorMessage + "]");
-                    }
-                });
                 mBase.setOnCheckPointArrivedListener(new CheckPointStateListener() {
                     @Override
                     public void onCheckPointArrived(final CheckPoint checkPoint, Pose2D realPose, boolean isLast) {
@@ -578,7 +602,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     /**
      * Binds the base instance and the sensor instance to the respective services.
      */
-    private void bindServices() {
+    public void bindServices() {
         mSensor = Sensor.getInstance();
         mSensor.bindService(this, mSensorBindStateListener);
         mBase = Base.getInstance();
@@ -589,7 +613,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     public void onClick(View v) {
         switch(v.getId()) {
             case R.id.buttonStart:
-                startExploration();
+                prepareExploration();
                 break;
             case R.id.buttonStop:
                 mBase.clearCheckPointsAndStop();

@@ -17,13 +17,11 @@ import android.widget.Toast;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.segway.robot.algo.Pose2D;
-import com.segway.robot.algo.PoseVLS;
 import com.segway.robot.algo.minicontroller.CheckPoint;
 import com.segway.robot.algo.minicontroller.ObstacleStateChangedListener;
 import com.segway.robot.algo.minicontroller.CheckPointStateListener;
 import com.segway.robot.sdk.base.bind.ServiceBinder;
 import com.segway.robot.sdk.locomotion.sbv.Base;
-import com.segway.robot.sdk.locomotion.sbv.StartVLSListener;
 import com.segway.robot.sdk.perception.sensor.Sensor;
 
 import java.io.File;
@@ -168,18 +166,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
      */
     private Type mListType = new TypeToken<LinkedList<Position>>(){}.getType();
 
-    private StartVLSListener startVLSListener = new StartVLSListener() {
-        @Override
-        public void onOpened() {
-            mBase.setNavigationDataSource(Base.NAVIGATION_SOURCE_TYPE_VLS);
-        }
-
-        @Override
-        public void onError(String errorMessage) {
-            Log.d(TAG, "onError() called with: errorMessage = [" + errorMessage + "]");
-        }
-    };
-
     /**
      * Checks whether the file with the filename positions.json already exists.
      * @return true if the file already exists; false otherwise
@@ -208,33 +194,19 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
     }
 
-    /**
-     * Starts the exploration process by initialising the obstacle avoidance functionality and
-     * setting the first checkpoints. After reaching those checkpoints, the CheckPointStateListener
-     * is triggered and the exploration goes on.
-     */
-    public void prepareExploration() {
-        if(!mBase.isVLSStarted()) {
-            mBase.startVLS(true, true, startVLSListener);
-        }
-        startExploration();
-    }
-
     public void startExploration(){
-        if(mBase.isVLSStarted()) {
-            mState = State.START;
-            mOrientation = Orientation.FORWARD;
-            mBase.clearCheckPointsAndStop();
-            mBase.cleanOriginalPoint();
-            PoseVLS pos = mBase.getVLSPose(-1);
-            mBase.setOriginalPoint(pos);
-            mBase.setUltrasonicObstacleAvoidanceEnabled(true);
-            mBase.setUltrasonicObstacleAvoidanceDistance(OBSTACLE_AVOIDANCE_DISTANCE);
-            // It is necessary to set 2 checkpoints in the beginning
-            // With just one checkpoint, the OnCheckPointArrivedListener is not called correctly
-            mBase.addCheckPoint(0, 0);
-            mBase.addCheckPoint(0, 0);
-        }
+        mState = State.START;
+        mOrientation = Orientation.FORWARD;
+        mBase.clearCheckPointsAndStop();
+        mBase.cleanOriginalPoint();
+        Pose2D pos = mBase.getOdometryPose(-1);
+        mBase.setOriginalPoint(pos);
+        mBase.setUltrasonicObstacleAvoidanceEnabled(true);
+        mBase.setUltrasonicObstacleAvoidanceDistance(OBSTACLE_AVOIDANCE_DISTANCE);
+        // It is necessary to set 2 checkpoints in the beginning
+        // With just one checkpoint, the OnCheckPointArrivedListener is not called correctly
+        mBase.addCheckPoint(0, 0);
+        mBase.addCheckPoint(0, 0);
     }
 
     /**
@@ -255,7 +227,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     public void arrivedAtCheckpoint() {
         mBase.clearCheckPointsAndStop();
         mBase.cleanOriginalPoint();
-        PoseVLS pos = mBase.getVLSPose(-1);
+        Pose2D pos = mBase.getOdometryPose(-1);
         mBase.setOriginalPoint(pos);
         switch(mState) {
             case START:
@@ -372,7 +344,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     // Therefore the last checkpoint needs to be deleted before the new one is set.
                     mBase.clearCheckPointsAndStop();
                     mBase.cleanOriginalPoint();
-                    PoseVLS pos = mBase.getVLSPose(-1);
+                    Pose2D pos = mBase.getOdometryPose(-1);
                     mBase.setOriginalPoint(pos);
                     if(mState == State.START) {
                         // This is the first obstacle that the robot has detected (the coordinates are 0.0)
@@ -613,7 +585,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     public void onClick(View v) {
         switch(v.getId()) {
             case R.id.buttonStart:
-                prepareExploration();
+                startExploration();
                 break;
             case R.id.buttonStop:
                 mBase.clearCheckPointsAndStop();

@@ -4,17 +4,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
-import android.widget.Toast;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.lang.reflect.Type;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.LinkedList;
@@ -25,11 +15,6 @@ import java.util.LinkedList;
  * @author Nadja Konrad
  */
 public class MapActivity extends Activity {
-
-    /**
-     * The filename of the file that the positions are stored in.
-     */
-    private static final String FILENAME = "positions.json";
 
     /**
      * The padding for the map.
@@ -54,11 +39,6 @@ public class MapActivity extends Activity {
     private double mDistanceBetweenPoints;
 
     /**
-     * The Gson instance for serialization and deserialization.
-     */
-    private Gson mGson = new Gson();
-
-    /**
      * All the positions that the robot has reached during the exploration phase.
      */
     private LinkedList<Position> mInputPositions = new LinkedList<>();
@@ -69,42 +49,7 @@ public class MapActivity extends Activity {
      */
     private LinkedList<Position> mScreenPositions = new LinkedList<>();
 
-    /**
-     * The Type LinkedList<Position> that is needed for serialization and deserialization with Gson.
-     */
-    private Type mListType = new TypeToken<LinkedList<Position>>(){}.getType();
-
-    /**
-     * Checks whether the file with the filename positions.json already exists.
-     * @return true if the file already exists; false otherwise
-     */
-    public boolean fileExists() {
-        String path = getApplicationContext().getFilesDir().getAbsolutePath() + "/" + FILENAME;
-        File file = new File(path);
-        return file.exists();
-    }
-
-    /**
-     * Reads the list of positions from the previous exploration from the file positions.json.
-     * @return a Json String representation of the list of positions from the previous exploration
-     */
-    public String read() {
-        try {
-            FileInputStream fileInputStream = getApplicationContext().openFileInput(FILENAME);
-            InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
-            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-            StringBuilder stringBuilder = new StringBuilder();
-            String line;
-            while((line = bufferedReader.readLine()) != null) {
-                stringBuilder.append(line);
-            }
-            return stringBuilder.toString();
-        } catch(IOException e) {
-            e.printStackTrace();
-            Toast.makeText(getApplicationContext(), "File not found!", Toast.LENGTH_SHORT).show();
-            return "Error!";
-        }
-    }
+    private FileHelper mFileHelper;
 
     /**
      * Converts all the positions that the robot has reached during the exploration phase to
@@ -272,8 +217,12 @@ public class MapActivity extends Activity {
 
         mFrameLayout = (FrameLayout)findViewById(R.id.frameLayout);
 
-        if(fileExists()) {
-            mInputPositions = mGson.fromJson(read(), mListType);
+        if(mFileHelper == null) {
+            mFileHelper = new FileHelper(this);
+        }
+
+        if(mFileHelper.fileExists()) {
+            mInputPositions = mFileHelper.convertPositions();
         }
 
         initFrameLayoutListener();

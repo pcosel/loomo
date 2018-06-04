@@ -25,7 +25,7 @@ public class LoomoTextToSpeech extends UtteranceProgressListener implements Text
             Tts.setLanguage(ctx.getResources().getConfiguration().locale);
 
             isTtsReady = true;
-            Tts.speak("This is Sparta.", TextToSpeech.QUEUE_FLUSH, null, null);
+            Tts.speak("Hello there.", TextToSpeech.QUEUE_FLUSH, null, null);
 
             Tts.setOnUtteranceProgressListener(this);
         }

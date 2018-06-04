@@ -1,6 +1,6 @@
 package com.tudresden.navigationrobot;
 
-import android.app.Activity;
+import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,7 +11,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.Toast;
 
-public class MainActivity extends Activity implements View.OnClickListener {
+public class MainActivity extends de.tud.loomospeech.MainActivity implements View.OnClickListener {
 
     private Exploration mExploration;
 
@@ -24,10 +24,16 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
+        super.intentsLibrary = new IntentsLibraryNavigation(this);
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
 
-        getActionBar().setDisplayHomeAsUpEnabled(true);
+        ActionBar actionBar = getActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
 
         Button startButton = (Button)findViewById(R.id.buttonStart);
         startButton.setOnClickListener(this);
@@ -37,6 +43,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         if(mExploration == null) {
             mExploration = new Exploration(this);
         }
+    }
 
         if(mFileHelper == null) {
             mFileHelper = new FileHelper(this);
@@ -59,6 +66,32 @@ public class MainActivity extends Activity implements View.OnClickListener {
         mExploration.unbindServices();
     }
 
+    public void stopExploration() {
+        mExploration.stopExploration();
+        if(mExploration.getPositions().size() == 0) {
+            // If no new exploration was performed and no positions from a previous
+            // exploration can be found, tell the user to perform an exploration in order
+            // to be able to create the map
+            if(!mFileHelper.fileExists()) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("No map could be created!");
+                builder.setMessage("Please run the exploration process first.");
+                builder.setPositiveButton("OK", null);
+                AlertDialog dialog = builder.create();
+                dialog.show();
+            } else {
+                // Use old positions from a previous exploration to create the map
+                Intent intent = new Intent(this, MapActivity.class);
+                startActivity(intent);
+            }
+        } else {
+            // Store the new positions and use those to create the map
+            mFileHelper.storePositions(mExploration.getPositions());
+            Intent intent = new Intent(this, MapActivity.class);
+            startActivity(intent);
+        }
+    }
+
     @Override
     public void onClick(View v) {
         switch(v.getId()) {
@@ -66,29 +99,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 mExploration.startExploration();
                 break;
             case R.id.buttonStop:
-                mExploration.stopExploration();
-                if(mExploration.getPositions().size() == 0) {
-                    // If no new exploration was performed and no positions from a previous
-                    // exploration can be found, tell the user to perform an exploration in order
-                    // to be able to create the map
-                    if(!mFileHelper.fileExists()) {
-                        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                        builder.setTitle("No map could be created!");
-                        builder.setMessage("Please run the exploration process first.");
-                        builder.setPositiveButton("OK", null);
-                        AlertDialog dialog = builder.create();
-                        dialog.show();
-                    } else {
-                        // Use old positions from a previous exploration to create the map
-                        Intent intent = new Intent(this, MapActivity.class);
-                        startActivity(intent);
-                    }
-                } else {
-                    // Store the new positions and use those to create the map
-                    mFileHelper.storePositions(mExploration.getPositions());
-                    Intent intent = new Intent(this, MapActivity.class);
-                    startActivity(intent);
-                }
+                stopExploration();
+                break;
+
         }
     }
 

@@ -31,33 +31,34 @@ public class MainActivity extends Activity {
         }
 
         switchLanguage(Locale.getDefault());
-        if (mHandler == null) mHandler = new MessageHandler(this);
-        if (loomoSoundPool == null) loomoSoundPool = new LoomoSoundPool(this);
-        if (intentsLibrary == null) intentsLibrary  = new IntentsLibrary(this);
-        if (azureSpeechRecognition == null) azureSpeechRecognition = new AzureSpeechRecognition(this);
-        if (loomoRecognizer == null) loomoRecognizer = new LoomoWakeUpRecognizer(this);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
 
+        if (mHandler == null) mHandler = new MessageHandler(this);
+        if (loomoSoundPool == null) loomoSoundPool = new LoomoSoundPool(this);
+        if (intentsLibrary == null) intentsLibrary  = new IntentsLibrary(this);
+        if (azureSpeechRecognition == null) azureSpeechRecognition = new AzureSpeechRecognition(this);
+        if (loomoRecognizer == null) loomoRecognizer = new LoomoWakeUpRecognizer(this);
         if (loomoTextToSpeech == null) loomoTextToSpeech = new LoomoTextToSpeech(this);
     }
 
     @Override
     protected void onStop() {
-        if (loomoTextToSpeech != null) loomoTextToSpeech.shutdown();
+        if (azureSpeechRecognition != null) azureSpeechRecognition = null;
+        if (loomoSoundPool != null) loomoSoundPool = null;
+        if (loomoRecognizer != null) loomoRecognizer = null;
+//        if (loomoTextToSpeech != null) loomoTextToSpeech.shutdown();
+        if (loomoTextToSpeech != null) loomoTextToSpeech = null;
 
         super.onStop();
     }
 
     @Override
     protected void onDestroy() {
-        if (azureSpeechRecognition != null) azureSpeechRecognition = null;
         if (mHandler != null) mHandler = null;
-        if (loomoSoundPool != null) loomoSoundPool = null;
-        if (loomoRecognizer != null) loomoRecognizer = null;
 
         super.onDestroy();
     }

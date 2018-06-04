@@ -44,14 +44,14 @@ repositories {
 }
 
 dependencies {
-    compile fileTree(include: ['*.jar'], dir: 'libs')
-    testCompile 'junit:junit:4.12'
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    testImplementation 'junit:junit:4.12'
 
-    compile 'com.google.code.gson:gson:2.8.2'
+    implementation 'com.google.code.gson:gson:2.8.2'
 
-    compile 'com.segway.robot:basesdk:0.6.364'
-    compile 'com.segway.robot:sensorsdk:0.6.293'
-    compile 'com.segway.robot:support-lib:1.1.2'
+    implementation 'com.segway.robot:basesdk:0.6.364'
+    implementation 'com.segway.robot:sensorsdk:0.6.293'
+    implementation 'com.segway.robot:support-lib:1.1.2'
     implementation 'com.android.support.constraint:constraint-layout:1.1.0'
     implementation 'com.segway.robot:speech-sdk:0.5.183'
     implementation 'com.microsoft.projectoxford:speechrecognition:1.2.2'

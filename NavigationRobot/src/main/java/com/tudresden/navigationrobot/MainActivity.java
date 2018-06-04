@@ -13,7 +13,7 @@ import android.widget.Toast;
 
 public class MainActivity extends de.tud.loomospeech.MainActivity implements View.OnClickListener {
 
-    private Exploration mExploration;
+    public Exploration mExploration;
 
     private FileHelper mFileHelper;
 
@@ -23,7 +23,6 @@ public class MainActivity extends de.tud.loomospeech.MainActivity implements Vie
     private int mPress = 0;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
     protected void onCreate(Bundle savedInstanceState) {
         super.intentsLibrary = new IntentsLibraryNavigation(this);
         super.onCreate(savedInstanceState);
@@ -43,7 +42,6 @@ public class MainActivity extends de.tud.loomospeech.MainActivity implements Vie
         if(mExploration == null) {
             mExploration = new Exploration(this);
         }
-    }
 
         if(mFileHelper == null) {
             mFileHelper = new FileHelper(this);

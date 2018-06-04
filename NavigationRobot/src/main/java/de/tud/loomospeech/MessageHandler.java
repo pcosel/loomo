@@ -39,24 +39,32 @@ public class MessageHandler extends Handler {
             return;
         }
 
-        if (msg.arg1 == APPEND) {
-            if (msg.arg2 == OUTPUT) {
-                textView.append("\n" + msg.obj.toString());
-            } else if (msg.arg2 == STATUS) {
-                statusView.append("\n" + msg.obj.toString());
-            } else {
-                return;
-            }
+        if (msg.arg2 == OUTPUT) {
+            textView.setText(msg.obj.toString());
+        } else if (msg.arg2 == STATUS) {
+            statusView.setText(msg.obj.toString());
+        } else {
+            return;
         }
-        else {
-            if (msg.arg2 == OUTPUT) {
-                textView.setText(msg.obj.toString());
-            } else if (msg.arg2 == STATUS) {
-                statusView.setText(msg.obj.toString());
-            } else {
-                return;
-            }
-        }
+
+//        if (msg.arg1 == APPEND) {
+//            if (msg.arg2 == OUTPUT) {
+//                textView.append("\n" + msg.obj.toString());
+//            } else if (msg.arg2 == STATUS) {
+//                statusView.append("\n" + msg.obj.toString());
+//            } else {
+//                return;
+//            }
+//        }
+//        else {
+//            if (msg.arg2 == OUTPUT) {
+//                textView.setText(msg.obj.toString());
+//            } else if (msg.arg2 == STATUS) {
+//                statusView.setText(msg.obj.toString());
+//            } else {
+//                return;
+//            }
+//        }
     }
 
     private TextView getTextView(int myId) {

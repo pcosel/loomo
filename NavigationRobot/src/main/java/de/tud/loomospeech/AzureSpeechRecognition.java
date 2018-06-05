@@ -72,15 +72,16 @@ public class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         if(intentsLibrary.dialogStarted && recognitionResult.RecognitionStatus == RecognitionStatus.RecognitionSuccess) {
             intentsLibrary.callByName(intentsLibrary.dialogContext, recognitionResult.Results[0].LexicalForm);
         } else {
+            //InitialSilenceTimeout or NoMatch
             if (recognitionResult.RecognitionStatus != RecognitionStatus.RecognitionSuccess) {
                 intentsLibrary.dialogStarted = false;
 
-                msg = "Pardon? I didnt understand that.";
-
-                activity.loomoTextToSpeech.speak(msg, "NoRecognitionSuccess", null);
-                activity.mHandler.sendMessage(activity.mHandler.obtainMessage(MessageHandler.INFO, MessageHandler.APPEND, MessageHandler.OUTPUT, msg));
-
-                activity.loomoRecognizer.startWakeUpListener();
+                activity.loomoTextToSpeech.speak(randomPardonMessage(), "NoRecognitionSuccess", new Runnable() {
+                    @Override
+                    public void run() {
+                        startMicAndRecognitionWithIntent();
+                    }
+                });
             }
         }
     }
@@ -112,7 +113,7 @@ public class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
                         }
                     });
                 } else {
-                    activity.loomoTextToSpeech.speak("Pardon? I didn't understand that.", "LowConfidence", new Runnable() {
+                    activity.loomoTextToSpeech.speak(randomPardonMessage(), "LowConfidence", new Runnable() {
                         @Override
                         public void run() {
                             startMicAndRecognitionWithIntent();
@@ -234,6 +235,26 @@ public class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         }
 
         return sb.toString();
+    }
+
+    private String randomPardonMessage() {
+
+        String msg = "";
+        int random = (int) (Math.random() * 3);
+
+        switch (random) {
+            case 0:
+                msg = "Pardon? I didn't understand that.";
+                break;
+            case 1:
+                msg = "Can you repeat that please?";
+                break;
+            case 2:
+                msg = "What did you say?";
+                break;
+        }
+
+        return msg;
     }
 
 }

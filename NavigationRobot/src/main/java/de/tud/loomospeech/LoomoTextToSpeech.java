@@ -39,7 +39,10 @@ public class LoomoTextToSpeech extends UtteranceProgressListener implements Text
     }
 
     public void shutdown() {
-        Tts.shutdown();
+        if (Tts != null) {
+            Tts.stop();
+            Tts.shutdown();
+        }
     }
 
     @Override

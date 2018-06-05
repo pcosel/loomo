@@ -102,7 +102,7 @@ public class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
             JSONArray entities = json.getJSONArray("entities");
             Double score = (double) json.getJSONArray("intents").getJSONObject(0).get("score");
 
-            if(score > 0.4 || intent.equals("Utilities.Confirm") || intent.equals("Utilities.Decline")) {
+            if(score > 0.7 || intent.equals("Utilities.Confirm") || intent.equals("Utilities.Decline")) {
                 intentsLibrary.callByName(intent, entities);
             } else {
                 if(phrases.get(intent) != null) {

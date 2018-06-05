@@ -13,14 +13,18 @@ import android.widget.Toast;
 
 public class MainActivity extends de.tud.loomospeech.MainActivity implements View.OnClickListener {
 
-    public Exploration mExploration;
+    private Exploration mExploration;
 
-    private FileHelper mFileHelper;
+    private StorageHelper mFileHelper;
 
     /**
      * A counter for handling exiting the app by pressing the back button.
      */
     private int mPress = 0;
+
+    public Exploration getExploration() {
+        return mExploration;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,7 +48,7 @@ public class MainActivity extends de.tud.loomospeech.MainActivity implements Vie
         }
 
         if(mFileHelper == null) {
-            mFileHelper = new FileHelper(this);
+            mFileHelper = new StorageHelper(this);
         }
 
         mExploration.initListeners();
@@ -64,8 +68,7 @@ public class MainActivity extends de.tud.loomospeech.MainActivity implements Vie
         mExploration.unbindServices();
     }
 
-    public void stopExploration() {
-        mExploration.stopExploration();
+    public void startMapActivity() {
         if(mExploration.getPositions().size() == 0) {
             // If no new exploration was performed and no positions from a previous
             // exploration can be found, tell the user to perform an exploration in order
@@ -97,7 +100,8 @@ public class MainActivity extends de.tud.loomospeech.MainActivity implements Vie
                 mExploration.startExploration();
                 break;
             case R.id.buttonStop:
-                stopExploration();
+                mExploration.stopExploration();
+                startMapActivity();
                 break;
 
         }

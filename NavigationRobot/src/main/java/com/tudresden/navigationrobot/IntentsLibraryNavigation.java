@@ -1,14 +1,11 @@
 package com.tudresden.navigationrobot;
 
-import de.tud.loomospeech.IntentsLibrary;
-
 public class IntentsLibraryNavigation extends de.tud.loomospeech.IntentsLibrary {
-    protected static final String TAG = "IntentsLibraryNavigation";
+
     protected MainActivity activity;
 
     public IntentsLibraryNavigation(MainActivity myActivity) {
         super(myActivity);
-
         activity = myActivity;
     }
 
@@ -16,7 +13,7 @@ public class IntentsLibraryNavigation extends de.tud.loomospeech.IntentsLibrary 
         Speak("I'm going to look around.", "ExplorationStart", new Runnable() {
             @Override
             public void run() {
-                activity.mExploration.startExploration();
+                activity.getExploration().startExploration();
                 activity.loomoRecognizer.startWakeUpListener();
             }
         });
@@ -26,7 +23,8 @@ public class IntentsLibraryNavigation extends de.tud.loomospeech.IntentsLibrary 
         Speak("I stop to look around.", "ExplorationStop", new Runnable() {
             @Override
             public void run() {
-                activity.stopExploration();
+                activity.getExploration().stopExploration();
+                activity.startMapActivity();
                 activity.loomoRecognizer.startWakeUpListener();
             }
         });

@@ -18,7 +18,7 @@ import java.util.LinkedList;
 /**
  * This class handles the storing an retrieving of data.
  */
-public class FileHelper {
+public class StorageHelper {
 
     /**
      * The filename of the file that the positions are stored in.
@@ -37,7 +37,7 @@ public class FileHelper {
 
     private Context mContext;
 
-    public FileHelper(Context context) {
+    public StorageHelper(Context context) {
         this.mContext = context;
     }
 

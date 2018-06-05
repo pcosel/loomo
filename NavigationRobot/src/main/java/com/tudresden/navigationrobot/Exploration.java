@@ -265,7 +265,8 @@ public class Exploration {
                 // In case an obstacle appears
                 mDistanceWall = mDistanceFront;
                 mState = State.CORNER_DONE;
-                mBase.addCheckPoint(WALKING_DISTANCE * 2.5f, 0);
+                // TODO: Find best correction value
+                mBase.addCheckPoint(WALKING_DISTANCE * 2, -0.1f);
                 break;
             case CORNER_DONE:
                 mDistanceFront = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m

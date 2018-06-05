@@ -23,7 +23,7 @@ public class IntentsLibraryNavigation extends de.tud.loomospeech.IntentsLibrary 
     }
 
     public void ExplorationStop() {
-        Speak("I stop to look around.", "ExplorationStart", new Runnable() {
+        Speak("I stop to look around.", "ExplorationStop", new Runnable() {
             @Override
             public void run() {
                 activity.stopExploration();

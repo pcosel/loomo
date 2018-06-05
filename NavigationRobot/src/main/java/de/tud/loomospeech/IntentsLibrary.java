@@ -158,6 +158,16 @@ public class IntentsLibrary {
         });
     }
 
+    protected void UtilitiesCancel() {
+
+        activity.loomoTextToSpeech.speak("Okay.", "UtilitiesCancel", new Runnable() {
+            @Override
+            public void run() {
+                activity.loomoRecognizer.startWakeUpListener();
+            }
+        });
+    }
+
     protected void OnDeviceCloseApplication() {
         Speak("Dont you love me anymore?", "UtilitiesStop", new Runnable() {
             @Override
@@ -167,6 +177,10 @@ public class IntentsLibrary {
                 System.exit(0);
             }
         });
+    }
+
+    protected void OnDevicePowerOff() {
+        OnDeviceCloseApplication();
     }
 
     protected void OnDeviceAreYouListening() {

@@ -34,6 +34,8 @@ public class AzureSpeechRecognition implements ISpeechRecognitionServerEvents {
         intentsLibrary = myActivity.intentsLibrary;
 
         phrases.put("OnDevice.CloseApplication", "Do you want to close the application?");
+        phrases.put("OnDevice.PowerOff", "Do you want to close the application?");
+        phrases.put("Utilities.Cancel", "Do you want me to stop?");
         phrases.put("OnDevice.Time", "Are you asking for the time?");
         phrases.put("OnDevice.Date", "Are you asking for the date?");
         phrases.put("OnDevice.SetBrightness", "Do you want to set the brightness?");

@@ -253,7 +253,15 @@ public class IntentsLibrary {
             } catch (Settings.SettingNotFoundException e) {
                 //Throw an error case it couldn't be retrieved
                 Log.e(TAG, "Error: Cannot access system brightness");
+
+                activity.loomoTextToSpeech.speak("I can't set the Brightness.", "NoAccess", new Runnable() {
+                    @Override
+                    public void run() {
+                        activity.loomoRecognizer.startWakeUpListener();
+                    }
+                });
                 e.printStackTrace();
+                return;
             }
 
             String value = "";
@@ -345,7 +353,14 @@ public class IntentsLibrary {
         } catch (Settings.SettingNotFoundException e) {
             //Throw an error case it couldn't be retrieved
             Log.e(TAG, "Error: Cannot access system brightness");
+            activity.loomoTextToSpeech.speak("I can't set the Brightness.", "NoAccess", new Runnable() {
+                @Override
+                public void run() {
+                    activity.loomoRecognizer.startWakeUpListener();
+                }
+            });
             e.printStackTrace();
+            return;
         }
 
         if(entity != null) {

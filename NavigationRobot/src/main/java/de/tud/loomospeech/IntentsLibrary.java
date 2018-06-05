@@ -122,8 +122,12 @@ public class IntentsLibrary {
     protected void None() {
         // No suitable action for command found.
         Log.d(TAG, "No suitable action for command found.");
-        Speak("Pardon? I didn't understand that.", "None", null);
-        activity.loomoRecognizer.startWakeUpListener();
+        activity.loomoTextToSpeech.speak("I don't know what to do. Try something else.", "UnknownIntent", new Runnable() {
+            @Override
+            public void run() {
+                activity.azureSpeechRecognition.startMicAndRecognitionWithIntent();
+            }
+        });
     }
 
     protected void UtilitiesConfirm() {

@@ -479,7 +479,7 @@ public class IntentsLibrary {
             //start dialog
             dialogContext = "DialogOnDeviceSetVolume";
             dialogStarted = true;
-            Speak("What to?", dialogContext, new Runnable() {
+            Speak("What do you want to set the volume to?", dialogContext, new Runnable() {
                 @Override
                 public void run() {
                     //start recognition without intent detection

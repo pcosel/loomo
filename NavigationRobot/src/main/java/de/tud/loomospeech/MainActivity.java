@@ -50,8 +50,8 @@ public class MainActivity extends Activity {
         if (azureSpeechRecognition != null) azureSpeechRecognition = null;
         if (loomoSoundPool != null) loomoSoundPool = null;
         if (loomoRecognizer != null) loomoRecognizer = null;
-//        if (loomoTextToSpeech != null) loomoTextToSpeech.shutdown();
-        if (loomoTextToSpeech != null) loomoTextToSpeech = null;
+        if (loomoTextToSpeech != null) loomoTextToSpeech.shutdown();
+//        if (loomoTextToSpeech != null) loomoTextToSpeech = null;
 
         super.onStop();
     }

@@ -13,8 +13,15 @@ import android.widget.Toast;
 
 public class MainActivity extends de.tud.loomospeech.MainActivity implements View.OnClickListener {
 
+    /**
+     * The Exploration instance that is used for starting and stopping the exploration process and
+     * collecting the positions of the robot.
+     */
     private Exploration mExploration;
 
+    /**
+     * The StorageHelper instance that is used for storing an retrieving data.
+     */
     private StorageHelper mFileHelper;
 
     /**
@@ -34,7 +41,7 @@ public class MainActivity extends de.tud.loomospeech.MainActivity implements Vie
         setContentView(R.layout.activity_main);
 
         ActionBar actionBar = getActionBar();
-        if (actionBar != null) {
+        if(actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
 
@@ -68,6 +75,9 @@ public class MainActivity extends de.tud.loomospeech.MainActivity implements Vie
         mExploration.unbindServices();
     }
 
+    /**
+     * Starts a new MapActivity that displays a map of the last executed exploration, if existent.
+     */
     public void startMapActivity() {
         if(mExploration.getPositions().size() == 0) {
             // If no new exploration was performed and no positions from a previous
@@ -81,11 +91,13 @@ public class MainActivity extends de.tud.loomospeech.MainActivity implements Vie
                 AlertDialog dialog = builder.create();
                 dialog.show();
             } else {
-                // Use old positions from a previous exploration to create the map
+                // If no new exploration was performed but positions from a previous exploration were
+                // found, use the positions from the previous exploration to create the map
                 Intent intent = new Intent(this, MapActivity.class);
                 startActivity(intent);
             }
         } else {
+            // An exploration was performed
             // Store the new positions and use those to create the map
             mFileHelper.storePositions(mExploration.getPositions());
             Intent intent = new Intent(this, MapActivity.class);

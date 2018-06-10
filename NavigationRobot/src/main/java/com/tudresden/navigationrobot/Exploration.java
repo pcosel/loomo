@@ -34,8 +34,16 @@ public class Exploration {
      */
     private static final String RIGHT_TURN = "right turn";
 
+    /**
+     * A delay of 300 milliseconds that is used for double-checking the ultrasonic distance.
+     */
     private static final int DELAY = 300;
 
+    /**
+     * The maximum return value of the ultrasonic sensor. The ultrasonic sensor jas a range between
+     * 250 an 1500 millimeters. If no obstacle is detected within that range, the function
+     * getDistance() returns the value 1500.
+     */
     private static final float ULTRASONIC_MAX = 1.5f;
 
     /**
@@ -43,14 +51,38 @@ public class Exploration {
      */
     private static final float OBSTACLE_AVOIDANCE_DISTANCE = 1f;
 
+    /**
+     * The minimal distance that the robot should have to the wall that it is following. If the
+     * robot gets closer to the wall than this threshold, the distance needs to be increased in
+     * order to avoid the robot getting stuck at the wall.
+     */
     private static final float WALL_DISTANCE = 0.8f;
 
+    /**
+     * Correction constant for increasing the robot's distance to the wall. When this constant is
+     * used as the y coordinate for setting a new checkpoint, the robot moves forward and slightly
+     * left.
+     */
     private static final float WALL_DISTANCE_CORRECTION = 0.1f;
+
+    /**
+     * Correction constant for avoiding that the robot moves too far away from the wall when walking
+     * around a corner. When this constant is used as the y coordinate for setting a new checkpoint,
+     * the robot moves forward and slightly right.
+     */
+    private static final float CORNER_CORRECTION = -0.2f;
 
     /**
      * The distance that the robot walks from one checkpoint to the next.
      */
     private static final float WALKING_DISTANCE = 0.5f;
+
+    /**
+     * The distance that the robot walks when passing a corner. 1 meter needs to be walked in order
+     * bypass the obstacle avoidance distance of 1 meter. The further 25 centimeters make sure that
+     * the robot definitely passes the corner.
+     */
+    private static final float CORNER_WALKING_DISTANCE = 1.25f;
 
     /**
      * The theta value for adding a checkpoint that makes the robot rotate 90° to the left.
@@ -105,12 +137,13 @@ public class Exploration {
     private Orientation mOrientation;
 
     /**
-     * The current ultrasonic distance from the next obstacle in front of the robot.
+     * The current distance to the next obstacle in front of the robot. If no obstacle is detected,
+     * this value is set to 1500 (the maximum return value of getDistance()).
      */
     private double mDistanceFront = 0.0;
 
     /**
-     * The distance from the wall to the right.
+     * The current distance from the wall to the robot's right (the wall that the robot is following).
      */
     private double mDistanceWall = 0.0;
 
@@ -129,6 +162,9 @@ public class Exploration {
      */
     private LinkedList<Position> mPositions = new LinkedList<>();
 
+    /**
+     * The application context.
+     */
     private Context mContext;
 
     public Exploration(Context context) {
@@ -139,6 +175,13 @@ public class Exploration {
         return mPositions;
     }
 
+    /**
+     * Prepares the exploration process by configuring the automatic obstacle avoidance and setting
+     * the first checkpoints.
+     * When those checkpoints are reached, CheckPointStateListener is called and the next checkpoint
+     * is set and so on.
+     * If an obstacle appears, ObstacleStateChangeListener is called and the next checkpoint is set.
+     */
     public void startExploration() {
         mState = State.START;
         mOrientation = Orientation.FORWARD;
@@ -154,6 +197,9 @@ public class Exploration {
         mBase.addCheckPoint(0, 0);
     }
 
+    /**
+     * Makes the robot stop its movements.
+     */
     public void stopExploration() {
         mBase.clearCheckPointsAndStop();
     }
@@ -162,16 +208,17 @@ public class Exploration {
      * Sets a new checkpoint depending on the current state of the robot.
      * The strategy for setting a new checkpoint is as follows:
      * In the initial phase of the exploration process (before the first wall is found) the new
-     * checkpoint is set to make the robot walk forward (1 meter) in order to eventually reach the
-     * first wall.
+     * checkpoint is set to make the robot walk forward in order to eventually reach the first wall.
      * In case an obstacle was detected and the left turn was performed ({@see #obstacleDetected()}),
-     * the new checkpoint needs to be set to make the robot walk forward (1 meter) in order to reach
-     * the next wall.
+     * the new checkpoint needs to be set to make the robot walk forward in order to reach the next
+     * wall.
      * After every meter that the robot walks in search of the next wall, it needs to rotate 90° to
      * the right in order to check if the wall on its right has ended.
      * If the wall has not ended, the robot rotates back 90° to the left and continues to walk
      * forward along the wall.
      * If the wall has ended, the robot does not turn back but instead follows the new wall.
+     * Before walking around a corner, the distance to the corner is increased to make sure that the
+     * robot doesn't get stuck at the corner with its right wheel.
      */
     public void arrivedAtCheckpoint() {
         mBase.clearCheckPointsAndStop();
@@ -180,7 +227,7 @@ public class Exploration {
         mBase.setOriginalPoint(pos);
         switch(mState) {
             case START:
-                // As long as no wall has been found yet, keep walking forward (1 meter)
+                // As long as no wall has been found yet, keep walking forward
                 mBase.addCheckPoint(WALKING_DISTANCE, 0);
                 break;
             case WALKING:
@@ -191,7 +238,7 @@ public class Exploration {
                 mState = State.CHECKING_WALL;
                 mDistanceFront = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
                 updateOrientation(RIGHT_TURN);
-                // After every meter, rotate 90° to the right to check the wall
+                // Rotate 90° to the right to check the wall
                 mBase.addCheckPoint(0, 0, RIGHT_90);
                 break;
             case CHECKING_WALL:
@@ -203,33 +250,30 @@ public class Exploration {
                 // The boolean mCheckingWall is only relevant for the second scenario, because in that
                 // case in the ObstacleStateChangeListener the coordinates are not supposed to be
                 // updated. mCheckingWall allows to distinguish between the following cases:
-                // 1. The robot is walking towards a new wall and an obstacle appears in front of him
+                // 1. The robot is walking towards a new wall and an obstacle appears in front of it
                 // 2. An obstacle appears while checking the wall next to the robot
                 // In both cases the state of the robot is WALKING, but in the ObstacleStateChangeListener
                 // different things need to happen.
-                // Without setting the state to WALK in this switch case, the robot would not continue
+                // Without setting the state to WALKING in this switch case, the robot would not continue
                 // walking if after the right turn no obstacle is found.
                 mCheckingWall = true;
                 mHandler.postDelayed(new Runnable() {
                     public void run() {
                         mDistanceWall = mSensor.getUltrasonicDistance().getDistance() / 1000;
                         if(mDistanceWall == ULTRASONIC_MAX) {
+                            // No obstacle detected, this means the wall has ended and the robot needs
+                            // walk around a corner
                             mState = State.CORNER_LEFT;
                             updateOrientation(LEFT_TURN);
                             mBase.addCheckPoint(0, 0, LEFT_90);
                         } else {
+                            // In case the robot is further away from the wall than OBSTACLE_AVOIDANCE_DISTANCE
+                            // this code makes it approach the wall again.
                             mState = State.WALKING;
-                            // Walk forward (1 meter)
                             mBase.addCheckPoint(WALKING_DISTANCE, 0);
                         }
                     }
                 }, DELAY);
-                // In case the robot is further away from the wall than OBSTACLE_AVOIDANCE_DISTANCE
-                // this code makes it walk towards the wall again. Because the checkpoint is not
-                // reached (because normally the robot hasn't walked further away from the wall than
-                // a meter), this doesn't affect the setting of the coordinates. This is because
-                // the coordinates are only updated in arrivedAtCheckpoint() which of course isn't
-                // called if the checkpoint isn't reached.
                 break;
             case OBSTACLE_DETECTED:
                 mDistanceFront = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
@@ -240,15 +284,17 @@ public class Exploration {
                 } else {
                     mState = State.WALKING;
                     if(mDistanceWall <= WALL_DISTANCE) {
-                        // Increase the distance from the wall to the right
+                        // Increase the distance to the wall to the robot's right
                         mBase.addCheckPoint(WALKING_DISTANCE, WALL_DISTANCE_CORRECTION);
                     } else {
-                        // Decrease the distance from the wall to the right
+                        // Keep the distance to the wall to the robot's right
                         mBase.addCheckPoint(WALKING_DISTANCE, 0);
                     }
                 }
                 break;
             case CORNER_LEFT:
+                // Increase distance to the corner to make sure that the robot doesn't get stuck with
+                // its right wheel when passing the corner
                 mDistanceFront = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
                 mState = State.CORNER_FORWARD;
                 mBase.addCheckPoint(WALKING_DISTANCE, 0);
@@ -263,11 +309,15 @@ public class Exploration {
             case CORNER_RIGHT:
                 mDistanceFront = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
                 // In case an obstacle appears
-                mDistanceWall = mDistanceFront;
+                // TODO: Test if it works without this
+                // mDistanceWall = mDistanceFront;
                 mState = State.CORNER_DONE;
-                mBase.addCheckPoint(WALKING_DISTANCE * 2.5f, -0.2f);
+                // Walk around the corner
+                // TODO: Find best CORNER_CORRECTION value
+                mBase.addCheckPoint(CORNER_WALKING_DISTANCE, CORNER_CORRECTION);
                 break;
             case CORNER_DONE:
+                // Approach the new wall
                 mDistanceFront = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
                 updateCoordinates();
                 mState = State.START;
@@ -282,7 +332,7 @@ public class Exploration {
      * Sets a new checkpoint to make the robot rotate 90° to the left in case an obstacle was detected.
      */
     public void obstacleDetected() {
-        // Delay the execution of the code for 1 second, then check if there really is an obstacle
+        // Delay the execution of the code for 300 milliseconds, then check if there really is an obstacle
         mHandler.postDelayed(new Runnable() {
             public void run() {
                 if(mSensor.getUltrasonicDistance().getDistance() / 1000 <= OBSTACLE_AVOIDANCE_DISTANCE) {
@@ -301,7 +351,8 @@ public class Exploration {
                                 " | Orientation: " + mOrientation +
                                 " | Position: (" + mXCoordinate + " , " + mYCoordinate + ")");
                         mPositions.add(new Position(mXCoordinate, mYCoordinate, mOrientation));
-                        mState = State.OBSTACLE_DETECTED;
+                        // TODO: Test if it works without this
+                        // mState = State.OBSTACLE_DETECTED;
                         mDistanceWall = mSensor.getUltrasonicDistance().getDistance() / 1000;
                         mState = State.OBSTACLE_DETECTED;
                         updateOrientation(LEFT_TURN);
@@ -344,7 +395,7 @@ public class Exploration {
     }
 
     /**
-     * Sets the x- or y-coordinate according to the current orientation of the robot.
+     * Sets the x- or y-coordinate according to the current orientation and state of the robot.
      */
     public void updateCoordinates() {
         if(mState == State.WALKING || mState == State.CORNER_FORWARD) {
@@ -384,16 +435,16 @@ public class Exploration {
         } else if(mState == State.CORNER_DONE) {
             switch (mOrientation) {
                 case FORWARD:
-                    mXCoordinate += WALKING_DISTANCE * 2.5;
+                    mXCoordinate += CORNER_WALKING_DISTANCE;
                     break;
                 case BACKWARD:
-                    mXCoordinate -= WALKING_DISTANCE * 2.5;
+                    mXCoordinate -= CORNER_WALKING_DISTANCE;
                     break;
                 case LEFT:
-                    mYCoordinate += WALKING_DISTANCE * 2.5;
+                    mYCoordinate += CORNER_WALKING_DISTANCE;
                     break;
                 case RIGHT:
-                    mYCoordinate -= WALKING_DISTANCE * 2.5;
+                    mYCoordinate -= CORNER_WALKING_DISTANCE;
                     break;
                 default:
                     // All possible cases are handled above
@@ -450,8 +501,7 @@ public class Exploration {
 
     /**
      * Initializes the listeners for the base instance and the sensor instance. For the base
-     * instance the Visual Localization System is started, the CheckPointStateListener is registered
-     * and the ObstacleStateChangeListener is registered.
+     * instance the CheckPointStateListener is registered and the ObstacleStateChangeListener is registered.
      */
     public void initListeners() {
         mBaseBindStateListener = new ServiceBinder.BindStateListener() {

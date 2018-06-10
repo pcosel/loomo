@@ -13,7 +13,7 @@ import java.text.DecimalFormatSymbols;
 import java.util.LinkedList;
 
 /**
- * This View displays a map of the positions that the robot has reached during the exploration
+ * This View draws a map of the positions that the robot has reached during the exploration
  * phase.
  *
  * @author Nadja Konrad
@@ -103,7 +103,7 @@ public class MapView extends View implements View.OnTouchListener {
     private int mHeight;
 
     /**
-     * Indicates whether a touch event has occured.
+     * Indicates whether a touch event has occurred.
      */
     private boolean mTouchEvent = false;
 
@@ -170,6 +170,8 @@ public class MapView extends View implements View.OnTouchListener {
         for(Position p : mInputPositions) {
             double x = p.getX();
             double y = p.getY();
+
+            // Find the greatest positive and negative values for x and y amongst all the positions
             if(Double.compare(x, 0.0) > 0) {
                 if(Double.compare(x, greatestPosX) > 0) {
                     greatestPosX = x;
@@ -233,7 +235,7 @@ public class MapView extends View implements View.OnTouchListener {
                 // coordinate system of the screen:
                 // Robot: Positive x --> forward, positive y --> left
                 // Screen: Positive x --> width, positive y --> height (origin in the left upper
-                // corner of the screen
+                // corner of the screen)
                 if(Double.compare(inX, 0.0) > 0) {
                     outY = startY - (inX * mDistanceBetweenPoints);
                 } else {

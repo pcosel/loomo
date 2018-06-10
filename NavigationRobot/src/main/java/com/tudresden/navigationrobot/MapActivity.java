@@ -1,5 +1,6 @@
 package com.tudresden.navigationrobot;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.ViewTreeObserver;
@@ -24,6 +25,9 @@ public class MapActivity extends Activity {
      */
     private LinkedList<Position> mInputPositions = new LinkedList<>();
 
+    /**
+     * The StorageHelper instance that is used for storing an retrieving data.
+     */
     private StorageHelper mFileHelper;
 
     /**
@@ -51,7 +55,11 @@ public class MapActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
-        getActionBar().setDisplayHomeAsUpEnabled(true);
+
+        ActionBar actionBar = getActionBar();
+        if(actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
 
         mFrameLayout = (FrameLayout)findViewById(R.id.frameLayout);
 

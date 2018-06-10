@@ -1,7 +1,7 @@
 package com.tudresden.navigationrobot;
 
 /**
- * Represents a position in the coordinate system.
+ * Represents a position that the robot reaches during exploration.
  *
  * @author Nadja Konrad
  */

@@ -17,11 +17,13 @@ import java.util.LinkedList;
 
 /**
  * This class handles the storing an retrieving of data.
+ *
+ * @author Nadja Konrad
  */
 public class StorageHelper {
 
     /**
-     * The filename of the file that the positions are stored in.
+     * The name of the file that the positions are stored in.
      */
     private static final String FILENAME = "positions.json";
 
@@ -35,6 +37,9 @@ public class StorageHelper {
      */
     private Type mListType = new TypeToken<LinkedList<Position>>(){}.getType();
 
+    /**
+     * The application context.
+     */
     private Context mContext;
 
     public StorageHelper(Context context) {
@@ -52,8 +57,8 @@ public class StorageHelper {
     }
 
     /**
-     * Serializes the list that contains all the positions that the robot has reached so far with
-     * Gson and writes the resulting String to the file positions.json in the internal storage.
+     * Serializes a list of positions with Gson and writes the resulting String to the file
+     * positions.json in the internal storage.
      */
     public void storePositions(LinkedList<Position> positions) {
         String json = mGson.toJson(positions, mListType);
@@ -70,10 +75,10 @@ public class StorageHelper {
     }
 
     /**
-     * Reads the list of positions from the previous exploration from the file positions.json.
-     * @return a Json String representation of the list of positions from the previous exploration
+     * Reads the content of a file.
+     * @return a String containing the content of the file
      */
-    public String readPositions() {
+    public String retrieveContent() {
         try {
             FileInputStream fileInputStream = mContext.openFileInput(FILENAME);
             InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
@@ -91,8 +96,12 @@ public class StorageHelper {
         }
     }
 
+    /**
+     * Converts a JSON String representation of a LinkedList<Position> to an actual LinkedList<Position>
+     * @return a LinkedList<Position>
+     */
     public LinkedList<Position> convertPositions() {
-        return mGson.fromJson(readPositions(), mListType);
+        return mGson.fromJson(retrieveContent(), mListType);
     }
 
 }

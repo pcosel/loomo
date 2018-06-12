@@ -189,13 +189,14 @@ public class Exploration {
         mBase.clearCheckPointsAndStop();
         mBase.cleanOriginalPoint();
         mBase.setOriginalPoint(mBase.getOdometryPose(-1));
-        if(meters > 0) {
+        if (meters > 0) {
             // Walk forward
             mBase.addCheckPoint(meters, 0);
         } else {
             // Walk backward
             // In NAVIGATION mode Loomo can not directly walk backward, therefore it first has to
             // turn around and then move
+            mBase.addCheckPoint(0, 0, LEFT_90);
             mBase.addCheckPoint(0, 0, LEFT_90);
             mBase.clearCheckPointsAndStop();
             mBase.cleanOriginalPoint();
@@ -208,7 +209,7 @@ public class Exploration {
         mBase.setUltrasonicObstacleAvoidanceEnabled(false);
         Log.d(TAG, "Turn");
         mState = State.BASIC_MOVEMENTS;
-        float rad = (float)(Math.PI / 180) * degrees;
+        float rad = (float) (Math.PI / 180) * degrees;
         mBase.clearCheckPointsAndStop();
         mBase.cleanOriginalPoint();
         mBase.setOriginalPoint(mBase.getOdometryPose(-1));
@@ -233,7 +234,7 @@ public class Exploration {
         // is clicked. This check makes sure that the checkpoints are set again and again until the
         // robot actually reached them. mReachedFirstCheckpoint is set to false as soon as those
         // checkpoints are reached (see arrivedAtCheckpoint() case START).
-        while(!mReachedFirstCheckpoint) {
+        while (!mReachedFirstCheckpoint) {
             // It is necessary to set 2 checkpoints in the beginning
             // With just one checkpoint, the OnCheckPointArrivedListener is not called correctly
             mBase.addCheckPoint(0, 0);
@@ -269,7 +270,7 @@ public class Exploration {
         mBase.cleanOriginalPoint();
         Pose2D pos = mBase.getOdometryPose(-1);
         mBase.setOriginalPoint(pos);
-        switch(mState) {
+        switch (mState) {
             case BASIC_MOVEMENTS:
                 // Do nothing! Otherwise the robot will start performing exploration routines.
                 break;
@@ -279,7 +280,7 @@ public class Exploration {
                 mBase.addCheckPoint(WALKING_DISTANCE, 0);
                 break;
             case WALKING:
-                if(mCheckingWall) {
+                if (mCheckingWall) {
                     mCheckingWall = false;
                 }
                 updateCoordinates();
@@ -308,7 +309,7 @@ public class Exploration {
                 mHandler.postDelayed(new Runnable() {
                     public void run() {
                         mDistanceWall = mSensor.getUltrasonicDistance().getDistance() / 1000;
-                        if(mDistanceWall == ULTRASONIC_MAX) {
+                        if (mDistanceWall == ULTRASONIC_MAX) {
                             // No obstacle detected, this means the wall has ended and the robot needs
                             // walk around a corner
                             mState = State.CORNER_LEFT;
@@ -325,13 +326,13 @@ public class Exploration {
                 break;
             case OBSTACLE_DETECTED:
                 mDistanceFront = mSensor.getUltrasonicDistance().getDistance() / 1000; // convert mm to m
-                if(mDistanceFront <= OBSTACLE_AVOIDANCE_DISTANCE) {
+                if (mDistanceFront <= OBSTACLE_AVOIDANCE_DISTANCE) {
                     // Obstacle right after obstacle --> Turn left
                     updateOrientation(LEFT_TURN);
                     mBase.addCheckPoint(0, 0, LEFT_90);
                 } else {
                     mState = State.WALKING;
-                    if(mDistanceWall <= WALL_DISTANCE) {
+                    if (mDistanceWall <= WALL_DISTANCE) {
                         // Increase the distance to the wall to the robot's right
                         mBase.addCheckPoint(WALKING_DISTANCE, WALL_DISTANCE_CORRECTION);
                     } else {
@@ -382,7 +383,7 @@ public class Exploration {
         // Delay the execution of the code for 300 milliseconds, then check if there really is an obstacle
         mHandler.postDelayed(new Runnable() {
             public void run() {
-                if(mSensor.getUltrasonicDistance().getDistance() / 1000 <= OBSTACLE_AVOIDANCE_DISTANCE) {
+                if (mSensor.getUltrasonicDistance().getDistance() / 1000 <= OBSTACLE_AVOIDANCE_DISTANCE) {
                     // The robot detects an obstacle before it reaches the current checkpoint. When an obstacle
                     // is detected, a new checkpoint is set for the left turn but the robot still tries to reach
                     // the last checkpoint first. That checkpoint obviously can't be reached, because there is an
@@ -392,11 +393,9 @@ public class Exploration {
                     mBase.cleanOriginalPoint();
                     Pose2D pos = mBase.getOdometryPose(-1);
                     mBase.setOriginalPoint(pos);
-                    if(mState == State.START) {
+                    if (mState == State.START) {
                         // This is the first obstacle that the robot has detected (the coordinates are 0.0)
-                        Log.d(TAG, "State: " + mState +
-                                " | Orientation: " + mOrientation +
-                                " | Position: (" + mXCoordinate + " , " + mYCoordinate + ")");
+                        Log.d(TAG, "State: " + mState + " | Orientation: " + mOrientation + " | Position: (" + mXCoordinate + " , " + mYCoordinate + ")");
                         mPositions.add(new Position(mXCoordinate, mYCoordinate, mOrientation));
                         mDistanceWall = mSensor.getUltrasonicDistance().getDistance() / 1000;
                         mState = State.OBSTACLE_DETECTED;
@@ -404,10 +403,10 @@ public class Exploration {
                         mBase.addCheckPoint(0, 0, LEFT_90);
                         // When the turn is finished, {@see #arrivedAtCheckpoint()} is called and the robot walks
                         // forward to the next wall
-                    } else if(mState == State.WALKING) {
+                    } else if (mState == State.WALKING) {
                         mState = State.OBSTACLE_DETECTED;
                         // Concerning mCheckingWall see explanation in arrivedAtCheckpoint() (case CHECKING_WALL)
-                        if(!mCheckingWall) {
+                        if (!mCheckingWall) {
                             updateCoordinates();
                         } else {
                             mCheckingWall = false;
@@ -416,24 +415,24 @@ public class Exploration {
                         mBase.addCheckPoint(0, 0, LEFT_90);
                         // When the turn is finished, {@see #arrivedAtCheckpoint()} is called and the robot walks
                         // forward to the next wall
-                    } else if(mState == State.CORNER_FORWARD) {
+                    } else if (mState == State.CORNER_FORWARD) {
                         mState = State.CORNER_RIGHT;
                         updateOrientation(RIGHT_TURN);
                         mBase.addCheckPoint(0, 0, RIGHT_90);
-                    } else if(mState == State.CORNER_RIGHT) {
+                    } else if (mState == State.CORNER_RIGHT) {
                         mState = State.OBSTACLE_DETECTED;
                         updateOrientation(LEFT_TURN);
                         mBase.addCheckPoint(0, 0, LEFT_90);
-                    } else if(mState == State.CORNER_DONE) {
+                    } else if (mState == State.CORNER_DONE) {
                         mState = State.OBSTACLE_DETECTED;
                         updateCoordinates();
                         updateOrientation(LEFT_TURN);
                         mBase.addCheckPoint(0, 0, LEFT_90);
-                    } else if(mState == State.OBSTACLE_DETECTED) {
+                    } else if (mState == State.OBSTACLE_DETECTED) {
                         mState = State.OBSTACLE_DETECTED;
                         updateOrientation(LEFT_TURN);
                         mBase.addCheckPoint(0, 0, LEFT_90);
-                    } else if(mState == State.BASIC_MOVEMENTS) {
+                    } else if (mState == State.BASIC_MOVEMENTS) {
                         // Do nothing! Otherwise the robot will start performing exploration routines.
                     }
                 }
@@ -445,8 +444,8 @@ public class Exploration {
      * Sets the x- or y-coordinate according to the current orientation and state of the robot.
      */
     public void updateCoordinates() {
-        if(mState == State.WALKING || mState == State.CORNER_FORWARD) {
-            switch(mOrientation) {
+        if (mState == State.WALKING || mState == State.CORNER_FORWARD) {
+            switch (mOrientation) {
                 case FORWARD:
                     mXCoordinate += WALKING_DISTANCE;
                     break;
@@ -462,8 +461,8 @@ public class Exploration {
                 default:
                     // All possible cases are handled above
             }
-        } else if(mState == State.OBSTACLE_DETECTED) {
-            switch(mOrientation) {
+        } else if (mState == State.OBSTACLE_DETECTED) {
+            switch (mOrientation) {
                 case FORWARD:
                     mXCoordinate += (mDistanceFront - mSensor.getUltrasonicDistance().getDistance() / 1000); // convert mm to m
                     break;
@@ -479,7 +478,7 @@ public class Exploration {
                 default:
                     // All possible cases are handled above
             }
-        } else if(mState == State.CORNER_DONE) {
+        } else if (mState == State.CORNER_DONE) {
             switch (mOrientation) {
                 case FORWARD:
                     mXCoordinate += CORNER_WALKING_DISTANCE;
@@ -497,20 +496,19 @@ public class Exploration {
                     // All possible cases are handled above
             }
         }
-        Log.d(TAG, "State: " + mState +
-                " | Orientation: " + mOrientation +
-                " | Position: (" + mXCoordinate + " , " + mYCoordinate + ")");
+        Log.d(TAG, "State: " + mState + " | Orientation: " + mOrientation + " | Position: (" + mXCoordinate + " , " + mYCoordinate + ")");
         mPositions.add(new Position(mXCoordinate, mYCoordinate, mOrientation));
     }
 
     /**
      * Sets the orientation of the robot. The new orientation of the robot depends on whether a left
      * or a right turn is to be performed.
+     *
      * @param direction indicates whether the turn to be performed is a left turn or a right turn
      */
     public void updateOrientation(String direction) {
-        if(direction.equals(LEFT_TURN)) {
-            switch(mOrientation) {
+        if (direction.equals(LEFT_TURN)) {
+            switch (mOrientation) {
                 case FORWARD:
                     mOrientation = Orientation.LEFT;
                     break;
@@ -527,7 +525,7 @@ public class Exploration {
                     // All possible cases are handled above
             }
         } else {
-            switch(mOrientation) {
+            switch (mOrientation) {
                 case FORWARD:
                     mOrientation = Orientation.RIGHT;
                     break;
@@ -562,12 +560,13 @@ public class Exploration {
                     }
 
                     @Override
-                    public void onCheckPointMiss(CheckPoint checkPoint, Pose2D realPose, boolean isLast, int reason) {}
+                    public void onCheckPointMiss(CheckPoint checkPoint, Pose2D realPose, boolean isLast, int reason) {
+                    }
                 });
                 mBase.setObstacleStateChangeListener(new ObstacleStateChangedListener() {
                     @Override
                     public void onObstacleStateChanged(int ObstacleAppearance) {
-                        if(ObstacleAppearance == ObstacleStateChangedListener.OBSTACLE_APPEARED) {
+                        if (ObstacleAppearance == ObstacleStateChangedListener.OBSTACLE_APPEARED) {
                             obstacleDetected();
                         }
                     }
@@ -575,15 +574,18 @@ public class Exploration {
             }
 
             @Override
-            public void onUnbind(String reason) {}
+            public void onUnbind(String reason) {
+            }
         };
 
         mSensorBindStateListener = new ServiceBinder.BindStateListener() {
             @Override
-            public void onBind() {}
+            public void onBind() {
+            }
 
             @Override
-            public void onUnbind(String reason) {}
+            public void onUnbind(String reason) {
+            }
         };
     }
 

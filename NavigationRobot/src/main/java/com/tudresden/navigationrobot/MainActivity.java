@@ -109,7 +109,8 @@ public class MainActivity extends de.tud.loomospeech.MainActivity implements Vie
     public void onClick(View v) {
         switch(v.getId()) {
             case R.id.buttonStart:
-                mExploration.startExploration();
+                //mExploration.startExploration();
+                mExploration.move(1);
                 break;
             case R.id.buttonStop:
                 mExploration.stopExploration();

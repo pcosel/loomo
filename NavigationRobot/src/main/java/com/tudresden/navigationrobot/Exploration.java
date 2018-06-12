@@ -182,6 +182,39 @@ public class Exploration {
         return mPositions;
     }
 
+    public void move(float meters) {
+        mBase.setUltrasonicObstacleAvoidanceEnabled(false);
+        Log.d(TAG, "Move");
+        mState = State.BASIC_MOVEMENTS;
+        mBase.clearCheckPointsAndStop();
+        mBase.cleanOriginalPoint();
+        mBase.setOriginalPoint(mBase.getOdometryPose(-1));
+        if(meters > 0) {
+            // Walk forward
+            mBase.addCheckPoint(meters, 0);
+        } else {
+            // Walk backward
+            // In NAVIGATION mode Loomo can not directly walk backward, therefore it first has to
+            // turn around and then move
+            mBase.addCheckPoint(0, 0, LEFT_90);
+            mBase.clearCheckPointsAndStop();
+            mBase.cleanOriginalPoint();
+            mBase.setOriginalPoint(mBase.getOdometryPose(-1));
+            mBase.addCheckPoint(meters, 0);
+        }
+    }
+
+    public void turn(float degrees) {
+        mBase.setUltrasonicObstacleAvoidanceEnabled(false);
+        Log.d(TAG, "Turn");
+        mState = State.BASIC_MOVEMENTS;
+        float rad = (float)(Math.PI / 180) * degrees;
+        mBase.clearCheckPointsAndStop();
+        mBase.cleanOriginalPoint();
+        mBase.setOriginalPoint(mBase.getOdometryPose(-1));
+        mBase.addCheckPoint(0, 0, rad);
+    }
+
     /**
      * Prepares the exploration process by configuring the automatic obstacle avoidance and setting
      * the first checkpoints.
@@ -237,6 +270,9 @@ public class Exploration {
         Pose2D pos = mBase.getOdometryPose(-1);
         mBase.setOriginalPoint(pos);
         switch(mState) {
+            case BASIC_MOVEMENTS:
+                // Do nothing! Otherwise the robot will start performing exploration routines.
+                break;
             case START:
                 mReachedFirstCheckpoint = true;
                 // As long as no wall has been found yet, keep walking forward
@@ -397,6 +433,8 @@ public class Exploration {
                         mState = State.OBSTACLE_DETECTED;
                         updateOrientation(LEFT_TURN);
                         mBase.addCheckPoint(0, 0, LEFT_90);
+                    } else if(mState == State.BASIC_MOVEMENTS) {
+                        // Do nothing! Otherwise the robot will start performing exploration routines.
                     }
                 }
             }

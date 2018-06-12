@@ -114,6 +114,12 @@ public class IntentsLibraryNavigation extends de.tud.loomospeech.IntentsLibrary 
                             });
                     }
                 }
+                Speak("Okay.", "Movement.Move", new Runnable() {
+                    @Override
+                    public void run() {
+                        activity.loomoRecognizer.startWakeUpListener();
+                    }
+                });
             } catch (Exception e) {
                 Log.d(TAG, "Exception: ", e);
             }

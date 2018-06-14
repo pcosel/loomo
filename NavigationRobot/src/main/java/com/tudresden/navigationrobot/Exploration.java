@@ -90,11 +90,6 @@ public class Exploration {
     private static final float LEFT_90 = (float) (Math.PI / 2);
 
     /**
-     * The theta value for adding a checkpoint that makes the robot rotate 90° to the left.
-     */
-    private static final float LEFT_180 = (float) Math.PI;
-
-    /**
      * The theta value for adding a checkpoint that makes the robot rotate 90° to the right.
      */
     private static final float RIGHT_90 = (float) -(Math.PI / 2);
@@ -187,29 +182,30 @@ public class Exploration {
         return mPositions;
     }
 
+    /**
+     * Makes the robot walk forward or backward.
+     * When the parameter is set to a positive value, the robot walks forward.
+     * Otherwise the robot turns around and walks back.
+     * @param meters
+     */
     public void move(float meters) {
         mState = State.BASIC_MOVEMENTS;
         mBase.clearCheckPointsAndStop();
         mBase.cleanOriginalPoint();
         mBase.setOriginalPoint(mBase.getOdometryPose(-1));
-        if (meters > 0) {
-            // Walk forward
-            mBase.addCheckPoint(meters, 0);
-        } else {
-            // Walk backward
-            // In NAVIGATION mode Loomo can not directly walk backward, therefore it first has to
-            // turn around (180°) and then move forward
-            mBase.addCheckPoint(0, 0, LEFT_180);
-            mBase.clearCheckPointsAndStop();
-            mBase.cleanOriginalPoint();
-            mBase.setOriginalPoint(mBase.getOdometryPose(-1));
-            mBase.addCheckPoint(meters, 0);
-        }
+        mBase.addCheckPoint(meters, 0);
     }
 
+    /**
+     * Makes the robot perform rotations.
+     * When the parameter is set to a positive value, the robot performs a left rotation.
+     * Otherwise the robot performs a right rotation.
+     * @param degrees
+     */
     public void turn(float degrees) {
         mState = State.BASIC_MOVEMENTS;
-        float rad = (float) (Math.PI / 180) * degrees;
+        // convert degree to radiant
+        float rad = ((float)(2 * Math.PI) / 360) * degrees;
         mBase.clearCheckPointsAndStop();
         mBase.cleanOriginalPoint();
         mBase.setOriginalPoint(mBase.getOdometryPose(-1));
@@ -432,8 +428,6 @@ public class Exploration {
                         mState = State.OBSTACLE_DETECTED;
                         updateOrientation(LEFT_TURN);
                         mBase.addCheckPoint(0, 0, LEFT_90);
-                    } else if (mState == State.BASIC_MOVEMENTS) {
-                        // Do nothing! Otherwise the robot will start performing exploration routines.
                     }
                 }
             }

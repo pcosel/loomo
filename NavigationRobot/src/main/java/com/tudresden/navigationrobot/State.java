@@ -52,7 +52,7 @@ public enum State {
 
     /**
      * This is the state for demonstrating the basic movements of the robot (move, turn).
-     * In this case nothing should happen when a checkpoint is reached or an obstacle appears.
+     * In this state nothing should happen when a checkpoint is reached or an obstacle appears.
      * Otherwise the robot would start performing exploration routines.
      */
     BASIC_MOVEMENTS;

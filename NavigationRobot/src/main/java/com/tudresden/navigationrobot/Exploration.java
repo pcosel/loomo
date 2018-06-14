@@ -90,6 +90,11 @@ public class Exploration {
     private static final float LEFT_90 = (float) (Math.PI / 2);
 
     /**
+     * The theta value for adding a checkpoint that makes the robot rotate 90° to the left.
+     */
+    private static final float LEFT_180 = (float) Math.PI;
+
+    /**
      * The theta value for adding a checkpoint that makes the robot rotate 90° to the right.
      */
     private static final float RIGHT_90 = (float) -(Math.PI / 2);
@@ -183,8 +188,6 @@ public class Exploration {
     }
 
     public void move(float meters) {
-        mBase.setUltrasonicObstacleAvoidanceEnabled(false);
-        Log.d(TAG, "Move");
         mState = State.BASIC_MOVEMENTS;
         mBase.clearCheckPointsAndStop();
         mBase.cleanOriginalPoint();
@@ -195,9 +198,8 @@ public class Exploration {
         } else {
             // Walk backward
             // In NAVIGATION mode Loomo can not directly walk backward, therefore it first has to
-            // turn around and then move
-            mBase.addCheckPoint(0, 0, LEFT_90);
-            mBase.addCheckPoint(0, 0, LEFT_90);
+            // turn around (180°) and then move forward
+            mBase.addCheckPoint(0, 0, LEFT_180);
             mBase.clearCheckPointsAndStop();
             mBase.cleanOriginalPoint();
             mBase.setOriginalPoint(mBase.getOdometryPose(-1));
@@ -206,8 +208,6 @@ public class Exploration {
     }
 
     public void turn(float degrees) {
-        mBase.setUltrasonicObstacleAvoidanceEnabled(false);
-        Log.d(TAG, "Turn");
         mState = State.BASIC_MOVEMENTS;
         float rad = (float) (Math.PI / 180) * degrees;
         mBase.clearCheckPointsAndStop();
@@ -270,10 +270,7 @@ public class Exploration {
         mBase.cleanOriginalPoint();
         Pose2D pos = mBase.getOdometryPose(-1);
         mBase.setOriginalPoint(pos);
-        switch (mState) {
-            case BASIC_MOVEMENTS:
-                // Do nothing! Otherwise the robot will start performing exploration routines.
-                break;
+        switch(mState) {
             case START:
                 mReachedFirstCheckpoint = true;
                 // As long as no wall has been found yet, keep walking forward
@@ -371,6 +368,9 @@ public class Exploration {
                 mState = State.START;
                 updateOrientation(RIGHT_TURN);
                 mBase.addCheckPoint(0, 0, RIGHT_90);
+            case BASIC_MOVEMENTS:
+                // Do nothing! Otherwise the robot will start performing exploration routines.
+                break;
             default:
                 // All possible cases are handled above
         }
